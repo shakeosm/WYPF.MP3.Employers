@@ -95,6 +95,8 @@ namespace MCPhase3
             app.UseSession();
             app.UseRouting();
 
+            app.UseMiddleware<UserSessionHandler>("test");
+
             app.UseAuthorization();
            
 
