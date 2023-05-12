@@ -1,0 +1,66 @@
+﻿
+
+
+@{
+    ViewData["Title"] = "Record Disply/ Ammend Page";
+}
+<div class="container">
+     <div class="jumbotron">
+        
+            <h3 style="color:blue;">Record Display / Amend Page</h3>
+            <p style="font-size:small;">Shows incoming data and all errors and warnings against this record.<br />
+                      The user may amend and then re-check the record.
+            </p><br />
+            <div class=table-bordered>
+                <h4 style="color:black;"> Errors and Warnings Processing for Lothlorien School, April 2020 </h4>
+                <p style="font-size:small;">Incoming Record Details</p>
+               
+            <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>  
+                            <th>FName</th>
+                            <th>SName</th>
+                            <th>DOB</th>
+                            <th>Ni Number</th>
+                            <th>Date Start</th>
+                            <th>Job Title</th>
+                            <th>Error Count</th>
+                            <th>View Full Details</th>                           
+                        </tr>
+                       </thead>
+                    <tbody>
+               @* @foreach (var item in Model) {*@
+                        <tr>
+                            <td>
+                               @* @Html.DisplayFor(modelItem => item.alertClass)*@
+                            </td>
+                            <td>
+                                
+                            </td>
+                            <td>
+                                
+                            </td>   
+                             <td>
+                                
+                            </td>
+                            <td>
+                                
+                            </td>  
+                            <td>
+                                
+                            </td> 
+                           
+                            <td>
+                                <a asp-action="Edit" asp-route-id="2" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>                
+                            </td>
+                        </tr>
+                       @*  }
+*@                    </tbody>
+                </table>
+            </div>
+       
+    </div>
+</div>
+
+
+

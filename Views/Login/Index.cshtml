@@ -1,0 +1,98 @@
+﻿@model MCPhase3.Models.DummyLoginViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+}
+
+<div class="">
+    <div class="">
+        <div class="wrap-login100">
+            @*Session expired message*@
+            @if (TempData["msg"] != null)
+            {
+                <div class="container">
+                    <div class="alert-danger">
+                        <div class="alert alert-danger">
+                            @TempData["msg"].ToString()
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (TempData["Msg1"] != null)
+            {
+                <div class="container">
+                    <div class="alert-danger">
+                        <div class="alert alert-danger">
+
+
+                            @TempData["Msg1"].ToString()
+                        </div>
+                    </div>
+                </div>
+
+            }
+            @if (TempData["MsgSession"] != null)
+            {
+                <div class="container">
+                    <div class="alert-danger">
+                        <div class="alert alert-danger">
+
+                            @TempData["MsgSession"].ToString()
+                        </div>
+                    </div>
+                </div>
+
+            }
+            <div class="login100-pic pt-5">
+                @*<img src="https://colorlib.com/etc/lf/Login_v1/images/img-01.png" alt="IMG">*@
+                <img src="~/img/Artboard4.png" alt="login img" />
+                <div class="text-center p-t-136">
+                    <p style="color: #2FA22F; font-weight: 900 ">
+                        Please contact 01274 434900 if you have problems logging in.
+                    </p>
+                </div>
+            </div>
+
+            @*<form class="login100-form validate-form" method="post">*@
+            <form asp-action="Index" asp-controller="Login" method="post">
+                <span class="login100-form-title" style="color: #2FA22F; font-weight: 900">
+                    WYPF Monthly Posting Login
+                </span>
+
+                <div class="wrap-input100 validate-input" data-validate="Valid Username is required">
+                    <input class="input100" asp-for="userName" placeholder="Username *" required />
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                    </span>
+                </div>
+
+                <div class="wrap-input100 validate-input" data-validate="Password is required">
+                    <input class="input100" asp-for="password" type="password" placeholder="Password *" required />
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </span>
+
+                </div>
+                @*<div class="wrap-input100 validate-input" data-validate = "Password is required">
+                <input class="input100" asp-for="clientId" placeholder="Client Id"/>
+                <span class="focus-input100"></span>
+                <span class="symbol-input100">
+                    <i class="fa fa-lock" aria-hidden="true"></i>
+                </span>
+            </div>*@
+
+                <div class="container-login100-form-btn">
+                    <button value="Submit" type="submit" class="login100-form-btn">Login</button>
+                </div>
+            </form>
+
+            @*<p>Encoded remittance id:  @ViewData["enRemid"] </p>
+            <p>Decoded remittance id:  @ViewData["remid"] </p>*@
+
+
+        </div>
+    </div>
+</div>
+

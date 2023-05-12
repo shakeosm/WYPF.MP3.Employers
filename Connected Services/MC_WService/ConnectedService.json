@@ -1,0 +1,17 @@
+{
+  "ExtendedData": {
+    "inputs": [
+      "http://172.22.80.129/employerWS.asmx"
+    ],
+    "collectionTypes": [
+      "System.Collections.Generic.Dictionary`2",
+      "System.Collections.ObjectModel.ObservableCollection`1"
+    ],
+    "namespaceMappings": [
+      "*, MC_WService"
+    ],
+    "sync": true,
+    "targetFramework": "netcoreapp3.1",
+    "typeReuseMode": "None"
+  }
+}

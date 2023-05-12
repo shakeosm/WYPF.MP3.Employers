@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Insert Records into Database";
+}
+
+
+  
+    <div class="container-login100">
+      
+        <div class="container">
+            <div class="progress">
+                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width:60%">
+                    60%
+                </div>
+            </div>
+        </div>
+     
+        <div class="container">
+            <div class="jumbotron">
+                <div class="alert-danger">
+                    @if (TempData["Msg"] != null)
+                    {
+                        <div class="alert alert-dismissible alert-danger">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            @TempData["Msg"].ToString()
+                        </div>
+                    }
+                </div>
+
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="jumbotron">
+                <h3><b>Auto matching process</b></h3><hr />
+                <a href="#" class="btn btn-primary">click here</a> <b>to Start Auto matching.</b><br><br>
+                <div class="alert-danger">
+                    <b>1240 records Auto Matched.</b><br>
+
+                </div>
+
+            </div>
+        </div>
+        <div class="container">
+            <div class="jumbotron">
+                <h3><b>List of Records that are not Auto matched</b></h3><hr />
+                <div class="alert alert-danger" role="alert">
+                    <b> 1002 records are not Auto Matched.</b><br><br><br>
+                    <a href="Page5MunualMatch.html" class="btn btn-primary">click here</a> <b>to Start Manual matching process and fix 1002 records.</b><br><br><hr />
+                    <b>If you want to fix 1002 unmatched records on the spreadsheet please click here to resubmit the file again.</b><br> <a href="MCNFPage1Main.html" class="btn btn-primary">click here</a>
+                </div>
+
+            </div>
+        </div>
+    </div>

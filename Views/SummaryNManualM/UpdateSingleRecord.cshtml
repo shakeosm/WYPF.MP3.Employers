@@ -1,0 +1,464 @@
+﻿@model MCPhase3.Models.MemberUpdateRecordBO
+@{
+    ViewData["Title"] = "Update Record";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    var nextParms = new Dictionary<string, string>();
+    int x = 1;
+
+}
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid bg-3 text-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+
+                        <!-- progressbar -->
+                        <ul id="progressbar">
+                            <li class="active" id="account"><strong>File Upload</strong></li>
+                            <li class="active" id="personal"><strong>Check Totals</strong></li>
+                            <li class="active" id="personal"><strong>Data Processing</strong></li>
+                            <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
+                            <li class="active" id="personal"><strong>Bulk Approval</strong></li>
+                            <li class="active" id="payment"><strong>Submit to Database</strong></li>
+                            <li id="confirm"><strong>Finish</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+
+    <div class="container">
+        <div class="jumbotron">
+            <h3>Error and Warnings</h3>
+            <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
+            <div class=table-bordered>
+                <h4> Errors and Warnings Processing for payroll provider: <b>@ViewBag.empName </b></h4>
+                @*<p style="font-size:small;">Amend data above to correct any errors displayed below.</p>*@
+                <p style="font-size:small;">
+                    Once complete, click submit button.
+                </p>
+            </div>
+
+
+            <table class="table table-bordered">
+                <thead class="thead-light">
+                    @foreach (var item in (ViewBag.HelpText as IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>))
+                    {
+                       
+                            if (!item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE")&& !item.ALERT_DESC.Equals("A new folder will be created for this record."))
+                            {
+                                <tr>
+
+                                    @{
+                                        if (item.ALERT_CLASS.Equals("W"))
+                                        {
+                                            <td> Warning</td>
+                                        }
+                                        else if (item.ALERT_CLASS.Equals("E"))
+                                        {
+                                            <td>  Error </td>
+                                        }
+                                    }
+
+                                    @*<td>@item.ALERT_DESC</td>*@
+                                    <td>@item.ALERT_DESC ,<b> @item.alert_Text</b></td>
+
+
+                                    @{
+
+                                        if (item.ALERT_COUNT.Equals(0))
+                                        {
+                                            <td>
+                                                <label style="color:red;">Cleared</label>
+                                            </td>
+
+                                        }
+                                        else
+                                        {
+                                            <td>1</td>
+                                        }
+                                    }
+
+                                    @{
+                                        if (item.ALERT_CLASS.Contains("W") && item.CLEARED_FG.Contains("N"))
+                                        {
+                                            nextParms.Add("id" + x, item.MC_ALERT_ID);
+                                            //<td><a asp-action="WarningApproval" asp-all-route-data="nextParms" style="color:blue;"> Acknowledge</a></td>
+                                            <td><a asp-action="WarningApproval" asp-route-Id="@item.MC_ALERT_ID" style="color:blue;"> Acknowledge</a></td>
+                                            x++;
+                                        }
+                                        if (item.CLEARED_FG.Contains("Y"))
+                                        {
+                                            <td><Label style="color:red;">Cleared</Label></td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                    }
+                </thead>
+            </table>
+
+            @* <table class="table table-bordered">*@
+            <form class="border p-4 mb-4 bg-white" asp-action="UpdateRecordToDataBase" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <p style="font-size:small;">Incoming Record Details</p>
+                <div class="container">
+
+
+                    <div class="row">
+                        <div class="col-md-5 col-sm-5 col-xs-12">
+
+                            <div class="form-group">
+                                <label class="control-label">First Name</label>
+                                <input asp-for="@Model.forenames" class="form-control" required oninvalid="this.setCustomValidity('* First name is required.')" oninput="setCustomValidity('')">
+                                <span asp-validation-for="@Model.forenames" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">SurName</label>
+                                <input asp-for="@Model.lastName" class="form-control" required oninvalid="this.setCustomValidity('* Last name is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Job Title</label>
+                                <input asp-for="@Model.jobTitle" class="form-control" required oninvalid="this.setCustomValidity('* Jobtitle is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Address1</label>
+                                <input asp-for="@Model.address1" class="form-control" required oninvalid="this.setCustomValidity('* Address Line 1 is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Address2</label>
+                                <input asp-for="@Model.address2" class="form-control" required oninvalid="this.setCustomValidity('* Address Line 2 is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Address3</label>
+                                <input asp-for="@Model.address3" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Address4</label>
+                                <input asp-for="@Model.address4" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Address5</label>
+                                <input asp-for="@Model.address5" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Postcode</label>
+                                <input asp-for="@Model.postCode" class="form-control" required oninvalid="this.setCustomValidity('* PostCode is required.')" oninput="setCustomValidity('')" />
+                            </div>
+                           
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-12"></div>
+                        <div class="col-md-5 col-sm-5 col-xs-12">
+
+                            <div class="form-group">
+                                <label class="control-label">Title</label>
+                                <input asp-for="@Model.title" class="form-control" required oninvalid="this.setCustomValidity('* Title is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">DOB</label>
+                                <input asp-for="@Model.DOB" class="form-control" required oninvalid="this.setCustomValidity('* Date of birth is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Gender</label>
+                                <input asp-for="@Model.gender" class="form-control" required oninvalid="this.setCustomValidity('* Gender is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">NI Number</label>
+                                <input asp-for="@Model.NI" class="form-control" required oninvalid="this.setCustomValidity('* NI is required.')" oninput="setCustomValidity('')">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Member No</label>
+                                <input asp-for="@Model.memberNo" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Pay Ref</label>
+                                <input asp-for="@Model.payRef" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Post Ref</label>
+                                <input asp-for="@Model.postRef" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Costcode</label>
+                                <input asp-for="@Model.costCode" class="form-control">
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+
+                            <div class="form-group">
+                                <label class="control-label">PT Flag</label>
+                                <input asp-for="@Model.ptCSFlag" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Hours Worked</label>
+                                <input asp-for="@Model.hoursWorked" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Std Hours</label>
+                                <input asp-for="@Model.stdHours" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Contractual Hrs</label>
+                                <input asp-for="@Model.contractHours" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                @{
+                                    bool is_NEW_FLDR_DATE_WARN = false;
+                                @foreach (var item in (ViewBag.HelpText as IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>))
+                                {
+                                    
+                                    if (item.ALERT_TYPE_REF.Equals("NEW_FLDR_DATE_WARN") )
+                                    {
+                                            is_NEW_FLDR_DATE_WARN = true;
+                                            break;
+                                    }
+
+                                }
+                                    if (is_NEW_FLDR_DATE_WARN)
+                                    {
+                                        <label style="color:red;" class="control-label">Date Joined</label>
+                                    }
+                                    else
+                                    {
+                                        @Html.Label("Date Joined")
+                                        
+                                    }
+                                }
+                                
+                                
+                                <input asp-for="@Model.dateJoined" class="form-control">
+                            </div>
+
+
+                            <div class="form-group">
+                                <label class="control-label">Enrolment Type</label>
+                                @* <input asp-for="enrolmentType" class="form-control">*@
+                                <select asp-for="@Model.enrolmentType">
+                                    <option value=""></option>
+                                    <option value="CONTRACTUAL">CONTRACTUAL</option>
+                                    <option value="AUTO">AUTO</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+
+                                @{
+                                    bool is_LVR_BEFORE_JOIN = false;
+                                    @foreach (var item in (ViewBag.HelpText as IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>))
+                                    {
+                                        if (item.ALERT_TYPE_REF.Contains("LVR_BEFORE_JOIN") )
+                                        {
+                                            is_LVR_BEFORE_JOIN = true;
+                                            break;
+                                        }
+                                    }
+
+                                        if (is_LVR_BEFORE_JOIN)
+                                        {
+                                            <label style="color:red;" class="control-label" >Date Left</label>
+                                            
+                                        }
+                                        else
+                                        {
+                                            @Html.Label("Date Left")
+
+                                        }                                    
+                                }
+                                
+                                <input asp-for="@Model.dateLeft" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                @{
+                                    bool is_OO_FLAG_INVALID1 = false;
+                                    @foreach (var item in (ViewBag.HelpText as IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>))
+                                    {
+                                        if (item.ALERT_TYPE_REF.Contains("OO_NO_FLAG") || item.ALERT_TYPE_REF.Contains("OO_FLAG_INVALID"))
+                                        {
+                                                is_OO_FLAG_INVALID1 = true;
+                                                break;
+                                        }
+                                    }
+                                        if (is_OO_FLAG_INVALID1)
+                                        {
+                                            <label style="color:red;" class="control-label">Opt Out Flag</label>
+                                        }
+
+                                        else
+                                        {
+                                            @Html.Label("Opt Out Flag")
+                                        }
+                                    
+                                }
+                                
+                                @*<input asp-for="@Model.optOutFlag" class="form-control">*@
+                                <select asp-for="@Model.optOutFlag">
+                                    <option value=""></option>
+                                    <option value="CONTRACTUAL">CONTRACTUAL</option>
+                                    <option value="AUTO">AUTO</option>
+                                </select>
+
+                            </div>
+                            
+                            <div class="form-group">
+                                @{
+                                    bool is_OPTOUT_ = false;
+                                    @foreach (var item in (ViewBag.HelpText as IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>))
+                                    {
+                                        if (item.ALERT_TYPE_REF.Contains("OPTOUT_") || item.ALERT_TYPE_REF.Contains("OO_"))
+                                        {
+                                            is_OPTOUT_ = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (is_OPTOUT_)
+                                    {
+                                            <label style="color:red;" class="control-label">Opt Out Date</label>                                     
+                                    }
+                                    else
+                                    {
+                                         @Html.Label("Opt Out Date")                                        
+                                    }
+                                    
+                                }
+                                
+                                <input asp-for="@Model.optOutDate" class="form-control">
+                            </div>
+
+
+                        </div>
+                        <div class="col-md-1 col-sm-1 col-xs-12">
+                        </div>
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+
+                            <div class="form-group">
+                                <label class="control-label">Pay Main</label>
+                                <input asp-for="@Model.payMain" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Ee Conts Main</label>
+                                <input asp-for="@Model.eeContsMain" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Pay 50 50</label>
+                                <input asp-for="@Model.pay5050" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">EE Conts 50 50</label>
+                                <input asp-for="@Model.eeConts5050" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">50 50 Start date</label>
+                                <input asp-for="@Model.startDate5050" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">50 50 End Date</label>
+                                <input asp-for="@Model.endDate5050" class="form-control">
+                            </div>
+
+                        </div>
+                        <div class="col-md-1 col-sm-1 col-xs-12">
+                        </div>
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+
+                            <div class="form-group">
+                                <label class="control-label">Purch Service</label>
+                                <input asp-for="@Model.purchService" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">ARC Conts</label>
+                                <input asp-for="@Model.arcConts" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">EE APC Conts</label>
+                                <input asp-for="@Model.eeAPCConts" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">ER APC Conts</label>
+                                <input asp-for="@Model.erAPCConts" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">ER Conts</label>
+                                <input asp-for="@Model.erConts" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Ann Rate of Pay</label>
+                                <input asp-for="@Model.annRateofPay" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Total AVC Conts Paid</label>
+                                <input asp-for="@Model.totalAVCContsPaid" class="form-control">
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+
+                            <div class="form-group">
+                                <label class="control-label">Notes</label>
+                                <input asp-for="@Model.notes" class="form-control">
+                            </div>
+
+                        </div>
+                    </div>
+                    @{
+                        <input asp-for="@Model.dataRowID" type="hidden">
+                        <input asp-for="@Model.schemeName" type="hidden">
+                        <input asp-for="@Model.dataRowID" type="hidden">
+                        <input asp-for="@Model.pay19922006" type="hidden">
+                        <input asp-for="@Model.pay2015" type="hidden">
+                        <input asp-for="@Model.eeConts" type="hidden">
+                        <input asp-for="@Model.apbTempProm" type="hidden">
+                        <input asp-for="@Model.purch60" type="hidden">
+                        <input asp-for="@Model.addedPenConts" type="hidden">
+                        <input asp-for="@Model.annRateofPay" type="hidden">
+                        <input asp-for="@Model.cpdEEConts" type="hidden">
+                        <input asp-for="@Model.rank" type="hidden">
+                        <input asp-for="@Model.totalAVCContsPaid" type="hidden">
+
+                    }
+
+                <div class="row">
+                    @*<div class="text-center row">
+        <table class="table table-bordered">*@
+                    <div class="col-6">
+                        <a asp-action="Index" class="btn btn-primary btn-lg"> Exit</a>
+                    </div>
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary btn-lg"> Submit</button>
+                    </div>
+                    @*</table>
+                </div>*@
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+
+<script>
+    // When the user scrolls down 20px from the top of the document, slide down the navbar
+    window.onscroll = function () { scrollFunction() };
+
+    function scrollFunction() {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            document.getElementById("navbar").style.top = "0";
+        } else {
+            document.getElementById("navbar").style.top = "-50px";
+        }
+    }
+    
+   document.getElementById('passToWYPF').style.display = 'block';
+</script>

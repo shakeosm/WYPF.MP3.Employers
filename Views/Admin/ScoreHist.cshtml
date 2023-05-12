@@ -1,0 +1,71 @@
+﻿
+@model IEnumerable<MCPhase3.Models.DashboardHistScoreBO>
+@{
+    ViewData["Title"] = "Score History";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+
+    int i = 0;
+    int remittanceID = 0;
+}
+<br />
+<br />
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid">
+        <div class="container-fluid bg-3 text-center">
+            <h1 class="">Monthly posting</h1>
+            <p class="">If you need to contact us phone 01274 434563 or 01274 435310</p>
+        </div>
+        <h4> Employer's uploaded files With Scores History</h4>
+
+
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <a class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Score History</a>
+                
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th><b>No.</b></th>
+                            <th><b>Remittane</b></th>
+                            <th><b>Score Date</b></th>
+                            <th><b>Score</b></th>                            
+                            <th><b></b></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                           
+                            <tr>
+                                <td>@{i++;} @i</td>
+                                <td>@item.remittance_Id</td>
+                                <td>@Convert.ToDateTime(item.score_Date).ToString("dd/MM/yyyy")</td>                           
+                                <td>@item.score_Employer</td>
+                                <td></td>
+                                @{ remittanceID = @item.remittance_Id;}
+                                @*<td> @Html.ActionLink("Select", "Index", "SummaryNManualM", new { remittanceID = "176448" })<br /></td>*@
+                            </tr>                           
+                        }
+                    <tr>
+                        <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID = remittanceID class="btn btn-cyan">Select</a></td>
+                        <td><a asp-action="MasterDetailEmp" asp-controller="Admin" class="btn btn-outline-info">Back</a>@*|<a asp-action="Index" asp-controller="SummaryNManualM" class="btn btn-outline-danger">Delete</a></td>*@
+
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>          
+        </div>
+    </div>
+</div>
+
+
+<!--Bootstrap Js-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+
+
+

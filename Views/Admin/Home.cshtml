@@ -1,0 +1,159 @@
+﻿
+@{
+    ViewData["Title"] = "Home";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<br />
+<br />
+<div class="border shadow-lg p-4 mb-4" style="background-color: #a8e4a0">
+    <div class="container-fluid pt-5">
+        @if (TempData["MsgError"] != null)
+        {
+        <div class="container">
+
+            <div class="alert-danger">
+                <div class="alert alert-danger">
+
+                    @TempData["MsgError"].ToString()
+                </div>
+            </div>          
+
+        </div>
+        }
+        <div class="row">
+            <div class="col-md-6 col-lg-6 col-xlg-6">
+                <a asp-action="MasterDetailEmp" asp-controller="Admin">
+                    <div class="card card-hover" style="background-color: #e3fbe3">
+
+                        @*<div class="box bg-cyan text-center">*@
+                        <div class="text-center pt-3">
+                            <h1 class="font-light text-black">
+                                @*<i class="mdi mdi-view-dashboard"></i>*@
+                                <img src="~/img/Artboard5.png" />
+                            </h1>
+                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Dashboard</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Column -->
+            <div class="col-md-6 col-lg-6 col-xlg-6">
+                <a asp-action="Index" asp-controller="Home">
+                    <div class="card card-hover pt-3" style="background-color: #e3fbe3">
+                        @*<div class="box bg-success text-center">*@
+                        <div class="text-center">
+                            <h1 class="font-light text-black">
+                                @*<i class="mdi mdi-chart-areaspline"></i>*@
+                                <img src="~/img/Artboard7.png" />
+                            </h1>
+                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Contributions</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
+                <a asp-action="UpdatePassword" asp-controller="Admin">
+                    <div class="card card-hover" style="background-color: #e3fbe3">-->
+                        @*<div class="box bg-warning text-center">*@
+                        <!--<div class="text-center pt-3">
+                            <h1 class="font-light text-black">-->
+                                @*<i class="mdi mdi-collage"></i>*@
+                                <!--<img src="~/img/Artboard6.png" />
+                            </h1>
+                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Reports</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>-->
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
+                <div class="card card-hover" style="background-color: #e3fbe3">-->
+                    @*<div class="box bg-danger text-center">*@
+                    <!--<div class="text-center pt-3">
+                        <h1 class="font-light text-black">-->
+                            @*<i class="mdi mdi-border-outside"></i>*@
+                            <!--<img src="~/img/Artboard8.png" />
+                        </h1>
+                        <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Send Files</h6>
+                    </div>
+                </div>
+            </div>-->
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
+                <div class="card card-hover" style="background-color: #e3fbe3">-->
+                    @*<div class="box bg-info text-center">*@
+                    <!--<div class="text-center pt-3">
+                        <h1 class="font-light text-black">-->
+                            @*<i class="mdi mdi-arrow-all"></i>*@
+                            <!--<img src="~/img/Artboard9.png" />
+                        </h1>
+                        <h6 class="text-black" style="color: #ff7b00; font-weight:bold">Actions</h6>
+                    </div>
+                </div>
+            </div>-->
+            <!-- Column -->
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
+                <div class="card card-hover" style="background-color: #e3fbe3">-->
+                    @*<div class="box bg-danger text-center">*@
+                    <!--<div class="text-center pt-3">
+                        <h1 class="font-light text-black">-->
+                            @*<i class="mdi mdi-receipt"></i>*@
+                            <!--<img src="~/img/Artboard11.png" />
+                        </h1>
+                        <h6 class="text-black" style="color: #ff7b00; font-weight:bold">Documentation</h6>
+                    </div>
+                </div>
+            </div>-->
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
+            <div class="card card-hover">
+                <div class="box bg-info text-center">
+                    <h1 class="font-light text-white">
+                        <i class="mdi mdi-relative-scale"></i>
+                    </h1>
+                    <h6 class="text-white">Upcoming actions</h6>
+                </div>
+            </div>
+        </div>-->
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
+            <div class="card card-hover">
+                <div class="box bg-cyan text-center">
+                    <h1 class="font-light text-white">
+                        <i class="mdi mdi-pencil"></i>
+                    </h1>
+                    <h6 class="text-white">Elements</h6>
+                </div>
+            </div>
+        </div>-->
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
+            <div class="card card-hover">
+                <div class="box bg-success text-center">
+                    <h1 class="font-light text-white">
+                        <i class="mdi mdi-calendar-check"></i>
+                    </h1>
+                    <h6 class="text-white">Calnedar</h6>
+                </div>
+            </div>
+        </div>-->
+            <!-- Column -->
+            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
+            <div class="card card-hover">
+                <div class="box bg-warning text-center">
+                    <h1 class="font-light text-white">
+                        <i class="mdi mdi-alert"></i>
+                    </h1>
+                    <h6 class="text-white">Errors</h6>
+                </div>
+            </div>
+        </div>-->
+            <!-- Column -->
+        </div>
+    </div>
+</div>
+
+

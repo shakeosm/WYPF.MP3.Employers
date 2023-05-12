@@ -1,0 +1,100 @@
+﻿@model MCPhase3.Models.MyModel
+
+@{
+    ViewData["Title"] = "LG";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+
+
+<form asp-action="Create" enctype="multipart/form-data" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    @*<h1 class="mainheading"> LG - Contribution advice</h1>
+    <p class="mainheading">If you need to contact us phone 01274 434563 or 01274 435310</p>*@
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    @*<div class="container-fluid bg-3 text-center">
+        <div class="container">*@
+    <div class="row justify-content-center">
+        <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+            <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+
+                <!-- progressbar -->
+                <ul id="progressbar">
+                    <li class="active" id="account"><strong>File Upload</strong></li>
+                    <li id="personal"><strong>Check Totals</strong></li>
+                    <li id="personal"><strong>Data Summary</strong></li>
+                    <li id="personal"><strong>Error and Warning Summary</strong></li>
+                    <li id="personal"><strong>Bulk Approval</strong></li>
+                    <li id="payment"><strong>Submit to Database</strong></li>
+                    <li id="confirm"><strong>Finish</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    @* </div>
+        </div>*@
+    <div class="container">
+        <div class="jumbotron col-md-12">
+            <h4>List of Paylocations:</h4>
+            <select class="form-control col-md-6" asp-for="paylocationList" asp-items="ViewBag.Paylocations"></select>
+        </div>
+    </div>
+    </br>
+    <div class="container" id="uploadFile">
+        <div class="jumbotron">
+
+            <h4>Step 1 - upload monthly contribution spreadsheet</h4><hr />
+
+            <div class="col-md-12">
+                <label class="col-md-6">Select Payroll month:</label>
+                <select class="form-control col-md-6" asp-for="monthsList" asp-items="ViewBag.Months"></select><br><br>
+            </div>
+            <div class="col-md-12">
+                <label class="col-md-6">Select Payroll year:</label>
+                <select class="form-control col-md-6" asp-for="yearsList" asp-items="ViewBag.Years"></select><br><br>
+            </div>
+
+            <div class="col-md-12">
+                <label class="col-md-6">Posting for:</label>
+                <select class="form-control col-md-6" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting"></select><br><br>
+            </div>
+
+            <h4>Step 2: Browse file</h4>
+            <p><input type="file" name="files" class="form-control"></p>
+            <div class="form-group col-md-6">
+                <input type="submit" value="Upload File" class="btn btn-primary" />
+            </div>
+            @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
+        </div>
+        @if (TempData["MsgM"] != null)
+        {
+            <div class="alert alert-danger border-2">
+        <!--Html.Raw to apply Html tags inside a string-->
+                @Html.Raw(@TempData["MsgM"].ToString())      
+            </div>
+
+            @if (@TempData["MsgM"].ToString() == "File is uploaded successfully")           
+            {
+                <div class="alert alert-success" role="alert">
+                    <a asp-action="Remad" class="btn btn-primary">Next </a> to check all totals are correct.
+                </div>
+            }
+        }
+    </div>
+</div>
+</form>
+   
+
+
+
+@*@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}*@
+
+
+<script>
+    document.getElementById('passToWYPF').style.display = 'none';
+</script>
+
+

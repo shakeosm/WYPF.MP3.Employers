@@ -1,0 +1,50 @@
+﻿
+@{
+    ViewData["Title"] = "MoveFileForFTP";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid bg-3 text-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+
+                        <!-- progressbar -->
+                        <ul id="progressbar">
+                            <li class="active" id="account"><strong>File Upload</strong></li>
+                            <li class="active" id="personal"><strong>Check Totals</strong></li>
+                            <li class="active" id="personal"><strong>Data Processing</strong></li>
+                            <li id="personal"><strong>Error and Warning Summary</strong></li>
+                            <li id="personal"><strong>Bulk Approval</strong></li>
+                            <li id="payment"><strong>Submit to Database</strong></li>
+                            <li id="confirm"><strong>Finish</strong></li>
+                        </ul>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="border shadow-lg p-4 mb-4 bg-white">
+        <div class="container">
+            <div class="jumbotron">
+                <h3>Remittance file uploaded and submitted for processing.</h3>
+                <p style="font-size:small;">Please click Next button to move uploaded file to WYPF DataBases. It might takes few minutes....</p><br />
+
+                <a class="btn btn-primary" id="rg_btn" asp-action="RemittanceInsertDB" asp-controller="Home" asp-route-id="@Model.remittanceID"> Next</a>
+            </div>
+            @*<div class="loading loading--full-height"></div>*@
+        </div>
+    </div>
+   
+</div>
+
+
+

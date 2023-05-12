@@ -1,0 +1,177 @@
+﻿
+@{
+    ViewData["Title"] = "Loose Match Records";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="container-fluid bg-3 text-center">
+    <h1 class="mainheading">Monthly Posting</h1>
+    <p class="mainheading">If you need to contact us phone 01274 434563 or 01274 435310</p>
+</div>
+
+<div class="jumbotron">
+    <div class="container-fluid bg-3">
+
+        <label><b>Person Loose Match Found</b></label><br />
+        <label>Employer: <b>@ViewBag.EmployerName</b></label>
+
+        <form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">
+            <table class="table table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Forenames</th>
+                        <th>Surname</th>
+                        <th>NI Number</th>
+                        <th>Date of Birth</th>
+                        <th>Postcode</th>
+                        <th>Person Has Folders<br /> at this Employer</th>
+                    </tr>
+                    <tr>
+                        <td class="text-center">Contribution Data Received</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <label>David</label>
+                            <!--Html.DisplayFor(modelItem => item.fName)-->
+                        </td>
+                        <td>
+                            <label>Smith</label>
+                        </td>
+                        <td>
+                            <label>AB123456C</label>
+                        </td>
+                        <td>
+                            <label>01/02/1970</label>
+                        </td>
+                        <td>
+                            <label>AB12 3CD</label>
+                        </td>
+                        <td>Y</td>
+                    </tr>
+                    <tr>
+                        <td class="text-center">Loose Matches For This Person</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>David</label>
+                            <!--Html.DisplayFor(modelItem => item.fName)-->
+                        </td>
+                        <td>
+                            <label>Smith</label>
+                        </td>
+                        <td>
+                            <label>AB123456C</label>
+                        </td>
+                        <td>
+                            <label>01/02/1970</label>
+                        </td>
+                        <td>
+                            <label>AB12 3CD</label>
+                        </td>
+                        <td>N</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>David</label>
+                            <!--Html.DisplayFor(modelItem => item.fName)-->
+                        </td>
+                        <td>
+                            <label>Smith</label>
+                        </td>
+                        <td>
+                            <label>AB123456C</label>
+                        </td>
+                        <td>
+                            <label>01/02/1970</label>
+                        </td>
+                        <td>
+                            <label>AB12 3CD</label>
+                        </td>
+                        <td>N</td>
+
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4><b>To resolve this warning, you can:</b></h4>
+
+            <table class="table table-bordered">
+                <thead class="thead-light">
+
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>
+                            <label>
+                                Amend the contributions data to create a full match.<br />
+                                Arrange to amend employer payroll data so that future returns match automatically.
+                            </label>
+                            <!--Html.DisplayFor(modelItem => item.fName)-->
+                        </td>
+                        <td>
+                            <input type="radio">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>
+                                Request amendment of person data by WYPF to create a full match.<br />
+                                Please double check that employer data is correct first.
+                            </label>
+                            <!--Html.DisplayFor(modelItem => item.fName)-->
+                        </td>
+                        <td>
+                            <input type="radio" onclick="myFunc()">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>
+                                Confirm that a new record should be created from the contributions data.<br />
+                                Only available if NI number is not already on file at WYPF.
+
+                            </label>
+                            <!--Html.DisplayFor(modelItem => item.fName)-->
+                        </td>
+                        <td>
+                            <input type="radio">
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+
+            <!--PopUp text will be passed to following input item to upload to database-->
+            <input type="hidden" value="" name="myValue" id="myValue">
+            <div class="row">
+                <div class="col-sm-6">
+                    <button class="btn btn-primary form-control " type="submit">Cancel</button>
+                </div>
+                <div class="col-sm-6">
+                    <button class="btn btn-success form-control col-sm-6" type="submit">Confirm</button>
+                </div>
+
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    function myFunc() {
+        let text;
+         text = prompt("Request amendment of person data by WYPF to create a full match.");
+        let person = prompt("Please enter your message for WYPF:", "Enter your text here");
+        if (person != null || person != "") {
+
+            document.getElementById("myValue").innerHTML = text;
+        }
+        text = prompt("By clicking Confirm you are authorising WYPF to amend the person record, and confirm that the details on the contributions return and message for WYPF are correct.");
+    }
+</script>
+
+

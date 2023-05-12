@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+<DataIntegration>
+	<DataTable SourceFileLocation="" SourceFileType="Excel" SpreadsheetFileColumnName="MC_Data" DBTableFileColumnName="UPMTableFileColumnName" DBDataDeleteBeforeInsert = "NO" TotalFileColumns = "43">			
+		<SourceFileColumns>
+			<Column FileColumnName = "PAYROLL_PD" DBColumnName = "PAYROLLPD" type = "System.String" length = "100" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "PAYROLL_YR" DBColumnName = "PAYROLLYR" type = "System.String" length = "20" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "EMPLOYER_LOC_CODE" DBColumnName = "EMPLOYERLOCCODE" type = "System.String" length = "20" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>			
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "EMPLOYER_NAME" DBColumnName = "EMPLOYERNAME" type = "System.String" length = "250" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "MEMBERS_TITLE" DBColumnName = "TITLE" type = "System.String" length = "20" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "SURNAME" DBColumnName = "SURNAME" type = "System.String" length = "250" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>	
+			<Column FileColumnName = "FORENAMES" DBColumnName = "FORENAMES" type = "System.String" length = "250" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "GENDER" DBColumnName = "GENDER" type = "System.String" length = "5" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "F" ValidColumnValues2 = "M" ValidColumnValues3 = ""/>
+			</Column>	
+			<Column FileColumnName = "DOB" DBColumnName = "DOB" type = "System.DateTime" length = "" allowNull = "NO" DefaultValue = "Null" ColumnValueFormat = "dd/MM/yyyy">
+				<DeleteDataIfColumnHasValue Value1 = "01/01/0001 00:00:00" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "JOBTITLES" DBColumnName = "JOBTITLE" type = "System.String" length = "100" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ADDRESS1" DBColumnName = "ADDRESS1" type = "System.String" length = "250" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ADDRESS2" DBColumnName = "ADDRESS2" type = "System.String" length = "100" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ADDRESS3" DBColumnName = "ADDRESS3" type = "System.String" length = "100" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ADDRESS4" DBColumnName = "ADDRESS4" type = "System.String" length = "100" allowNull = "YES" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ADDRESS5" DBColumnName = "ADDRESS5" type = "System.String" length = "100" allowNull = "YES" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "POSTCODE" DBColumnName = "POSTCODE" type = "System.String" length = "20" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "COSTCODE" DBColumnName = "COSTCODE" type = "System.String" length = "25" allowNull = "YES" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "MEMBER_NO" DBColumnName = "MEMBER_NO" type = "System.String" length = "25" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "NI_NUMBER" DBColumnName = "NINUMBER" type = "System.String" length = "20" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "[ABCEGHJKLMNPRSTWXYZ][0-9]{6}[A-D ]">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "PAYREF" DBColumnName = "PAYREF" type = "System.String" length = "20" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "POSTREF" DBColumnName = "POSTREF" type = "System.String" length = "20" allowNull = "YES" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "FT_PT_CS_FLAG" DBColumnName = "FTPTCSFLAG" type = "System.String" length = "2" allowNull = "NO" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "FT" ValidColumnValues2 = "PT" ValidColumnValues3 = "CS"/>
+			</Column>
+			<Column FileColumnName = "FT_PT_HOURS_WORKED" DBColumnName = "FTPTHOURSWORKED" type = "System.Double" length = "10" allowNull = "NO" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "STD_HOURS" DBColumnName = "STDHOURS" type = "System.Double" length = "10" allowNull = "NO" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "CONTRACTUAL_HRS" DBColumnName = "CONTRACTUALHOURS" type = "System.Double" length = "10" allowNull = "NO" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "DATE_JOINED_SCHEME" DBColumnName = "DATEJOINEDSCHEME" type = "System.DateTime" length = "" allowNull = "NO" DefaultValue = "Null" ColumnValueFormat = "dd/MM/yyyy">
+				<DeleteDataIfColumnHasValue Value1 = "01/01/0001 00:00:00" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ENROLMENT_TYPE" DBColumnName = "ENROLMENTTYPE" type = "System.String" length = "20" allowNull = "YES" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "AUTO" ValidColumnValues2 = "CONTRACTUAL" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "DATE_OF_LEAVING_SCHEME" DBColumnName = "DATEOFLEAVING" type = "System.DateTime" length = "" allowNull = "YES" DefaultValue = "Null" ColumnValueFormat = "dd/MM/yyyy">
+				<DeleteDataIfColumnHasValue Value1 = "01/01/0001 00:00:00" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "OPTOUT_FLAG" DBColumnName = "OPTOUTFLAG" type = "System.String" length = "20" allowNull = "YES" DefaultValue = "" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "AUTO" ValidColumnValues2 = "CONTRACTUAL" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "OPTOUT_DATE" DBColumnName = "OPTOUTDATE" type = "System.DateTime" length = "" allowNull = "YES" DefaultValue = "Null" ColumnValueFormat = "dd/MM/yyyy">
+				<DeleteDataIfColumnHasValue Value1 = "01/01/0001 00:00:00" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "PAY_MAIN" DBColumnName = "PAY_MAIN" type = "System.Double" length = "10" allowNull = "NO" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "EE_CONT_MAIN" DBColumnName = "EE_CONT_MAIN" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "PAY_50_50" DBColumnName = "PAY_50_50" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "EE_CONT_50_50" DBColumnName = "EE_CONT_50_50" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "50_50_START_DATE" DBColumnName = "START_DATE_50_50" type = "System.DateTime" length = "" allowNull = "YES" DefaultValue = "Null" ColumnValueFormat = "dd/MM/yyyy">
+				<DeleteDataIfColumnHasValue Value1 = "01/01/0001 00:00:00" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "50_50_END_DATE" DBColumnName = "END_DATE_50_50" type = "System.DateTime" length = "" allowNull = "YES" DefaultValue = "Null" ColumnValueFormat = "dd/MM/yyyy">
+				<DeleteDataIfColumnHasValue Value1 = "01/01/0001 00:00:00" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "PRCHS_OF_SRV" DBColumnName = "PRCHS_OF_SRV" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">			
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ARC_CONTS" DBColumnName = "ARC_CONTS" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "EE_APC_CONTS" DBColumnName = "EE_APC_CONTS" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ER_APC_CONTS" DBColumnName = "ER_APC_CONTS" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ER_CONTS" DBColumnName = "ER_CONTS" type = "System.Double" length = "10" allowNull = "NO" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "ANNUAL_RATE_OF_PAY" DBColumnName = "ANNUAL_RATE_PAY" type = "System.Double" length = "10" allowNull = "NO" DefaultValue = "0" ColumnValueFormat = "">
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "TOTAL_AVC_CONTRIBUTIONS_PAID" DBColumnName = "AVC_CONTRIBUTIONS" type = "System.Double" length = "10" allowNull = "YES" DefaultValue = "0" ColumnValueFormat = "">		
+				<DeleteDataIfColumnHasValue Value1 = "Null" Value2 = "-1" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>
+			<Column FileColumnName = "NOTES" DBColumnName = "NOTES" type = "System.String" length = "500" allowNull = "YES" DefaultValue = "" ColumnValueFormat = "">	
+				<DeleteDataIfColumnHasValue Value1 = "" Value2 = "" Value3 = ""/>
+				<ValidColumnValues ValidValue1 = "" ValidColumnValues2 = "" ValidColumnValues3 = ""/>
+			</Column>			
+	    </SourceFileColumns>	
+	</DataTable>
+
+
+	<DataTable Type="CSV" SpreadsheetFileColumnName="">		
+		<SourceFileColumns>
+			<Column FileColumnName = "PAYROLL_PD" DBColumnName = "PAYROLLPD" type = "String" length = "100" allowNull = "NO"/>
+			<Column FileColumnName = "PAYROLL_YR" DBColumnName = "PAYROLLYR" type = "String" length = "20" allowNull = "NO"/>	
+	    </SourceFileColumns>	
+	</DataTable>		
+	
+
+		
+
+
+</DataIntegration>

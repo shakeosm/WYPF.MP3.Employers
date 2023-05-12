@@ -1,0 +1,63 @@
+﻿@model MCPhase3.Models.MonthlyContributionBO
+@{
+    ViewData["Title"] = "Check Totals";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    @*<div class="container-fluid bg-3 text-center">
+        <div class="container">*@
+            <div class="row justify-content-center">
+                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+                        <!-- progressbar -->
+                        <ul id="progressbar">
+                            <li class="active" id="account"><strong>File Upload</strong></li>
+                            <li class="active" id="personal"><strong>Check Totals</strong></li>
+                            <li class="active" id="personal"><strong>Data Summary</strong></li>
+                            <li id="personal"><strong>Error and Warning Summary</strong></li>
+                            <li id="personal"><strong>Bulk Approval</strong></li>
+                            <li id="payment"><strong>Submit to Database</strong></li>
+                            <li id="confirm"><strong>Finish</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @*</div>
+    </div>*@
+    <br>
+    <br>
+
+    @if (TempData["Msg"] != null)
+    {
+        <div class="container">
+            <div class="jumbotron">
+                <div class="alert-danger">
+                    <div class="alert alert-dismissible alert-danger">
+                        
+                        @TempData["Msg"].ToString()
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
+
+
+    <form asp-action="Remad" enctype="multipart/form-data" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="container">
+            <h3><b>Step 2 – add any additional information</b></h3><hr />
+            <textarea asp-for="AdditionalInfo" class="form-control" rows="5" id="comment"></textarea>
+
+            <div class="alert alert-success" role="alert">
+                <h3>please click following button to Submit onto Database.</h3>
+                <input type="submit" value="Submit" class="btn btn-primary btn-block" />
+            </div>
+        </div>
+    </form>
+</div>
+
+    @*@section Scripts {
+            @{await Html.RenderPartialAsync("_ValidationScriptsPartial");
+            }
+        }*@

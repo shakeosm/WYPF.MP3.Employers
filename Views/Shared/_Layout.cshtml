@@ -1,0 +1,74 @@
+﻿
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>@ViewData["Title"] - MCPhase3</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link href="~/css/MCcss.css" rel="stylesheet" />   
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    @*<link href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">*@
+
+    <script src="~/js/fontawesome.min.js"></script>
+    <script src="~/js/html5shiv.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <img src="~/img/logo.png" class="img-responsive" alt="WYPF logo" />
+    </div>
+    <div class="container-fluid">
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" asp-action="Home" asp-controller="Admin">MCP</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    @*<ul
+                        <li class="navbarcolor active"><a href="#">Contribution remittance advice</a></li>
+                        <li><a href="#">UPM process mover</a></li>
+                        <li><a href="#">Monthly returns index</a></li>
+                        <li><a href="#">Employer home</a></li>
+                        <li><a href="#">File transfer</a></li>
+                    </ul>*@
+                    
+                        @(await Component.InvokeAsync("LoginCheck"))
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
+
+
+        <footer class="border-top footer text-muted">
+            <div class="container text-center" style="color:white;">
+                &copy; 2021 - MCPhase3 - <a style="color:blue;" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </div><br><br>
+
+        </footer>
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+                integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+                crossorigin="anonymous"></script>
+
+
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        @RenderSection("Scripts", required: false)
+    </div>
+</body>
+</html>

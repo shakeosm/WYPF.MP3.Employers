@@ -1,0 +1,98 @@
+﻿@model PaginatedList<MCPhase3.Models.DashboardBO>
+@{
+    ViewData["Title"] = "Files History";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    int i = 0;
+    int j = 0;
+}
+<br />
+<br />
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid">
+        <div class="container-fluid bg-3 text-center">
+            <h1 class="">Monthly posting</h1>
+            <p class="">If you need to contact us phone 01274 434563 or 01274 435310</p>
+        </div>
+        <h4> Employer's uploaded files</h4>
+
+
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <!--<a class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Pending Files</a>
+                     <a class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" href="/Admin/#nav-profile"-->
+                @*onclick="myFunction()"*@  <!--role="tab"  aria-controls="nav-profile" aria-selected="false">Completed Files</a>-->
+                <a href="/Admin/MasterDetailEmp" class="nav-link" id="nav-home-tab">Pending Files</a>
+                <a href="/Admin/CompletedFiles" class="nav-link active" id="nav-home-tab">Completed Files</a>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            @*<th><b>No.</b></th>*@
+                            <th><b>Month</b></th>
+                            <th><b>Year</b></th>
+                            <th><b>Reference</b></th>
+                            <th><b>Received</b></th>
+                            <th><b>Records</b></th>
+                            <th><b>Status</b></th>
+                            @*<th><b>Latest Score</b></th>*@
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            //if (Convert.ToInt32(item.return_Status_Code) >= 105)
+                            //{
+                                <tr>
+                                    @*<td>@{i++;} @i</td>*@
+                                    @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
+                                    <td>@item.return_Month_Name</td>
+                                    <td>@item.return_Year</td>
+                                    <td>@item.remittance_Id</td>
+
+                                    <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
+
+                                    <td>@item.return_Records</td>
+                                    <td>@item.return_Status_Text</td>
+                                </tr>
+                           // }
+                        }
+                    </tbody>
+                </table>
+
+                @{
+                    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+                }
+
+                <a asp-action="CompletedFiles"
+                   asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @prevDisabled">
+                    <<
+                </a>
+                <a asp-action="CompletedFiles"
+                   asp-route-pageNumber="@(Model.PageIndex - 1)"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @prevDisabled">
+                    <
+                </a>
+                <a asp-action="CompletedFiles"
+                   asp-route-pageNumber="@(Model.PageIndex + 1)"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @nextDisabled">
+                    >
+                </a>
+                <a asp-action="CompletedFiles"
+                   asp-route-pageNumber="@(Model.TotalPages)"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @nextDisabled">
+                    >>
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,398 @@
+﻿@model MCPhase3.Models.GetMatchesViewModel
+@{
+    ViewData["Title"] = "Loose Match Records";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    bool niAvailable = true;
+}
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid bg-3 text-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+
+                        <!-- progressbar -->
+                        <ul id="progressbar">
+                            <li class="active" id="account"><strong>File Upload</strong></li>
+                            <li class="active" id="personal"><strong>Check Totals</strong></li>
+                            <li class="active" id="personal"><strong>Data Processing</strong></li>
+                            <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
+                            <li class="active" id="personal"><strong>Loose Matches</strong></li>
+                            <li id="payment"><strong>Submit to Database</strong></li>
+                            <li id="confirm"><strong>Finish</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["error"] != null)
+    {
+        <div class="container-floud">
+            <div class="alert-danger">
+                <div class="alert alert-danger">
+
+                    @TempData["error"].ToString()
+                </div>
+            </div>
+        </div>
+    }
+
+    <label>Employer: <b>@ViewBag.fileData.employerName</b></label>
+    <style>
+        .TextBoxAsLabel {
+            border: none;
+            background-color: #fff;
+            background: transparent;
+        }
+    </style>
+
+    <form asp-action="UpdateUsingManualMatch" id="myForm" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <h3>Contributions Data Received</h3>
+        <div class="form-group">
+
+            <table class="table table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Forenames</th>
+                        <th>Surname</th>
+                        <th>NI Number</th>
+                        <th>Date of Birth</th>
+                        <th>PostCode</th>
+                        <th>FolderRef</th>
+                        <th>PayLocation</th>
+                        @*<th>Status</th>*@
+                        <th>Date Joined</th>
+                        <th>Date Left</th>
+                        <th>PayRef</th>
+                        @*<th>ServiceType</th>*@
+
+                        <th>PostRef</th>
+                        <th>Hours</th>
+                        <th>Job Title</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    @*@foreach (var item1 in (ViewBag.fileData as IEnumerable<MCPhase3.Models.MemberUpdateRecordBO>))
+                        {*@
+                    <tr>
+                        <td>@ViewBag.fileData.forenames</td>
+                        <td>@ViewBag.fileData.lastName</td>
+                        <td><b>@ViewBag.fileData.NI</b></td>
+                        <td>
+                            @{
+                                @if (ViewBag.fileData.DOB != null)
+                                {
+                                    @Convert.ToDateTime(ViewBag.fileData.DOB).ToString("dd/MM/yyyy");
+                                }
+                            }
+                        </td>
+                        <td>@ViewBag.fileData.postCode</td>
+                        <td>@ViewBag.fileData.memberNo</td>
+                        <td>@ViewBag.fileData.employerName</td>
+                        @*<td></td>*@
+                        <td>
+                            @{
+                                @if (ViewBag.fileData.dateJoined != null)
+                                {
+                                    @Convert.ToDateTime(ViewBag.fileData.dateJoined).ToString("dd/MM/yyyy");
+                                }
+                            }
+                        </td>
+                        <td>
+                            <b>
+                                @{
+                                    @if (ViewBag.fileData.dateLeft != null)
+                                    {
+                                        @Convert.ToDateTime(ViewBag.fileData.dateLeft).ToString("dd/MM/yyyy");
+                                    }
+                                }
+                            </b>
+                        </td>
+                        <td>@ViewBag.fileData.payRef</td>
+                        @*<td>@ViewBag.fileData.purchService</td>*@
+
+                        <td>@ViewBag.fileData.postRef</td>
+
+                        <td>@ViewBag.fileData.HOURS_CONCATENATED</td>
+                        <td>@ViewBag.fileData.jobTitle</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <br />
+
+            <h3>Potential Matches</h3>
+            <p>Select one option</p>
+            @*<form asp-action="UpdateUsingManualMatch" id="myForm" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>*@
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            @*<th style="color:red;">Create new folder for this person</th>*@
+                            <th>Forenames</th>
+                            <th>Surname</th>
+                            <th>NI Number</th>
+                            <th>Date of Birth</th>
+                            <th>PostCode</th>
+                            @*<th>Job Title</th>*@
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!--if a new record does not match to any record in UPM then show view file record to create new folder-->
+@{
+                        if (Model.Matches.Count() == 0)
+                        {
+                            @Html.RadioButtonFor(m => Model.activeProcess, "AddNewFolder" + 1002, new { id = "LooseMatch", @class = "radio", @checked = "checked" })
+                        }
+                        else{
+
+                        @*@{*@
+                            int i = 0;
+                        @*}*@
+
+                        @for (var j = 0; j < Model.Matches.Count(); j = i)
+                            {
+                                //check if NI number does not match to posting file and upm record then
+
+                        <tr id="checkboxDiv">
+                            <!--<td>-->
+                                @*<p style="color:red;">Create new folder for this person</p>*@ <!--@Html.RadioButtonFor(m => Model.activeProcess, "AddNewFolder" + Model.Matches[j].personId, new { id = "LooseMatch", @class = "radio", @checked = "checked" })
+                            </td>-->
+                            <td> @Html.TextBoxFor(modelItem => Model.Matches[j].upperForeNames, new { @readonly = "readonly", @class = "TextBoxAsLabel" })@*<input asp-for="@m.upperForeNames" id="foreName" class="form-control">*@</td>
+                            <td> @Html.TextBoxFor(modelItem => Model.Matches[j].upperSurName, new { @readonly = "readonly", @class = "TextBoxAsLabel" })</td>
+                            <td> @Html.TextBoxFor(modelItem => Model.Matches[j].NINO, new { @readonly = "readonly", @class = "TextBoxAsLabel" })</td>
+                            <td> @Html.TextBoxFor(modelItem => Model.Matches[j].DOB, "{0:dd/MM/yyyy}", new { @readonly = "readonly", @class = "TextBoxAsLabel" })</td>
+                            <td> @Html.TextBoxFor(modelItem => Model.Matches[j].postCode, new { @readonly = "readonly", @class = "TextBoxAsLabel" })</td>
+                        </tr>
+                        <table class="table table-bordered table-responsive">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th style="color:red;">Select Folder</th>
+                                    <th>FolderRef</th>
+                                    <th>PayLocation</th>
+                                    <th>Status</th>
+                                    <th>Date Joined</th>
+                                    <th>Date Left</th>
+                                    <th>PayRef</th>
+                                    @*<th>ServiceType</th>
+                    <th>PostCode</th>*@
+                                    <th>PostRef</th>
+                                    <th>Hours</th>
+                                    <th>Job Title</th>
+
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @*get the number of folders attached with the showing person*@
+
+                                @for (var k = 0; k < Model.Matches.Count(); k++)
+                                        {
+                                @if (Model.Matches[k].personId == Model.Matches[j].personId)
+                                            {
+                                                <!--following NI check will be applied to check if NI is matched with received records-->
+                                                if (@ViewBag.fileData.NI == Model.Matches[j].NINO)
+                                                {
+                                                    niAvailable = true;
+                                                }
+                                <tr id="checkboxDiv">
+                                    <td>
+                                        @*<p style="color:red;">Select this folder</p>*@ @Html.RadioButtonFor(m => Model.activeProcess, "UpdateFolder" + Model.Matches[k].folderId, new { id = "LooseMatch", @class = "radio" })
+                                        @*<input asp-for="" type="radio" name="active" id=@k value="true">*@
+                                        @Html.HiddenFor(modelItem => Model.Matches[k].dataRowId)
+                                        @Html.HiddenFor(modelItem => Model.Matches[k].personId)
+                                        @Html.HiddenFor(modelItm => Model.Matches[k].personMatch)
+                                        @Html.HiddenFor(modelItem => Model.Matches[k].personMatchType)
+                                        @Html.HiddenFor(modelItem => Model.Matches[k].folderId)
+                                        @Html.HiddenFor(modelItm => Model.Matches[k].folderMatch)
+                                        @Html.HiddenFor(modelItem => Model.Matches[k].note)
+
+                                        @Html.HiddenFor(modelItm => Model.Matches[k].userId)
+                                        @Html.HiddenFor(modelItm => Model.Matches[k].serviceId)
+                                        @Html.HiddenFor(modelItm => Model.Matches[k].serviceTypeFG)
+                                    </td>
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].folderRef, new { @class = "TextBoxAsLabel" })</td>
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].payLocationName, new { @class = "TextBoxAsLabel" })</td>
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].statusDesc, new { @class = "TextBoxAsLabel" })</td>
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].dateJoined, "{0:dd/MM/yyyy}", new { @class = "TextBoxAsLabel" })</td>
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].dateLeft, "{0:dd/MM/yyyy}", new { @class = "TextBoxAsLabel" })</td>
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].payRef, new { @class = "TextBoxAsLabel" })</td>
+                                    @* <td> @Html.HiddenFor(modelItem => Model.Matches[k].serviceTypeFG)</td>
+                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].postCode)</td>*@
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].postRef, new { @class = "TextBoxAsLabel" })</td>
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].HOURS_CONCATENATED, new { @readonly = "readonly", @class = "TextBoxAsLabel" })</td>
+                                    @*<td> @Html.TextBoxFor(modelItem => Model.Matches[k].partTimeHours)</td>*@
+                                    <td> @Html.TextBoxFor(modelItem => Model.Matches[k].jobTitle, new { @readonly = "readonly", @class = "TextBoxAsLabel" })</td>
+                                </tr>
+                                            }
+                                            i++;
+                                        }
+                            </tbody>
+                        </table>
+
+                            }
+                       }
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <td>
+                            <label>
+                                Choose a UPM record to match to from the above list.
+                                If WYPF’s person data differs we will update it to match the contributions.
+                            </label>
+                        </td>
+                        <!--Html.DisplayFor(modelItem => item.fName)-->
+
+                    </tr>
+                    <tr id="checkboxDiv">
+                        <td>
+                            <label>
+                                Confirm that a new person should be created from the contributions data
+                                Only available if NI number is not already on file at WYPF.
+
+                            </label>
+
+                            <!--Html.DisplayFor(modelItem => item.fName)-->
+
+                            @{
+                                if (!niAvailable)
+                                {
+                                    @Html.RadioButtonFor(m => Model.activeProcess, "AddNewPersonAndFolder", new { id = "LooseMatch", @class = "radio" })
+                                    @*<input type="radio" onclick="myFunction()">*@
+                                }
+                            }
+                        </td>
+                    </tr>
+                    <!--
+                    <tr>
+                        <td>
+                            <h3>
+                                Request amendment of person data by WYPF to create a full match.
+                            </h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <h4> Enter a message for WYPF here:</h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <B>
+                                <input class="form-control" asp-for="@Model.note" type="text" id="noteArea" width="50">
+                                <br />
+                                @*@Html.TextArea()*@
+                                <p>
+                            </B>By clicking Confirm you are authorising WYPF to amend the person record, and confirm that the details on the contributions return and message for WYPF are correct.</p>
+                        </td>
+                    </tr>
+                    -->
+
+                </tbody>
+            </table>
+            <!--PopUp text will be passed to following input item to upload to database-->
+            <input type="hidden" value="" name="myValue" id="myValue">
+            <div class="row p-4">
+                <div class="col-lg">
+                    <button asp-action="Index" class="btn btn-primary form-control ">Cancel</button>
+                </div>
+                <div class="col-lg">
+                    <button class="btn btn-success form-control col-sm-6" type="submit" id="btnSubmit">Submit</button>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
+</div>
+
+
+        @*<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>*@
+
+
+        <script>
+            var textArea = document.getElementById("noteArea").value;
+            //pass that text area value to all the notes values
+            document.getElementById("note").innerHTML = textArea;
+
+            //enable disable submit button on radio button click.
+            function validate() {
+                alert("1");
+                if ($("#activeProcess:checked").val() != "") {
+                    $("#NonBillableReason").attr("disabled", false);
+                    alert("2");
+                }
+
+                if ($("#activeProcess:checked").val() == "") {
+                    $("#NonBillableReason").attr("disabled", false);
+                    alert("3");
+                }
+            }
+            $(document).ready(function () {
+                validate();
+                $('input').change(validate);
+            });
+
+
+            function getValues() {
+
+                //var listOfValues = [];
+                //var item = {};
+                //item.surName = document.getElementById("surName").value;
+                //item.foreName = document.getElementById("foreName").value;
+                //item.nino = document.getElementById("nino").value;
+                //item.dob = document.getElementById("dob").value;
+                //item.postcode = document.getElementById("postcode").value;
+                //item.stdHours = document.getElementById("stdHours").value;
+                //item.jobTitle = document.getElementById("jobTitle").value;
+                //item.dataRowId = document.getElementById("dataRowId").value;
+                //item.personId = document.getElementById("personId").value;
+                //item.personMatch = document.getElementById("personMatch").value;
+                //item.personMatchType = document.getElementById("personMatchType").value;
+                //item.folderId = document.getElementById("folderId").value;
+                //item.folderMatch = document.getElementById("folderMatch").value;
+                //item.note = document.getElementById("noteArea").value;
+                //item.userId = document.getElementById("userId").value;
+                //item.isActive = "true";
+
+                //listOfValues.push(item);
+                //alert("array has " + listOfValues.length);
+            }
+
+          
+
+            function myFunction() {
+                var x = document.getElementById("popUp");
+                if (x.style.display === "none") {
+                    x.style.display = "block";
+                } else {
+                    x.style.display = "none";
+                }
+            }
+
+            $(document).ready(function () {
+                $(document).on('change', 'input:radio[id^="LooseMatch"]', function (event) {
+                    alert("click fired");
+                });
+            });
+            function clickFunction() {
+                var x = document.getElementById("btnSubmit");
+                if (x.style.display === "none") {
+                    x.style.display = "block";
+                }
+            }
+        </script>
+
+

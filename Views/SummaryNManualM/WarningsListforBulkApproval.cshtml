@@ -1,0 +1,234 @@
+﻿@model IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>
+@{
+    ViewData["Title"] = "Bulk data approval";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    int I = 0;
+    var nextParms = new Dictionary<string, string>();
+    int x = 0;
+   
+
+}
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid bg-3 text-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+
+                        <!-- progressbar -->
+                        <ul id="progressbar">
+                            <li class="active" id="account"><strong>File Upload</strong></li>
+                            <li class="active" id="personal"><strong>Check Totals</strong></li>
+                            <li class="active" id="personal"><strong>Data Processing</strong></li>
+                            <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
+                            <li class="active" id="personal"><strong>Bulk Approval</strong></li>
+                            <li id="payment"><strong>Submit to Database</strong></li>
+                            <li id="confirm"><strong>Finish</strong></li>
+                        </ul>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="jumbotron">
+            <h3>Warnings List</h3>
+            <table class="table table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <td>@ViewBag.alertClass</td>
+                        <td><b>@ViewBag.status</b></td>
+                        <td>@ViewBag.total</td>
+                    </tr>
+                </thead>
+            </table>
+            @*<p style="font-size:small;">The user may approve all records, a selection of records or return to the previous page.</p><br />*@
+            <div class="table-bordered">
+                <h4> Errors and Warnings Processing for payroll provider :<b> @ViewBag.empName </b></h4>
+                @*<p style="font-size:small;">No persons have been found within our database that match the incoming records.   Once approved, person and folder records will be created, assuming no further errors are found.</p>*@
+                <p style="font-size:small;">
+                    Select the rows below for which you wish to acknowledge this warning.   All rows may be chosen by clicking “Select All”.
+                    If you are happy for WYPF to process these records chick “Acknowledge Warnings” below the table.
+                    If other errors or warnings are present on a record, these will need to be cleared before the record may be posted.
+                    Individual records may be viewed by clicking view.
+                </p>
+
+                <form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">
+                    <table class="table table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>First Name</th>
+                                <th>SurName</th>
+                                <th>DOB</th>
+                                <th>Ni Number</th>
+                                <th>Date Start</th>
+                                <th>Job Title</th>
+                                <th>Alert Desc</th>
+                                <th>Error Count</th>
+                                <th>View Full Details</th>
+                                <th id="th" style="display:none;"><label for="selectAll">Select All</label><input type="checkbox" id="selectAll" checked disabled /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                 int i = 0;
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.FORENAMES)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.SURNAME)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.DOB)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.NINUMBER)
+                                </td>
+
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.DATEJOINEDSCHEME)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.JOBTITLE)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ALERT_DESC)
+                                </td>
+
+                                @{
+                                    var newCount = item.ALERT_COUNT.Replace(".0", "");
+
+                                    if (item.ALERT_COUNT.Equals("0.0") || item.CLEARED_FG.Equals("Y"))
+                                    {
+                                        i++;
+
+
+                                        <td>
+                                            <label style="color:red;">Cleared</label>
+                                        </td>
+                                        if (!string.IsNullOrEmpty(item.ALERT_CLEARING_METHOD))
+                                        {
+                                            if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
+                                            {
+                                                <td>
+                                                    <a asp-action="ResetRecord" asp-route-Id="@item.DATAROWID_RECD" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a>
+                                                </td>
+                                            }
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        @*<td>@newCount</td>*@
+                                        <td>1</td>
+
+                                    }
+                                }
+
+
+
+                                @{
+                                    <input type="hidden" asp-for="@item.MC_ALERT_ID" id="alertID" />
+                                    <input type="hidden" asp-for="@item.DATAROWID_RECD" />
+                                    //<input asp-for="@item.selected" type="hidden" value="false"/>
+
+
+
+                                }
+
+
+                                <td>
+                                    <!--if Alert clearing method is null then it will take to existing update form otherwise control will go to new loose match/folder or person match.-->
+                                    @{
+                                        if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
+                                        {
+                                            if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
+                                            {
+                                                <a asp-action="NewMatchingCritera" asp-route-Id="@item.GenEncryptedID()" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                                            }
+                                            if (item.ALERT_CLEARING_METHOD.Equals("EDIT_CONTS_PAGE"))
+                                            {
+                                                <a asp-action="UpdateSingleRecord" asp-route-Id="@item.GenEncryptedID()" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                                            }
+
+                                        }
+                                        @*else
+                {
+                    <a asp-action="UpdateSingleRecord" asp-route-Id="@item.DATAROWID_RECD" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                }*@
+                                    }
+
+                                </td>
+                                <td>
+                                    @{
+                                        if (!string.IsNullOrEmpty(item.BULK_APPROVAL_FG))
+                                        {
+
+
+                                            if (item.BULK_APPROVAL_FG.Contains("Y"))
+                                            {
+                                                I = 1;
+                                                <input type="checkbox" asp-for="@item.selected" id="checkedID" name="checkedID" checked disabled />
+
+                                                nextParms.Add("id" + x, item.MC_ALERT_ID);
+                                                x++;
+
+
+                                                //<input type="text" id="myValue"/>
+
+                                                <!--if approval flag on then show select button-->
+                                                <script>
+                                                    var x = document.getElementById("th");
+                                                    x.style.display = "block";
+                                                </script>
+                                            }
+                                        }
+                                    }
+                                </td>
+                            </tr>
+
+                        }
+                        </tbody>
+                    </table>
+
+                </form>
+                <div class="row">
+                    <div class="col-6">
+                        @if (I == 1)
+                        {
+                            <a asp-action="WarningApproval" id="ack" asp-all-route-data="nextParms" class="btn btn-primary btn-lg"> Acknowledge All</a>
+                            @*<a asp-action="WarningApproval" asp-all-route-data="nextParms" class="btn btn-primary btn-block"> Acknowledge All</a> *@
+                        }
+                    </div>
+
+                    <div class="col-6">
+                        <a asp-action="Index" class="btn btn-primary btn-lg"> Exit</a>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+    
+    <script>
+
+        //document.getElementById('selectAll').onclick = function () {
+        //    $("#selectAll").change(function () {
+        //        $("input:checkbox").prop('checked', $(this).prop("checked"));
+        //    });
+        //}          
+        document.getElementById('passToWYPF').style.display = 'block';  
+    </script>
+
+
+

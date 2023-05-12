@@ -1,0 +1,312 @@
+/*============================= GENERIC CSS ================================*/
+body{font-family: 'Open Sans', Roboto;}
+h1, h2, h3, h4, h5, h6, p{margin: 0; padding: 0; /*	font-size: 100%; */ font-weight: inherit;}
+.clearfix:after{height:0; visibility:hidden; clear:both; content:''; display: block;}
+.ellipsis_inline{width: 100%; display: block; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;}
+input:focus, button:focus, select:focus{outline: none;}
+h1,h2,h3,h4,h5,h6{font-family: 'Roboto', cursive; font-weight: 300;}
+/*===================== Inherited Classes ====================*/
+section{
+    padding-top: 70px;
+    padding-bottom: 70px;
+}
+.blue{background-color: #2ab0ba !important;}
+.yellow{background-color:#f1c712 !important;}
+.pink{background-color: #ed117d !important;}
+.purple{background-color:#92278f !important;}
+.green{background-color: #00a651 !important;}
+.light-green{background-color: #8ac53f !important;}
+.text-white{color: #fff;}
+.kids-site p{
+    color: #444444;
+    font-weight: 400;
+}
+.text-primary {
+    color: #92278f !important;
+}
+.kids-site .fa{
+    color: #fff;
+}
+button.btn.btn-primary {
+    background-color: #8ac53f !important;
+    border-color: #8ac53f;
+}
+span.fa.fa-bars {
+    color: #000;
+}
+/*===================== Top Nav bar ====================*/
+.header-top {
+    background-color: #8ac53f;
+    padding: 7px 0;
+    color: #ffffff;
+}
+.header-top a{
+    color: #ffffff;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 14px;
+}
+.header-top a:hover{
+    text-decoration: underline;
+}
+.header-top a i{
+    margin-right: 10px;
+}
+.header-top input.form-control {
+    height: 30px;
+}
+/*===================== Nav bar ====================*/
+img.logo{
+    width: 100px;
+}
+#mainNav {
+    background-color: #ffffff;
+    position: relative;
+    z-index: 10000000000;
+    padding: 0;
+    border-bottom: 1px solid #e9ecef;
+}
+#mainNav .navbar-nav li a{
+    font-size: 18px;
+    color: #92278f;
+    padding: 20px 10px;    
+    font-family: 'Sniglet', cursive;
+}
+#mainNav .navbar-nav li a:hover{
+    background-color: #92278f;
+    color: #fff; 
+}
+/*===================== Index page ====================*/
+.masthead {
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-size: cover;
+    /* height: 100vh; */
+}
+.masthead .card{
+    height: 150px;
+    color: #ffffff;
+    display: block;
+    padding: 25px 5px;
+    text-align: center;
+    margin: 10px 4px;
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    -webkit-transition: all 500ms ease;
+    transition: all 500ms ease;
+}
+.kids-site a.card:hover {
+    color: #ffffff;
+    text-decoration: none;
+    -webkit-transform: scale(1.05);
+    transform: scale(1.05);
+}
+.section1{
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-size: cover;
+    /* height: 100vh; */
+}
+.section2{
+    background-color: #eaeaea;
+}
+.btn-card {
+    background-color: transparent;
+    color: #555555;
+    border: none;
+    display: inline-block;
+    border-bottom: 7px solid #8ac53f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.btn-card:hover{
+    padding-right: 10px;
+    transition: all 400ms;
+    color: #555555;
+    text-decoration: none;
+}
+/*================= KS1 page ================*/
+.single-team {
+    margin-bottom: 40px;
+    display: block;
+}
+.team-img {
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+.single-team h3:hover {
+     color:  #8ac53f !important;
+}
+.team-img img {
+    border-radius: 4px;  
+    /* height: 177px;
+    width: 195px; */
+}
+a.single-team:hover{
+    text-decoration: none;
+    color: #92278f;
+}
+.breadcrumb-content h2 {
+    color: #ffffff;
+    font-size: 50px;
+    font-weight: 400;
+    text-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+}
+/*================= KS1 English page ================*/
+.kids-table{
+
+}.kids-table img{
+    width: 75px  !important;
+    height: 56px;
+}
+.table th {
+   border: none !important; 
+}
+.table td{
+    line-height: 56px;
+}
+/*================= Pagination ================*/
+a.page-link.active {
+    background: #92278f;
+    color: #fff !important;
+}
+a.page-link {
+        color: #fff;
+        position: relative;
+        display: inline-block;
+        background: none;
+        color: #000 !important;
+        border-radius: 5px;
+        text-align: center;
+        margin: 0 3px;      
+}
+/*================= question answer page ================*/
+.qa-section{
+    border: 1px solid #ebf1f7;
+    cursor: pointer;
+    
+}
+.qa-section:hover{
+    background-color: #fafafa;
+    border-color: #8ac53f;
+}
+.quiz-section .alert{
+    margin-bottom: 4px;
+}
+
+
+
+
+
+
+
+
+/*========= footer =========*/
+.footer{
+     background: url(../img/footer.png) no-repeat top center / cover;
+/*     height: 323px;*/
+    padding-top: 80px;
+    padding-bottom: 307px;
+    background-color: #92278f;
+}
+.footer a{
+    color: #fff;
+    display: block;
+}
+.footer a:hover{
+    /* font-weight: bold; */
+}
+/*========= social media end=========*/
+.socialmediaicons2 .fa {
+    padding: 8px;
+    font-size: 30px;
+    width: 46px;
+    border-radius: 50%;
+    text-decoration: none;
+    margin: 5px 2px;
+    background-color: #fff;
+    cursor: pointer;
+}
+.socialmediaicons2 .fa:hover{
+    background-color: #8ac53f;
+    color: #fff !important;
+}
+.show-mobile{
+    display: none;
+}
+.hide-mobile{
+    display: block;
+}
+.login-signup-mbl {
+    display: inline-block;
+}
+/*========= social media end=========*/
+@media only screen and (max-width: 768px){
+    section{
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+    .hide-mobile{
+        display: none;
+    }
+    
+    .show-mobile{
+        display: block;
+    }
+    .login-signup-mbl{
+        text-align: center;
+        margin-top: 10px;
+        display: block;
+    }
+    .breadcrumb-content h2 {
+        font-size: 30px;
+    }
+    .table td {
+        line-height: 1.8;
+    }
+}
+@media only screen and (max-width: 480px){
+    .hide-mobile{
+        display: none;
+    }
+    
+    .show-mobile{
+        display: block;
+    }
+    
+    .h1, h1 {
+        font-size: 2rem;
+    }
+    #mainNav ul li a {
+        font-size: 20px;
+    }
+    #mainNav {
+        background-color: #343a40!important;
+        padding: 10px 0;
+    }
+    header.masthead {
+        margin-top: 0px;
+    }
+    header.masthead .intro-text {
+        padding: 50px 0 0 0;
+    }
+    .btn-banner {
+        font-size: 28px;
+    }
+    .c-date {
+        font-size: 2.5rem;
+    }
+    .section-4 img {
+        height: 200px;
+    }
+    .section-4 .media-body {
+        height: 200px;
+        padding: 5%;
+    }    
+    
+    p {
+        font-size: 12px;
+    }       
+}

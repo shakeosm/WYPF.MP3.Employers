@@ -1,0 +1,233 @@
+﻿@model MCPhase3.Models.MonthlyContributionBO
+@{
+    ViewData["Title"] = "Check Totals";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    @*<div class="container-fluid bg-3 text-center">
+        <div class="container">*@
+    <div class="row justify-content-center">
+        <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+            <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+
+                <!-- progressbar -->
+                <ul id="progressbar">
+                    <li class="active" id="account"><strong>File Upload</strong></li>
+                    <li class="active" id="personal"><strong>Check Totals</strong></li>
+                    <li id="personal"><strong>Data Summary</strong></li>
+                    <li id="personal"><strong>Error and Warning Summary</strong></li>
+                    <li id="personal"><strong>Bulk Approval</strong></li>
+                    <li id="payment"><strong>Submit to Database</strong></li>
+                    <li id="confirm"><strong>Finish</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    @*</div>
+        </div>*@
+    <br>
+
+    @*following tempdate shows session expired message worng.*@
+    @*@if (TempData["Msg"] != null)
+    {
+        <div class="container">
+            <div class="jumbotron">
+                <div class="alert-danger">
+                    <div class="alert alert-danger">
+
+                        @TempData["Msg"].ToString()
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }*@
+
+    <form asp-action="Remad" enctype="multipart/form-data" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="container">
+            <div class="jumbotron">
+                <h3><b>Step 2 – total employee contributions – check totals against spreadsheet</b></h3><hr />
+                <input type="hidden" asp-for="MemberContribSS">
+                <input type="hidden" asp-for="MemberContrib5050SS">
+                <input type="hidden" asp-for="MemberContribPOESSS">
+                <input type="hidden" asp-for="MemberContribARCSS">
+                <input type="hidden" asp-for="MemberContribAPCSS">
+
+                <input type="hidden" asp-for="@Model.EmployeePay5050">
+                <input type="hidden" asp-for="@Model.EmployeePayMain">
+                <div class="row"><h4 class="col-md-10">Total employees contribution</h4><h4 class="col-md-2">£ @Model.MemberContribSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees contribution 50/50  </h4><h4 class="col-md-2">£ @Model.MemberContrib5050SS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees purchase of extra service (contacts only) </h4><h4 class="col-md-2">£ @Model.MemberContribPOESSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees additional regular contributions (ARC) 2008 reg</h4><h4 class="col-md-2">£ @Model.MemberContribARCSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees additional pension contribution (APC) reg 16 </h4><h4 class="col-md-2">£ @Model.MemberContribAPCSS.ToString("N")</h4></div>
+                <hr />
+                <div class="row"><h4 class="col-md-10"><b>Total employees contribution</b></h4><h4 class="col-md-2" id="id=" MembersTotalValue""><b>£ @ViewBag.EmployeeTotal.ToString("N")</b></h4></div>
+            </div>
+        </div>
+        <br /><br />
+        <div class="container">
+            <div class="jumbotron">
+                <h3><b>Step 2.1 – total employer contribution – check totals against spreadsheet</b></h3><hr />
+                <input type="hidden" asp-for="@Model.EmployerContrib">
+                <input type="hidden" asp-for="@Model.PaymentMonth">
+                <input type="hidden" asp-for="@Model.EmployerContribAPC">
+                <input type="hidden" asp-for="@Model.EmployersTotalSS">
+                <input type="hidden" asp-for="@Model.EmployersTotal">
+                <input type="hidden" asp-for="@Model.payrollProviderID">
+
+                <div class="row"><h4 class="col-md-10">Total employer contribution</h4><h4 class="col-md-2">£ @Model.EmployersTotalSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2">£ @Model.EmployerContribAPCSS.ToString("N")</h4></div><hr />
+
+                <div class="row"><h4 class="col-md-10"><b>Employer total:</b></h4><h4 class="col-md-2" id="EmployersTotalValue"><b>£ @ViewBag.empTotal.ToString("N")</b></h4></div><br>
+                <div class="row"><h4 class="col-md-10"><b>Total employees and employer contribution</b></h4><h4 class="col-md-2" id="EmployersEmployeeTotalValue"><b>£ @ViewBag.EmployersEmployeeTotalValue</b></h4></div>
+
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="jumbotron">
+                <h3><b>Step 3 – enter any additional payments</b></h3><hr />
+                <div class="row">
+                    <h4 class="col-md-10">Deficit</h4>
+                    <input asp-for="@Model.DeficitRec" onkeypress="return validate(event)" onkeyup="foo()" id="Deficit" placeholder="£0" class="col-md-2" data-toggle="tooltip" title="if your additional payment relates to a WYPF invoice, please quote the invoice reference and the customer number in the additional information box below">
+
+                </div>
+                <div class="row"><h4 class="col-md-10">Previous year-end adjustments</h4><input asp-for="@Model.YearEndBalanceRec" onkeypress="return validate(event)" id="YearEndBalance" placeholder="£0" class="col-md-2"></div>
+                <div class="row"><h4 class="col-md-10">Unfunded benefits</h4><input asp-for="@Model.FundedBenefitsRec" onkeypress="return validate(event)" id="FundedBenefits" placeholder="£0" class="col-md-2"></div>
+                <div class="row"><h4 class="col-md-10">Miscellaneous</h4><input asp-for="@Model.Miscellaneous_Rec" onkeypress="return validate(event)" id="Miscellaneous" placeholder="£0" class="col-md-2"></div>
+                @*<div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2" id="MemberContribAPCLblValue">£ @Model.MemberContribAPCSS</h4></div><hr />*@
+
+                <div class="row"><h4 class="col-md-10"><b>Total additional payments</b></h4><label class="col-md-2" id="DedifitTotalLblValue">£ @ViewBag.DedifitTotalLblValue.ToString("N")</label></div><br>
+
+            </div>
+        </div>
+        <div class="container">
+            <div class="jumbotron">
+
+                <h3><b>Step 4 – check grand total</b></h3><hr />
+                <div class="row"><h4 class="col-md-10"><b>Total (Employees, employers and additional payments)</b></h4><h4 class="col-md-2" id="GrandTotalValue"><b>£ @ViewBag.GrandTotalValue</b></H4></div><br>
+            </div>
+        </div>
+        <div class="container">
+            <div class="jumbotron">
+
+                <h3><b>Step 5 – add any additional information</b></h3><hr />
+                <textarea asp-for="@Model.AdditionalInfo" class="form-control" rows="5" id="comment"></textarea>
+
+            </div>
+        </div>
+        <div class="container">
+            <div class="jumbotron">
+                <h3><b>Step 6 – enter payment date</b></h3><hr />
+                <div class="radio">
+                    <label class="col-md-10"><input asp-for=@Model.PaidDirectlyWYPF value="Paid directly into WYPF's' bank account." type="radio" checked />Paid directly into relevant bank account</label><input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value=@DateTime.Now placeholder="dd-MM-yyyy" type="date" asp-format="{0:dd-MM-yyyy}" class="col-md-2" required oninvalid="this.setCustomValidity('* Paid by date is required.')" oninput="setCustomValidity('')" class="col-md-2" />
+                </div>
+
+                <div class="radio">
+                    <label class="col-md-10"><input asp-for=@Model.PaidDirectlyWYPF value="Sent by cheque" type="radio" />Sent by cheque</label>
+                </div><br><br><hr />
+
+                <div class="alert alert-success" role="alert">
+                    <h3>If you have verified steps 1 - 6 please click following button to Move to the next stage.</h3>
+                    <input type="submit" value="Next" class="btn btn-primary btn-block" />
+                </div>
+            </div>
+        </div>
+    </form>
+   
+    @*<div class="spinner">
+            <div class="center-div">
+                <div class="inner-div">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>*@
+</div>
+
+
+
+
+@*@section Scripts {
+        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }*@
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.5.1/jquery.js">
+
+</script>
+
+<script>
+
+    function validate(key) {
+        //getting key code of pressed key
+        var a1, a2, a3, a4, total, gtotal, pp;
+        var keycode = (key.which) ? key.which : key.keyCode;
+        var phn = document.getElementById('Deficit');
+        var phn1 = document.getElementById('YearEndBalance');
+        var phn2 = document.getElementById('FundedBenefits');
+        var phn3 = document.getElementById('Miscellaneous');
+
+        //comparing pressed keycodes
+        if (keycode == 45 && (phn.value == "" || phn1.value == "" || phn2.value == "" || phn3.value == "")) {
+
+            return true;
+        }
+        if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
+
+            return false;
+        }
+    }
+
+
+    $(function () {
+
+        var textBox1 = $('#Deficit').keyup(foo);
+        var textBox2 = $('#YearEndBalance').keyup(foo);
+        var textBox3 = $('#FundedBenefits').keyup(foo);
+        var textBox4 = $('#Miscellaneous').keyup(foo);
+        var gtotal = $('#GrandTotalValue').text();
+
+        //var employersEmployeeTotalValue = $('#EmployersEmployeeTotalValue').val();
+
+        var employersEmployeeTotalValue = document.getElementById("EmployersEmployeeTotalValue").innerText;
+        var empVal = employersEmployeeTotalValue.replace('£', '');
+        //var employersEmployeeTotalValue_int = parseInt(empVal, 10);
+        var gt = gtotal.replace('£', '');
+
+
+        function foo() {
+            var value1 = textBox1.val();
+            var value2 = textBox2.val();
+            var value3 = textBox3.val();
+            var value4 = textBox4.val();
+            var sum = add(value1, value2, value3, value4);
+            var sum = sum.toFixed(2);
+
+            //$('input:label[id$=DedifitTotalLblValue]').val(sum);
+            $('#DedifitTotalLblValue').text('£' + sum);
+            //var myTotal = parseFloat(empVal) + parseFloat(sum) + parseFloat(gt);
+            var myTotal = parseFloat(empVal) + parseFloat(sum);
+            myTotal = myTotal.toFixed(2);
+            $('#GrandTotalValue').text('£' + myTotal);
+        }
+
+        function add() {
+            var sum = 0;
+            for (var i = 0, j = arguments.length; i < j; i++) {
+
+                if (IsNumeric(arguments[i])) {
+
+                    sum += parseFloat(arguments[i]);
+                }
+            }
+            return sum;
+        }
+
+        function IsNumeric(input) {
+
+            return (input - 0) == input && input.length > 0;
+
+        }
+    });
+</script>

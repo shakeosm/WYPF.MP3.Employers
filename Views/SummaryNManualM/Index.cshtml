@@ -1,0 +1,176 @@
+﻿@model PaginatedList<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>
+@{
+    ViewData["Title"] = "Error and Warnings Summary";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    string remID = ViewBag.remID;
+    int countErrors = 0;
+}
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    @*@if (TempData["msg1"] != null)
+    {
+        countErrors++;
+        <div class="container">
+            <div class="jumbotron">
+
+                <div class="alert alert-danger">
+
+                    <h2>@TempData["msg1"].ToString()</h2>
+                    <p>click button to finish process</p>
+                    <a href="/Admin/Home" class="btn btn-outline-warning" value="Finish"> Finish Process</a>
+                </div>
+
+
+            </div>
+        </div>
+    }
+    else
+    {*@
+        <div class="container-fluid bg-3 text-center">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                        <div class="card px-0 pt-1 pb-0 mt-1 mb-1">
+
+                            <!-- progressbar -->
+                            <ul id="progressbar">
+                                <li class="active" id="account"><strong>File Upload</strong></li>
+                                <li class="active" id="personal"><strong>Check Totals</strong></li>
+                                <li class="active" id="personal"><strong>Data Processing</strong></li>
+                                <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
+                                <li id="personal"><strong>Bulk Approval</strong></li>
+                                <li id="payment"><strong>Submit to Database</strong></li>
+                                <li id="confirm"><strong>Finish</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <div class="container" id="divHide">
+            <div class="jumbotron">
+                @*Session expired message shows*@
+                @if (TempData["msg"] != null)
+                {
+                    <div class="alert alert-dismissible alert-success">
+                        @TempData["msg"].ToString()
+                    </div>
+                }
+
+                <h3 style="color:black;">Errors and Warnings Summary.</h3>
+                <p style="font-size:small;">Shows all data alerts and their count. User may returns or shows list of all records with specific alert.</p><br />
+                <div class="table table-bordered">
+                    <h4> Errors and Warnings Summary for payroll provider: <b>@ViewBag.empName</b> </h4>
+                    <table class="table table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Status</th>
+                                <th>Description</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                if (item.ACTION_BY.Equals("ALL"))
+                                {
+                                    countErrors++;
+                                    <tr>
+                                        <td>
+                                            @{
+                                                if (item.ALERT_CLASS.Equals("W"))
+                                                {
+                                                    <label> Warning</label>
+                                                }
+                                                else if (item.ALERT_CLASS.Equals("E"))
+                                                {
+                                                    <label>  Error </label>
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.ALERT_DESC)
+                                        </td>
+
+                                        @{
+                                            var newCount = item.ALERT_COUNT.Replace(".0", "");
+                                            <td>@newCount</td>
+                                        }
+
+                                        @*<td>
+                                                @Html.DisplayFor(modelItem => item.ALERT_COUNT)
+                                            </td>*@
+                                        @Html.HiddenFor(modelItem => item.remittanceID)
+                                        @Html.HiddenFor(modelItem => item.ALERT_TYPE_REF)
+                                        @Html.HiddenFor(modelItem => item.remittanceID)
+                                        @{
+                                            item.remittanceID = remID;
+                                        }
+                                        <td>
+                                            @Html.ActionLink("View", "WarningsListforBulkApproval", "SummaryNManualM", item)
+                                            @* <a asp-action="WarningsListforBulkApproval" asp-all-route-data = new Dictionary{"remittanceID = item.remittanceID,"} style="color:blue;"><i class="fa fa-marker fa-lg"></i> Show</a>                *@
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @{
+                    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+                }
+
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @prevDisabled">
+                    &#60;&#60;
+                </a>
+
+
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.PageIndex - 1)"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @prevDisabled">
+                    &#60;
+                </a>
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.PageIndex + 1)"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @nextDisabled">
+                    >
+                </a>
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.TotalPages)"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                   class="btn btn-default @nextDisabled">
+                    >>
+                </a>
+
+            </div>
+        </div>
+    @*}*@
+
+    @if (countErrors == 0)
+    {
+        <script>
+            document.getElementById('divHide').style.display = 'none';
+        </script>
+        <div class="container">
+            <div class="jumbotron">
+                <div class="alert alert-danger">
+
+                    <h2>You have removed all the error and warnings, File is with WYPF for processing.</h2>
+                    <p>click button to finish process</p>
+                    <a href="/Admin/Home" class="btn btn-primary" value="Finish"> Finish Process</a>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+<script>
+    document.getElementById('passToWYPF').style.display = 'block';
+</script>
