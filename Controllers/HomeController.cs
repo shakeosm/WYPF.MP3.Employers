@@ -1,4 +1,4 @@
-﻿using HtmlAgilityPack;
+﻿//using HtmlAgilityPack;
 using MCPhase3.CodeRepository;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -22,29 +22,30 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using MCPhase3.CodeRepository.InsertDataProcess;
+using MCPhase3.Common;
 
 namespace MCPhase3.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
         private readonly IHostingEnvironment _Environment;
-        public const string SessionKeyClientId = "_clientId";
-        public const string SessionKeyUserID = "_UserName";
-        public const string SessionKeyMonth = "_month";
-        public const string SessionKeyFileName = "_fileName";
-        public const string SessionKeyTotalRecords = "_totalRecords";
-        public const string SessionKeyRemittanceID = "_remittanceID";
-        public const string SessionKeyEmployerName = "_employerName";
-        public const string SessionKeyClientType = "_clientType";
-        public const string SessionKeyPayLocId = "_Id";
-        public const string SessionKeyPayrollProvider = "_payrollProvider";
-        public const string SessionKeyYears = "_years";
-        public const string SessionKeyReturnInit = "_returnInit";
-        public const string SessionKeyPosting = "_posting";
-        public const string SessionKeySchemeName = "_scheme";
+        //public const string SessionKeyClientId = "_clientId";
+        //public const string SessionKeyUserID = "_UserName";
+        //public const string SessionKeyMonth = "_month";
+        //public const string SessionKeyFileName = "_fileName";
+        //public const string SessionKeyTotalRecords = "_totalRecords";
+        //public const string SessionKeyRemittanceID = "_remittanceID";
+        //public const string SessionKeyEmployerName = "_employerName";
+        //public const string SessionKeyClientType = "_clientType";
+        //public const string SessionKeyPayLocId = "_Id";
+        //public const string SessionKeyPayrollProvider = "_payrollProvider";
+        //public const string SessionKeyYears = "_years";
+        //public const string SessionKeyReturnInit = "_returnInit";
+        //public const string SessionKeyPosting = "_posting";
+        //public const string SessionKeySchemeName = "_scheme";
 
 
         string apiBaseUrlForRemittanceInsert = string.Empty;
@@ -60,7 +61,7 @@ namespace MCPhase3.Controllers
         CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();
         
 
-        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host,IHostingEnvironment environment, IConfiguration configuration)
+        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host,IHostingEnvironment environment, IConfiguration configuration) : base (configuration)
         {
             _logger = logger;
             _host = host;
@@ -77,12 +78,12 @@ namespace MCPhase3.Controllers
         {
             string clientType = string.Empty;           
             //Session can set here to check if logged in user is Fire or LG.
-            clientType = HttpContext.Session.GetString(SessionKeyClientType);
+            clientType = ContextGetValue(Constants.SessionKeyClientType);
             //check if year, month and type of posting is already selected from session
-            string monthSelected = HttpContext.Session.GetString(SessionKeyMonth)?? string.Empty;
-            string yearSelected = HttpContext.Session.GetString(SessionKeyYears) ?? string.Empty;
-            string postSelected = HttpContext.Session.GetString(SessionKeyPosting) ?? string.Empty;
-            string userName = HttpContext.Session.GetString(SessionKeyUserID);
+            string monthSelected = ContextGetValue(Constants.SessionKeyMonth)?? string.Empty;
+            string yearSelected = ContextGetValue(Constants.SessionKeyYears) ?? string.Empty;
+            string postSelected = ContextGetValue(Constants.SessionKeyPosting) ?? string.Empty;
+            string userName = ContextGetValue(Constants.SessionKeyUserID);
 
             //client type is null or empty goto login page again
             if (string.IsNullOrEmpty(clientType))
@@ -136,10 +137,10 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> IndexFire()
         {
             string userName = string.Empty;
-            userName = HttpContext.Session.GetString(SessionKeyUserID);
-            string monthSelected = HttpContext.Session.GetString(SessionKeyMonth) ?? string.Empty;
-            string yearSelected = HttpContext.Session.GetString(SessionKeyYears) ?? string.Empty;
-            string postSelected = HttpContext.Session.GetString(SessionKeyPosting) ?? string.Empty;
+            userName = ContextGetValue(Constants.SessionKeyUserID);
+            string monthSelected = ContextGetValue(Constants.SessionKeyMonth) ?? string.Empty;
+            string yearSelected = ContextGetValue(Constants.SessionKeyYears) ?? string.Empty;
+            string postSelected = ContextGetValue(Constants.SessionKeyPosting) ?? string.Empty;
 
             List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
 
@@ -180,27 +181,27 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> Create(IFormFile files, string monthsList, string yearsList, string posting)
         {
             //Add selected name of month into Session, filename and total records in file.
-            HttpContext.Session.SetString(SessionKeyMonth, monthsList.ToString());
-            HttpContext.Session.SetString(SessionKeyYears, yearsList.ToString());
-            HttpContext.Session.SetString(SessionKeyPosting, posting);
-            HttpContext.Session.SetString(SessionKeySchemeName, "LGPS");
+            HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyPosting, posting);
+            HttpContext.Session.SetString(Constants.SessionKeySchemeName, "LGPS");
 
             TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
             CheckFileUploadedBO fileCheckBO = new CheckFileUploadedBO();
             fileCheckBO.P_Month = monthsList;
             fileCheckBO.P_Year = yearsList;
-            string userName = HttpContext.Session.GetString(SessionKeyUserID);
-            string empName = HttpContext.Session.GetString(SessionKeyEmployerName);
-            string empID = HttpContext.Session.GetString(SessionKeyPayrollProvider);
+            string userName = ContextGetValue(Constants.SessionKeyUserID);
+            string empName = ContextGetValue(Constants.SessionKeyEmployerName);
+            string empID = ContextGetValue(Constants.SessionKeyPayrollProvider);
             fileCheckBO.P_EMPID = empID;
             //Member titles coming from config - 
-            string[] validTitles = _Configure.GetValue<string>("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+            string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             //Check all invalid signs from file and show error to employer
-            string[] invalidSigns = _Configure.GetValue<string>("SignToCheck").Split(",".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);
+            string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);
 
             //update Event Details table File is uploaded successfully.
-            string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
-            string apiBaseUrlForCheckFileAvailable = _Configure.GetValue<string>("WebapiBaseUrlForCheckFileAvailable");
+            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
+            string apiBaseUrlForCheckFileAvailable = ConfigGetValue("WebapiBaseUrlForCheckFileAvailable");
             //check if file is uploaded for the selected month and year.
             int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
 
@@ -303,14 +304,14 @@ namespace MCPhase3.Controllers
                 int numberOfRows = modelDT.stringDT.Rows.Count;
 
                 //Add selected name of month into Session, filename and total records in file.
-                HttpContext.Session.SetString(SessionKeyMonth, monthsList.ToString());
-                HttpContext.Session.SetString(SessionKeyYears, yearsList.ToString());
-                //HttpContext.Session.SetString(SessionKeyClientId,3.ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
+                //HttpContext.Session.SetString(Constants.SessionKeyClientId,3.ToString());
 
-                HttpContext.Session.SetString(SessionKeyFileName, fileNameWithoutExt.ToString());
-                HttpContext.Session.SetString(SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(SessionKeyTotalRecords, (numberOfRows - 1).ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameWithoutExt.ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
 
-               // var validYears = _Configure.GetValue<string>("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+               // var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
                 //Seperated LG and Fire functions
                 //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
@@ -327,7 +328,7 @@ namespace MCPhase3.Controllers
                 else
                 {
                     
-                    //string designDocPath = _Configure.GetValue<string>("DesginXMLFilePath");
+                    //string designDocPath = GetConfigValue("DesginXMLFilePath");
                     //read design XML from wwwroot folder
                     string designDocPath = string.Concat(this._Environment.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
                     try
@@ -367,16 +368,16 @@ namespace MCPhase3.Controllers
             CheckFileUploadedBO fileCheckBO = new CheckFileUploadedBO();
             fileCheckBO.P_Month = monthsList;
             fileCheckBO.P_Year = yearsList;
-            string userName = HttpContext.Session.GetString(SessionKeyUserID);
-            string empName = HttpContext.Session.GetString(SessionKeyEmployerName);
-            string empID = HttpContext.Session.GetString(SessionKeyPayLocId);
-            HttpContext.Session.SetString(SessionKeySchemeName, "FIRE");
+            string userName = ContextGetValue(Constants.SessionKeyUserID);
+            string empName = ContextGetValue(Constants.SessionKeyEmployerName);
+            string empID = ContextGetValue(Constants.SessionKeyPayLocId);
+            HttpContext.Session.SetString(Constants.SessionKeySchemeName, "FIRE");
             fileCheckBO.P_EMPID = empID;
 
-            string[] validTitles = _Configure.GetValue<string>("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+            string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             //Check all invalid signs from file and show error to employer
-            string[] invalidSigns = _Configure.GetValue<string>("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            string apiBaseUrlForCheckFileAvailable = _Configure.GetValue<string>("WebapiBaseUrlForCheckFileAvailable");
+            string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+            string apiBaseUrlForCheckFileAvailable = ConfigGetValue("WebapiBaseUrlForCheckFileAvailable");
             //check if file is uploaded for the selected month and year.
             int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
             string fileExt = string.Empty;
@@ -471,15 +472,15 @@ namespace MCPhase3.Controllers
                 int numberOfRows = modelDT.stringDT.Rows.Count;              
 
                 //Add selected name of month into Session, filename and total records in file.
-                HttpContext.Session.SetString(SessionKeyMonth, monthsList.ToString());
-                HttpContext.Session.SetString(SessionKeyYears, yearsList.ToString());
-                //HttpContext.Session.SetString(SessionKeyClientId,3.ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
+                //HttpContext.Session.SetString(Constants.SessionKeyClientId,3.ToString());
 
-                HttpContext.Session.SetString(SessionKeyFileName, fileNameWithoutExt.ToString());
-                //HttpContext.Session.SetString(SessionKeyTotalRecords, (numberOfRows - 1).ToString());
-                HttpContext.Session.SetString(SessionKeyTotalRecords, (numberOfRows).ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameWithoutExt.ToString());
+                //HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows).ToString());
 
-                //var validYears = _Configure.GetValue<string>("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                //var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 
                 //Seperated LG and Fire functions
                 string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, monthsList, posting, yearsList, subPayList,validTitles, invalidSigns, ref errorMessage);
@@ -557,7 +558,7 @@ namespace MCPhase3.Controllers
             ViewBag.GrandTotalValue = GrandTotalValue.ToString("0.00");
 
             //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            if (string.IsNullOrEmpty(ContextGetValue("_UserName")))
             {
                 contributionBO = null;
                
@@ -579,7 +580,7 @@ namespace MCPhase3.Controllers
             MonthlyContributionBO contributionBO = new MonthlyContributionBO();
 
             //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            if (string.IsNullOrEmpty(ContextGetValue("_UserName")))
             {
                 contributionBO = null;
 
@@ -594,24 +595,24 @@ namespace MCPhase3.Controllers
             RemadShowTotalsValues formTotals = new RemadShowTotalsValues();
             
             string remittanceID = string.Empty;
-            contributionBO.UserLoginID = HttpContext.Session.GetString(SessionKeyUserID);
-            contributionBO.UserName = HttpContext.Session.GetString(SessionKeyUserID);
-            contributionBO.employerID = Convert.ToDouble(HttpContext.Session.GetString(SessionKeyPayLocId));
-            contributionBO.employerName = HttpContext.Session.GetString(SessionKeyEmployerName);
-            contributionBO.payrollProviderID = HttpContext.Session.GetString(SessionKeyPayrollProvider);
+            contributionBO.UserLoginID = ContextGetValue(Constants.SessionKeyUserID);
+            contributionBO.UserName = ContextGetValue(Constants.SessionKeyUserID);
+            contributionBO.employerID = Convert.ToDouble(ContextGetValue(Constants.SessionKeyPayLocId));
+            contributionBO.employerName = ContextGetValue(Constants.SessionKeyEmployerName);
+            contributionBO.payrollProviderID = ContextGetValue(Constants.SessionKeyPayrollProvider);
             string path = string.Empty;
 
-            contributionBO.PaymentMonth = HttpContext.Session.GetString(SessionKeyMonth);//monthAndPayroll.Columns[0].ColumnName;
-            contributionBO.UploadedFileName = HttpContext.Session.GetString(SessionKeyFileName);//monthAndPayroll.Columns[1].ColumnName;
-            contributionBO.ClientID = HttpContext.Session.GetString(SessionKeyClientId);
-            contributionBO.payRollYear = HttpContext.Session.GetString(SessionKeyYears);
+            contributionBO.PaymentMonth = ContextGetValue(Constants.SessionKeyMonth);//monthAndPayroll.Columns[0].ColumnName;
+            contributionBO.UploadedFileName = ContextGetValue(Constants.SessionKeyFileName);//monthAndPayroll.Columns[1].ColumnName;
+            contributionBO.ClientID = ContextGetValue(Constants.SessionKeyClientId);
+            contributionBO.payRollYear = ContextGetValue(Constants.SessionKeyYears);
           
             //Get api url from appsetting.json
-            apiBaseUrlForRemittanceInsert = _Configure.GetValue<string>("WebAPIBaseUrlForRemittanceInsert");
+            apiBaseUrlForRemittanceInsert = ConfigGetValue("WebAPIBaseUrlForRemittanceInsert");
             //Get api url from appsetting.json
-            string apiBaseUrlForRemittanceGet = _Configure.GetValue<string>("WebAPIBaseUrlForRemittanceGet");
+            string apiBaseUrlForRemittanceGet = ConfigGetValue("WebAPIBaseUrlForRemittanceGet");
             ///API URI is getting from Apsetting.json file.
-            string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
+            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
           
                     using (HttpClient client = new HttpClient())
                     {
@@ -669,7 +670,7 @@ namespace MCPhase3.Controllers
                             //monthAndPayroll.Clear();
 
                             //remove the browser response issue of pen testing
-                            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+                            if (string.IsNullOrEmpty(ContextGetValue("_UserName")))
                             {
                                 contributionBO = null;
 
@@ -707,9 +708,9 @@ namespace MCPhase3.Controllers
                 id = CustomDataProtection.Encrypt(id);
             }
             string path = string.Empty;
-            string uploadedFileName = HttpContext.Session.GetString(SessionKeyFileName);
+            string uploadedFileName = ContextGetValue(Constants.SessionKeyFileName);
             //Get api url from appsetting.json           
-            string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
+            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             
 
             path = Path.Combine(_host.WebRootPath + "/UploadedFiles/", uploadedFileName);
@@ -731,11 +732,11 @@ namespace MCPhase3.Controllers
                 //update Event Details table File is uploaded successfully.                               
                 callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
 
-                string clientID = HttpContext.Session.GetString(SessionKeyClientId);
-                string schemeName = HttpContext.Session.GetString(SessionKeySchemeName);
-                string userName = HttpContext.Session.GetString(SessionKeyUserID);
+                string clientID = ContextGetValue(Constants.SessionKeyClientId);
+                string schemeName = ContextGetValue(Constants.SessionKeySchemeName);
+                string userName = ContextGetValue(Constants.SessionKeyUserID);
                 //get total records from in file from datatable.
-                int totalRecordsInF = Convert.ToInt32(HttpContext.Session.GetString(SessionKeyTotalRecords));
+                int totalRecordsInF = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
                 totalRecordsInF += 1;
                 rangeOfRowsModel.P_USERID = userName;
                 rangeOfRowsModel.P_REMITTANCE_ID = Convert.ToInt32(id);
@@ -744,13 +745,13 @@ namespace MCPhase3.Controllers
                 
                 //Get the max Datarow id from MC_CONTRIBUTIONS_RECD to insert bulk data.
                 int row = 0;
-                string insertDataCounter = _Configure.GetValue<string>("WebapiBaseUrlForInsertDataCounter");
+                string insertDataCounter = ConfigGetValue("WebapiBaseUrlForInsertDataCounter");
                 row = await callApi.counterAPI(insertDataCounter, rangeOfRowsModel);//row = await callApi.counterAPI(insertDataCounter);
                 
                 //following datatable will change column names of datatable to DB column names and insert data from excelDT.
                 DataTable newDT = dataTableToDB.KeepDataTable(row + 1, userName, schemeName, clientID, id.ToString()) ;
                 //upload file to database using api
-                string insertDataConn = _Configure.GetValue<string>("WebapiBaseUrlForInsertData");
+                string insertDataConn = ConfigGetValue("WebapiBaseUrlForInsertData");
                 newDT.AcceptChanges();
                 bool result1 = await callApi.InsertDataApi(newDT, insertDataConn);
                 newDT.Dispose();
@@ -800,9 +801,9 @@ namespace MCPhase3.Controllers
             //AutoMatchBO autoMatchBO = new AutoMatchBO();
             ErrorAndWarningViewModelWithRecords errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords();
             InitialiseProcBO initialiseProcBO = new InitialiseProcBO();
-            string userID = HttpContext.Session.GetString(SessionKeyUserID);
-            string empURL = _Configure.GetValue<string>("WebapiBaseUrlForEmployerName");            
-            //string insertDataConn = _Configure.GetValue<string>("WebapiBaseUrlForInsertData");
+            string userID = ContextGetValue(Constants.SessionKeyUserID);
+            string empURL = ConfigGetValue("WebapiBaseUrlForEmployerName");            
+            //string insertDataConn = GetConfigValue("WebapiBaseUrlForInsertData");
 
             //callApi.InsertDataApi(excelDt, insertDataConn);
 
@@ -816,10 +817,10 @@ namespace MCPhase3.Controllers
 
             List<AutoMatchBO> BO = new List<AutoMatchBO>();
             //call Automatch api url from appsettings.json
-            apiBaseUrlForAutoMatch = _Configure.GetValue<string>("WebapiBaseUrlForAutoMatch");
+            apiBaseUrlForAutoMatch = ConfigGetValue("WebapiBaseUrlForAutoMatch");
             //url to get total number of records in database
-            string apiBaseUrlForTotalRecords = _Configure.GetValue<string>("WebAPIBaseUrlForRemittanceInsert");
-            string apiBaseUrlForInitialiseProc = _Configure.GetValue<string>("WebAPIBaseUrlForInitialiseProc");
+            string apiBaseUrlForTotalRecords = ConfigGetValue("WebAPIBaseUrlForRemittanceInsert");
+            string apiBaseUrlForInitialiseProc = ConfigGetValue("WebAPIBaseUrlForInitialiseProc");
 
             initialiseProcBO.P_REMITTANCE_ID = newID;
             initialiseProcBO.P_USERID = userID;
@@ -828,24 +829,24 @@ namespace MCPhase3.Controllers
 
             try
             {
-                string totalRecords = callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
+                string totalRecords = await callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
                 string num = totalRecords.Substring(totalRecords.IndexOf(":") + 2);
                 int total = Convert.ToInt32(num.Remove(num.IndexOf('"')));
-                string totalRecordsInF = HttpContext.Session.GetString(SessionKeyTotalRecords);
+                string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
                 //following loop will keep on until it finds a record in database.//Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
                 while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
                     {
-                        totalRecords = callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
+                        totalRecords = await callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
                         num = totalRecords.Substring(totalRecords.IndexOf(":") + 2);
                         total = Convert.ToInt32(num.Remove(num.IndexOf('"')));
                     }
-                //if (HttpContext.Session.GetString(SessionKeyReturnInit) == null)
+                //if (GetContextValue(Constants.SessionKeyReturnInit) == null)
                 //{
                     initialiseProcBO = await callApi.InitialiseProce(initialiseProcBO, apiBaseUrlForInitialiseProc);
-                   // HttpContext.Session.SetString(SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
+                   // HttpContext.Session.SetString(Constants.SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
                // }
                 
-                //HttpContext.Session.SetString(SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
+                //HttpContext.Session.SetString(Constants.SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
                 //Return Check API to call to check if the previous month file is completed 
                 result.p_REMITTANCE_ID = id1;
                 result.P_USERID = userID;
@@ -853,8 +854,8 @@ namespace MCPhase3.Controllers
 
                 
 
-                string apiBaseUrlForCheckReturn = _Configure.GetValue<string>("WebAPIBaseUrlForReturnCheckProc");
-                string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
+                string apiBaseUrlForCheckReturn = ConfigGetValue("WebAPIBaseUrlForReturnCheckProc");
+                string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
                 
                 eBO.remittanceID = id1;
                 eBO.remittanceStatus = 1;
@@ -916,7 +917,7 @@ namespace MCPhase3.Controllers
             }
 
             //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            if (string.IsNullOrEmpty(ContextGetValue("_UserName")))
             {
                 errorAndWarningViewModelWithRecords = null;
 
@@ -1018,8 +1019,8 @@ namespace MCPhase3.Controllers
         {
             
            
-            var validYears = _Configure.GetValue<string>("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            // string validYears = _Configure.GetValue<string>("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).ToString();
+            var validYears = ConfigGetValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+            // string validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).ToString();
 
             var yearList = new List<YearsBO>();
 
@@ -1064,7 +1065,7 @@ namespace MCPhase3.Controllers
         private async Task<List<PayrollProvidersBO>> CallPayrollProviderService(string userName)
         {
             List<PayrollProvidersBO> subPayrollList = new List<PayrollProvidersBO>();
-            string apiBaseUrlForSubPayrollProvider = _Configure.GetValue<string>("WebapiBaseUrlForSubPayrollProvider");
+            string apiBaseUrlForSubPayrollProvider = ConfigGetValue("WebapiBaseUrlForSubPayrollProvider");
             string apiResponse = String.Empty;
 
             using (var httpClient = new HttpClient())
@@ -1086,8 +1087,8 @@ namespace MCPhase3.Controllers
         /// </summary>
         private DataTable AllowedSigns(DataTable dataTable)
         {
-            string[] allwedSigns = _Configure.GetValue<string>("AllowedSigns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            string[] allowedColumns = _Configure.GetValue<string>("AllowedColumns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+            string[] allwedSigns = ConfigGetValue("AllowedSigns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+            string[] allowedColumns = ConfigGetValue("AllowedColumns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             int countRows = dataTable.Rows.Count;
             for (int i=0; i < countRows; i++)
             {

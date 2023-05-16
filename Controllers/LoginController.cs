@@ -1,52 +1,41 @@
-﻿using MCPhase3.CodeRepository;
+﻿using DocumentFormat.OpenXml.Presentation;
+using Grpc.Core;
+using MCPhase3.CodeRepository;
+using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Crypto.Tls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
+using Weather.UI.Utilties;
+using System.Net;
+using NPOI.OpenXmlFormats.Dml;
 
 namespace MCPhase3.Controllers
-{    
-    public class LoginController : Controller
+{
+    public class LoginController : BaseController
     {
-        public const string SessionKeyUserID = "_UserName";
-        //Paylocation and Employer both are same.
-        public const string SessionKeyPayLocName = "_PayLocName";
-        public const string SessionKeyPayLocId = "_Id";
-        public const string SessionKeyPassword = "_Password";   
-        public const string SessionKeyClientId = "_clientId";
-        public const string SessionKeyClientType = "_clientType";
-        public const string SessionKeyEmployerName = "_employerName";
-        public const string SessionKeyPayrollProvider = "_payrollProvider";
-
-       
-        public string SessionKeyMonth = "_month";
-        public string SessionKeyFileName = "_fileName";
-        public string SessionKeyTotalRecords = "_totalRecords";
-        public string SessionKeyRemittanceID = "_remittanceID";
-        
-
         //My list item to add all  the errors from the spreadsheet
         List<string> AllSpreadsheetErrors = new List<string>();       
         PayrollProvidersBO payrollBO = new PayrollProvidersBO();       
         DummyLoginViewModel loginDetails = new DummyLoginViewModel();
+
         string uploadedFileName = string.Empty;     
         private readonly IConfiguration _configuration;
-        
+        private readonly IRedisCache _cache;
 
-        public LoginController(IConfiguration configuration)
+        public LoginController(IConfiguration configuration, IRedisCache cache) : base (configuration)
         {
-            _configuration = configuration;            
+            _configuration = configuration;
+            _cache = cache;
         }
        
         public IActionResult Index()
@@ -71,31 +60,86 @@ namespace MCPhase3.Controllers
             return View(loginDetails);
         }
 
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]       
+        public async Task<IActionResult> Index(DummyLoginViewModel loginDetails)
+        {  
+            var sessionInfo = GetUserSessionInfo(loginDetails);
+            
+            //## we need to confirm their is only one login session for this user.. 
+            if (sessionInfo.HasExistingSession)
+            {
+                //## Notify the user ..
+                //## ask whether they wanna kill the existing one and continue here...?
+
+                //## Show the user a new ViewPage- with Question and button- whether to continue or discard the current login
+                //var sessionPwd = loginDetails.Password;
+
+                //sessionInfo.Password = WebUtility.UrlEncode(CustomDataProtection.Encrypt(loginDetails.Password));  //## sending the password to GUI- to use it again to login .. shouldn't send a raw password...
+                //sessionInfo.UserName = WebUtility.UrlEncode(CustomDataProtection.Encrypt(loginDetails.UserName));  //## keep it protected...                
+
+                //string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{loginDetails.UserName}";
+                //_cache.Delete(sessionInfoKeyName);
+                sessionInfo.Password = ""; //sessionInfo.UserName = "";
+                return View("MultipleSessionPrompt", sessionInfo);
+                
+            }
+
+            return await ProceedToLogIn(loginDetails);
+        }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-       
-        public async Task<IActionResult> Index(DummyLoginViewModel loginDetails)
+        public async Task<IActionResult> ProceedCurrentSession(DummyLoginViewModel vm)
+        {
+            //## The user wasn't logged in, rather shown a warning message to take action- coz they have another session opened somewhere... 
+            //## Now the user has decided to stay/continue this current login.. and kills the other session...
+            var currentBrowserSessionId = Guid.NewGuid().ToString();
+            var sessionInfo = GetUserSessionInfo(vm);
+            
+            string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{sessionInfo.UserName}";
+            _cache.Delete(sessionInfoKeyName);
+
+            //## Create a new one
+            sessionInfo.HasExistingSession = false;
+            sessionInfo.LastLoggedIn = DateTime.Now.ToString();
+            sessionInfo.SessionId = currentBrowserSessionId;
+            _cache.Set(sessionInfoKeyName, sessionInfo);
+
+            //## create entries in Session Cookies, too..
+            ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session
+            ContextSetValue(Constants.UserIdKeyName, sessionInfo.UserName);
+
+            //turn RedirectToAction("Home", "Admin");
+            vm.Password = sessionInfo.Password; //## we didn't keep the password in the VM.. security!
+            return await ProceedToLogIn(vm);
+        }
+
+
+        private async Task<IActionResult> ProceedToLogIn(DummyLoginViewModel vm)
         {
             LoginBO loginBO = new LoginBO();
             CodeRepository.UPM2LoginSR login = new CodeRepository.UPM2LoginSR();
             int result = 0;
 
-            loginBO.userName = loginDetails.userName;
-            loginBO.password = loginDetails.password;
-           
+            loginBO.userName = vm.UserName;
+            loginBO.password = vm.Password;
 
             //this model class has variables defined that I am using to validate.
             MyModel isFileFire = new MyModel();
             //get valid client id's from config file.
-             var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId").Split(",".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);
+            var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId")
+                                               .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
             //call new payroll provider REST API
             try
             {
                 //Once usernames copied to new table then uncomment following line of code
-                 payrollBO = await CallPayrollProviderService(loginDetails.userName);
-                
-                
+                payrollBO = await CallPayrollProviderService(vm.UserName);
+
+
                 //check username and password
                 result = await LoginCheckMethod(loginBO);
 
@@ -114,39 +158,39 @@ namespace MCPhase3.Controllers
             }
 
             // loginDetails.clientId = payrollBO.pay_location_ID.ToString();
-            loginDetails.clientId = payrollBO.client_Id;
-            
+            vm.ClientId = payrollBO.client_Id;
+
 
             //check user login details
             // if(login.Login(loginDetails.userName, loginDetails.password))
             // if (loginDetails.userName.ToUpper() == "BROWNA" && loginDetails.password == "1234567")
             if (result == 1)
             {
-               // var result1 = await signInManager.PasswordSignInAsync(loginDetails.userName, loginDetails.password, false, false);
+                // var result1 = await signInManager.PasswordSignInAsync(loginDetails.userName, loginDetails.password, false, false);
                 //loginDetailsService = loginDetails.userName;//services.GetLoginDetails(loginDetails.userName);
-                HttpContext.Session.SetString(SessionKeyClientId, loginDetails.clientId);
-                HttpContext.Session.SetString(SessionKeyUserID, loginDetails.userName);
-                HttpContext.Session.SetString(SessionKeyPayLocName, payrollBO.pay_location_name);
-                HttpContext.Session.SetString(SessionKeyPayLocId, payrollBO.pay_location_ID.ToString());
-                HttpContext.Session.SetString(SessionKeyEmployerName, payrollBO.pay_location_name);
+                HttpContext.Session.SetString(Constants.SessionKeyClientId, vm.ClientId);
+                HttpContext.Session.SetString(Constants.SessionKeyUserID, vm.UserName);
+                HttpContext.Session.SetString(Constants.SessionKeyPayLocName, payrollBO.pay_location_name);
+                HttpContext.Session.SetString(Constants.SessionKeyPayLocId, payrollBO.pay_location_ID.ToString());
+                HttpContext.Session.SetString(Constants.SessionKeyEmployerName, payrollBO.pay_location_name);
                 //following is a payrollprovider
-                HttpContext.Session.SetString(SessionKeyPayrollProvider, payrollBO.paylocation_ref);
+                HttpContext.Session.SetString(Constants.SessionKeyPayrollProvider, payrollBO.paylocation_ref);
 
-                TempData["ps"] = loginDetails.userName;
+                TempData["ps"] = vm.UserName;
 
-                if (fireSchemeId.Contains(loginDetails.clientId.Trim()))
+                if (fireSchemeId.Contains(vm.ClientId.Trim()))
                 {
                     TempData["MainHeading"] = "Fire - Contribution Advice";
                     TempData["isFire"] = true;
                     isFileFire.isFire = true;
-                    HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
+                    HttpContext.Session.SetString(Constants.SessionKeyClientType, "FIRE");
                     return RedirectToAction("Home", "Admin");
                 }
                 else
                 {
                     TempData["isFire"] = false;
                     isFileFire.isFire = false;
-                    HttpContext.Session.SetString(SessionKeyClientType, "LG");
+                    HttpContext.Session.SetString(Constants.SessionKeyClientType, "LG");
                     return RedirectToAction("Home", "Admin");
                 }
             }
@@ -159,14 +203,66 @@ namespace MCPhase3.Controllers
             {
                 TempData["Msg1"] = "Username or password not correct, please try again";
                 return RedirectToAction("Index", "Login");
-            }          
+            }
         }
-          
-            /// <summary>
-            /// following method will show main payroll provider with login name and id
-            /// </summary>
-            /// <param name="userName"></param>
-            /// <returns></returns>
+
+
+        /// <summary>This will read Redis cache and find if there is any entry for this user session</summary>
+        /// <param name="userId">User Id</param>
+        /// <returns>True/False</returns>
+        private UserSessionInfoVM GetUserSessionInfo(DummyLoginViewModel vm)
+        {
+            //## Get the session info from Redis cache
+            string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{vm.UserName}";    //## this KeyName should be used in Logout- to Delete the Redis entry
+            var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
+
+            if (sessionInfo is null)
+            {
+                var currentBrowserSessionId = Guid.NewGuid().ToString();    
+
+                ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session
+                ContextSetValue(Constants.UserIdKeyName, vm.UserName);
+
+                //## No user session info in the Cache..  so create an entry to stop any further login attempt from another browser                
+                sessionInfo = new UserSessionInfoVM()
+                {
+                    UserName = vm.UserName,
+                    Password = vm.Password,
+                    BrowserId = vm.BrowserId,
+                    WindowsId = vm.WindowsId,
+                    HasExistingSession = false,
+                    LastLoggedIn = DateTime.Now.ToString(),
+                    SessionId = currentBrowserSessionId
+                };
+                _cache.Set(sessionInfoKeyName, sessionInfo);
+
+                return sessionInfo;
+            }
+            else
+            {
+                //## The following is when user will try to use 'Incongnito' on Chrome.. very clever!
+                //##means there is an entry for this user in cache.. and the user is just trying to be cleaver.. don't let them Login
+                sessionInfo.HasExistingSession = true;
+                return sessionInfo;
+                //return new UserSessionInfoVM()
+                //{
+                //    BrowserId = vm.BrowserId,
+                //    WindowsId = vm.WindowsId,
+                //    LastLoggedIn = sessionInfo.LastLoggedIn,
+                //    HasExistingSession = true,
+                //    UserName = vm.UserName,
+                //    Password = vm.Password
+
+                //};
+            }
+        }
+
+
+        /// <summary>
+        /// following method will show main payroll provider with login name and id
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
         private async Task<PayrollProvidersBO> CallPayrollProviderService(string userName)
         {
             string apiBaseUrlForPayrollProvider = _configuration.GetValue<string>("WebapiBaseUrlForPayrollProvider");
@@ -222,7 +318,7 @@ namespace MCPhase3.Controllers
         {
             bool result = false;
            
-            if (!string.IsNullOrEmpty(HttpContext.Session.GetString(SessionKeyUserID)))
+            if (!string.IsNullOrEmpty(HttpContext.Session.GetString(Constants.SessionKeyUserID)))
             {  
                 result = true;               
             }
@@ -231,22 +327,34 @@ namespace MCPhase3.Controllers
 
         public async Task<IActionResult> Logout()
         {
+
+            //## clear the Redis cache... so the user can login next time easily            
+            //## but delete if this is your Redis session.. 
+            //## Scenario: user logged in from Browser 2 and wanna kick out Browser1 session.
+            //##  When logged in using Browser2- they already have cleared session for Browser_1. So- don't just delete a Redis session if that session doesn't belong to current Browser session Id            
+            var currentBrowserSessionId = ContextGetValue(Constants.SessionGuidKeyName);
+            var sessionKeyName = $"{Constants.SessionInfoKeyName}-{CurrentUserId()}";
+            var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
+
+            //## Browser Session Id and Redis SessionId-> are they same..?
+            if (currentBrowserSessionId == sessionInfo.SessionId) {
+                _cache.Delete(sessionKeyName);
+            }
+
+
             TempData["ps"] = null;          
             TempData["Msg"] = null;
             TempData["Msg1"] = null;
             TempData["MsgM"] = null;
             HttpContext.Session.Clear();
             
-            HttpContext.Session.Remove(SessionKeyUserID);
-            HttpContext.Session.Remove(SessionKeyPayLocName);
-            HttpContext.Session.Remove(SessionKeyPayLocId);
-            HttpContext.Session.Remove(SessionKeyClientId);
-            HttpContext.Session.Remove(SessionKeyClientType);
-            HttpContext.Session.Remove(SessionKeyEmployerName);
-            HttpContext.Session.Remove(SessionKeyPayrollProvider);
-
-            
-
+            HttpContext.Session.Remove(Constants.SessionKeyUserID);
+            HttpContext.Session.Remove(Constants.SessionKeyPayLocName);
+            HttpContext.Session.Remove(Constants.SessionKeyPayLocId);
+            HttpContext.Session.Remove(Constants.SessionKeyClientId);
+            HttpContext.Session.Remove(Constants.SessionKeyClientType);
+            HttpContext.Session.Remove(Constants.SessionKeyEmployerName);
+            HttpContext.Session.Remove(Constants.SessionKeyPayrollProvider);
             
             var opts = new CookieOptions
             {
@@ -256,7 +364,7 @@ namespace MCPhase3.Controllers
                 Secure = true
             };
 
-            HttpContext.Response.Cookies.Delete(SessionKeyUserID);
+            HttpContext.Response.Cookies.Delete(Constants.SessionKeyUserID);
             HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
             HttpContext.Response.Cookies.Append(".AspNetCore.Session", "test");
 
@@ -264,7 +372,6 @@ namespace MCPhase3.Controllers
             {
                 Response.Cookies.Delete(cookie);
             }
-
 
             // await signInManager.SignOutAsync();
             return RedirectToAction("Index", "Login");           

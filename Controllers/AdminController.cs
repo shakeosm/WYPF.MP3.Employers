@@ -1,4 +1,5 @@
 ﻿using MCPhase3.CodeRepository;
+using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,17 +16,17 @@ using System.Threading.Tasks;
 
 namespace MCPhase3.Controllers
 {
-    public class AdminController : Controller
+    public class AdminController : BaseController
     {
-        public const string SessionKeyUserID = "_UserName";
-        public const string SessionKeyEmployerName = "_employerName";
-        public const string SessionKeyPaylocFileID = "_PaylocFileID";
-        public const string SessionKeyRemittanceID = "_remittanceID";
-        public const string SessionKeyPayLocId = "_Id";
+        //public const string SessionKeyUserID = "_UserName";
+        //public const string SessionKeyEmployerName = "_employerName";
+        //public const string SessionKeyPaylocFileID = "_PaylocFileID";
+        //public const string SessionKeyRemittanceID = "_remittanceID";
+        //public const string SessionKeyPayLocId = "_Id";
         private readonly IConfiguration _configuration;
         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         
-        public AdminController(IConfiguration configuration)
+        public AdminController(IConfiguration configuration) : base(configuration)
         {
             _configuration = configuration;        
         }
@@ -36,13 +37,13 @@ namespace MCPhase3.Controllers
         public IActionResult Home(int? id)
         {
             int remittanceID = 0;
-            string apiBaseUrlForInsertEventDetails = _configuration.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
+            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             EventDetailsBO eBO = new EventDetailsBO();
             if (id == 1)
             {
                 try
                 {
-                    remittanceID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
+                    remittanceID = (int)HttpContext.Session.GetInt32(Constants.SessionKeyRemittanceID);
                 }
                 catch (Exception ex)
                 {
@@ -70,8 +71,9 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> Index(int? pageNumber)
         {
             List<GetRemittanceStatusByUserBO> dashboardBO = new List<GetRemittanceStatusByUserBO>();
-            ViewBag.EmployerName = HttpContext.Session.GetString(SessionKeyEmployerName);
-            var userid = HttpContext.Session.GetString(SessionKeyUserID);
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
+            //ViewBag.EmployerName = GetContextValue(Constants.SessionKeyEmployerName);
+            var userid = ContextGetValue(Constants.SessionKeyUserID);
             dashboardBO = await getDashboardValuesForEmployers(userid, "pending");
             var newBO = dashboardBO.AsQueryable<GetRemittanceStatusByUserBO>();
             newBO = newBO.OrderByDescending(x=>x.event_DateTime);
@@ -85,14 +87,14 @@ namespace MCPhase3.Controllers
             string payrolID = string.Empty;
             DashboardBO detailBO = new DashboardBO();
             List<DashboardBO> dashboardBO = new List<DashboardBO>();
-            ViewBag.EmployerName = HttpContext.Session.GetString(SessionKeyEmployerName);
-            var userid = HttpContext.Session.GetString(SessionKeyUserID);
-            payrolID = HttpContext.Session.GetString(SessionKeyPayLocId);
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
+            var userid = ContextGetValue(Constants.SessionKeyUserID);
+            payrolID = ContextGetValue(Constants.SessionKeyPayLocId);
 
             //List<DashboardBO> dashboardBO = new List<DashboardBO>();
             // DashboardBO dashboardBO1 = new DashboardBO();
-            ViewBag.EmployerName = HttpContext.Session.GetString(SessionKeyEmployerName);
-           // var userid = HttpContext.Session.GetString(SessionKeyUserID);
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
+           // var userid = GetContextValue(SessionKeyUserID);
             detailBO.userId = userid;
             //detailBO.L_PAYROLL_PROVIDER = payrolID;
             detailBO.L_PAYROLL_PROVIDER = null;
@@ -117,7 +119,7 @@ namespace MCPhase3.Controllers
         {
             int remID = Convert.ToInt32(CustomDataProtection.Encrypt(remittanceId));
             List<DashboardHistScoreBO> dashboardScoreHistBO = new List<DashboardHistScoreBO>();
-            ViewBag.EmployerName = HttpContext.Session.GetString(SessionKeyEmployerName);            
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);            
             dashboardScoreHistBO = await getDashboardScoreHist(remID);
             return View(dashboardScoreHistBO);
         }
@@ -129,7 +131,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public IActionResult Staff()
         {
-            ViewBag.EmployerName = HttpContext.Session.GetString(SessionKeyEmployerName);
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
             return View();
         }
         /// <summary>
@@ -156,11 +158,14 @@ namespace MCPhase3.Controllers
                 "one or more special characters, for example !,”.#",
             };
             ViewBag.isStaff = 1;
-            loginBO.userName = HttpContext.Session.GetString(SessionKeyUserID);
+            loginBO.userName = ContextGetValue(Constants.SessionKeyUserID);
             int result = await UpdatePasswordMethod(loginBO);
             if (result == 1)
             {
                 TempData["Msg1"] = "Password updated successfully, please login using new password.";
+                
+                // add this new password to RedisCache.. Set a flag- that password is changed
+
                 //return RedirectToAction("Index", "Login");
                 return RedirectToAction("Logout", "Login");
             }
@@ -179,7 +184,7 @@ namespace MCPhase3.Controllers
 
         private async Task<int> UpdatePasswordMethod(LoginBO loginBO)
         {
-            string apiBaseUrlForLoginCheck = _configuration.GetValue<string>("WebapiBaseUrlForPasswordChange");
+            string apiBaseUrlForLoginCheck = ConfigGetValue("WebapiBaseUrlForPasswordChange");
             string apiResponse = string.Empty;
             using (var httpClient = new HttpClient())
             {
@@ -205,7 +210,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<DashboardBO>> getDashboardValues(DashboardBO dashboardBO)
         {
-            string apiBaseUrlForDashboard = _configuration.GetValue<string>("WebapiBaseUrlForDashboard");
+            string apiBaseUrlForDashboard = ConfigGetValue("WebapiBaseUrlForDashboard");
             List<DashboardBO> listBO = new List<DashboardBO>();
             DashboardBO bo = new DashboardBO();
             // bo.userId = userid;
@@ -245,16 +250,16 @@ namespace MCPhase3.Controllers
                 string WebapiBaseUrlForDetailEmpList = string.Empty;
 
                 //check of PaylocID session has value then empty it.
-                if (HttpContext.Session.GetString(SessionKeyPaylocFileID) != null)
+                if (ContextGetValue(Constants.SessionKeyPaylocFileID) != null)
                 {
                     HttpContext.Session.Clear();
                 }
-                payrolID = HttpContext.Session.GetString(SessionKeyPayLocId);
+                payrolID = ContextGetValue(Constants.SessionKeyPayLocId);
 
                 List<DashboardBO> dashboardBO = new List<DashboardBO>();
                 // DashboardBO dashboardBO1 = new DashboardBO();
-                //ViewBag.EmployerName = HttpContext.Session.GetString(SessionKeyEmployerName);
-                var userid = HttpContext.Session.GetString(SessionKeyUserID);
+                //ViewBag.EmployerName = GetContextValue(SessionKeyEmployerName);
+                var userid = ContextGetValue(Constants.SessionKeyUserID);
                 detailBO.userId = userid;
                 //detailBO.L_PAYROLL_PROVIDER = payrolID;
                 detailBO.L_PAYROLL_PROVIDER = null;
@@ -263,7 +268,7 @@ namespace MCPhase3.Controllers
 
                 // DashboardBO dashboardBO1 = new DashboardBO();
 
-                // var userid = HttpContext.Session.GetString(SessionKeyUserID);
+                // var userid = GetContextValue(SessionKeyUserID);
                 viewModel.dashboardBO = await getDashboardValues(detailBO);
                 // viewModel.dashboardBO = await getDashboardValuesForEmployers(userid, "pending");
 
@@ -272,8 +277,8 @@ namespace MCPhase3.Controllers
                 //newBO = newBO.OrderByDescending(x => x.event_DateTime);
                 //int pageSize = 10;
 
-                WebapiBaseUrlForDetailEmpList = _configuration.GetValue<string>("WebapiBaseUrlForDetailEmpList");
-                BO.L_USERID = HttpContext.Session.GetString(SessionKeyUserID);
+                WebapiBaseUrlForDetailEmpList = ConfigGetValue("WebapiBaseUrlForDetailEmpList");
+                BO.L_USERID = ContextGetValue(Constants.SessionKeyUserID);
                 int j = 0;
 
                 if (!string.IsNullOrEmpty(remid))
@@ -337,7 +342,7 @@ namespace MCPhase3.Controllers
                 //            {
                 //               // foreach (var obj in viewModel.details)
                 //               // {
-                //                    viewModel.dashboardBO[j].paylocation_Name = HttpContext.Session.GetString(SessionKeyEmployerName);
+                //                    viewModel.dashboardBO[j].paylocation_Name = GetContextValue(SessionKeyEmployerName);
                 //                    j++;
                 //                //}
                 //            }
@@ -354,7 +359,7 @@ namespace MCPhase3.Controllers
                 //        viewModel.dashboardBO[0].paylocation_Name = obj.paylocation_Name;
                 //    }
                 //    //show paylocation with the remittance if the file has only one paylocation.
-                //    // ViewBag.EmployerName = HttpContext.Session.GetString(SessionKeyEmployerName);
+                //    // ViewBag.EmployerName = GetContextValue(SessionKeyEmployerName);
                     
                 //}
 
@@ -383,7 +388,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<GetRemittanceStatusByUserBO>> getDashboardValuesForEmployers(string userid, string status)
         {
-            string apiBaseUrlForDashboard = _configuration.GetValue<string>("WebapiBaseUrlForDashboardEmployers");
+            string apiBaseUrlForDashboard = ConfigGetValue("WebapiBaseUrlForDashboardEmployers");
             List<GetRemittanceStatusByUserBO> listBO = new List<GetRemittanceStatusByUserBO>();
             string apiResponse = string.Empty;
             using (var httpClient = new HttpClient())
@@ -412,7 +417,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<DashboardHistScoreBO>> getDashboardScoreHist(int remittanceId)
         {
-            string apiBaseUrlForDashboardScoreHist = _configuration.GetValue<string>("WebapiBaseUrlForDashboardScoreHist");
+            string apiBaseUrlForDashboardScoreHist = ConfigGetValue("WebapiBaseUrlForDashboardScoreHist");
             List<DashboardHistScoreBO> listBO = new List<DashboardHistScoreBO>();
             string apiResponse = string.Empty;
             using (var httpClient = new HttpClient())
@@ -436,18 +441,18 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> SubmitReturn(ReturnSubmitBO rBO)
         {
-            string apiBaseUrlForInsertEventDetails = _configuration.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
+            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             EventDetailsBO eBO = new EventDetailsBO();
             int remID = 0;
 
             if (rBO.p_REMITTANCE_ID == null)
             {
-                // remID = Convert.ToInt32(HttpContext.Session.GetString(SessionKeyRemittanceID));
+                // remID = Convert.ToInt32(GetContextValue(SessionKeyRemittanceID));
                 return RedirectToAction("Logout", "Home");
             }
             rBO.p_REMITTANCE_ID = CustomDataProtection.Encrypt(rBO.p_REMITTANCE_ID);
             //rBO.P_PAYLOC_FILE_ID = paylocID;
-            rBO.P_USERID = HttpContext.Session.GetString(SessionKeyUserID);
+            rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
             //rBO.p_REMITTANCE_ID = remID;
             TempData["msg1"] = "File uploaded to WYPF database successfully.";
             //eBO.remittanceID = remID;
@@ -461,7 +466,7 @@ namespace MCPhase3.Controllers
             ////I have disabled it for staff.
             //callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
 
-            string WebapiBaseUrlForSubmitReturn = _configuration.GetValue<string>("WebapiBaseUrlForSubmitReturn");
+            string WebapiBaseUrlForSubmitReturn = ConfigGetValue("WebapiBaseUrlForSubmitReturn");
 
             using (var httpClient = new HttpClient())
             {
@@ -490,7 +495,7 @@ namespace MCPhase3.Controllers
         {
             int remID =Convert.ToInt32(CustomDataProtection.Encrypt(id));
             string result = string.Empty;
-            string apiCallDeleteRemittance = _configuration.GetValue<string>("WebapiBaseUrlForDeleteRemittance");
+            string apiCallDeleteRemittance = ConfigGetValue("WebapiBaseUrlForDeleteRemittance");
             using (var httpClient = new HttpClient())
             {
                 using (var response = await httpClient.GetAsync(apiCallDeleteRemittance + remID))

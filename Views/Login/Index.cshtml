@@ -60,7 +60,7 @@
                 </span>
 
                 <div class="wrap-input100 validate-input" data-validate="Valid Username is required">
-                    <input class="input100" asp-for="userName" placeholder="Username *" required />
+                    <input class="input100" asp-for="UserName" placeholder="Username *" required />
                     <span class="focus-input100"></span>
                     <span class="symbol-input100">
                         <i class="fa fa-envelope" aria-hidden="true"></i>
@@ -68,7 +68,7 @@
                 </div>
 
                 <div class="wrap-input100 validate-input" data-validate="Password is required">
-                    <input class="input100" asp-for="password" type="password" placeholder="Password *" required />
+                    <input class="input100" asp-for="Password" type="password" placeholder="Password *" required />
                     <span class="focus-input100"></span>
                     <span class="symbol-input100">
                         <i class="fa fa-lock" aria-hidden="true"></i>
@@ -82,6 +82,8 @@
                     <i class="fa fa-lock" aria-hidden="true"></i>
                 </span>
             </div>*@
+                <input id="BrowserIdInput" type="hidden" asp-for="BrowserId"/>
+                <input id="WindowsIdInput" type="hidden" asp-for="WindowsId"/>
 
                 <div class="container-login100-form-btn">
                     <button value="Submit" type="submit" class="login100-form-btn">Login</button>

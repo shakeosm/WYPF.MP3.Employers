@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Weather.UI.Utilties;
 
 namespace MCPhase3
 {
@@ -38,7 +40,6 @@ namespace MCPhase3
                 options.Cookie.IsEssential = true;
             });
 
-            
 
             //to increase a rest api wait to maximum.
             services.Configure<FormOptions>(options =>
@@ -49,6 +50,15 @@ namespace MCPhase3
                 options.MultipartHeadersCountLimit = int.MaxValue;
                 options.MultipartHeadersLengthLimit = int.MaxValue;
             });
+
+            services.AddSingleton<IRedisCache, RedisCache>();
+            services.AddDistributedMemoryCache();
+            // Add Redis services to the container.
+            services.AddStackExchangeRedisCache(options => {
+                options.Configuration = Configuration.GetConnectionString("RedisCacheUrl");
+                //    options.InstanceName = builder.Configuration.GetValue<string>("RedisInstance");
+            });
+
 
             //remittance protector classes Dependency injection
             //services.AddSingleton<UniqueCode>();
@@ -95,7 +105,7 @@ namespace MCPhase3
             app.UseSession();
             app.UseRouting();
 
-            app.UseMiddleware<UserSessionHandler>("test");
+            app.UseMiddleware<UserSessionHandlerMiddleWare>("test");
 
             app.UseAuthorization();
            

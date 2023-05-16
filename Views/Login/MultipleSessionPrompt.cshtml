@@ -1,0 +1,48 @@
+﻿@model MCPhase3.Models.UserSessionInfoVM
+
+@{
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+}
+
+<div class="container">
+    
+    <div class="alert alert-warning mt-5" style="margin-top:3em;">        
+        <h2>Warning: Duplicate session found!</h2>
+    </div>
+    <div>
+        <h4>
+            <i class="mdi-content-duplicate me-1 ms-1"></i>
+            There is already a session running. Please see the details below:
+        </h4>
+        <p>
+            <ul>
+                <li>
+                    Computer: <span class="badge badge-secondary">@Model.WindowsId</span>
+                </li>
+                <li>
+                    Browser: <span class="badge badge-secondary">@Model.BrowserId</span>
+                </li>
+                <li>
+                    Last loged in: <span class="badge badge-secondary">@Model.LastLoggedIn</span>
+                </li>
+            </ul>
+        </p>
+
+
+    </div>
+    <h4 style="margin-top:2em;">Do you want to continue here on this browser or discard current login?</h4>
+
+    <form method="post" enctype="multipart/form-data" asp-controller="Login" asp-action="ProceedCurrentSession">
+        <div class="w-50">
+            <input type="hidden" asp-for="BrowserId" />
+            <input type="hidden" asp-for="WindowsId" />
+            <input type="hidden" name="UserName" id="UserName" value="@Model.UserName" />
+            <input type="hidden" name="Password" id="Password" value="@Model.Password" />
+
+            <button id="ContinueButton" type="submit" class="btn btn-primary me-2">Continue current login</button>
+            <span id="DiscardButton" class="btn btn-danger" onclick="location.replace('/login/');">Close</span>
+
+        </div>
+
+    </form>
+</div>

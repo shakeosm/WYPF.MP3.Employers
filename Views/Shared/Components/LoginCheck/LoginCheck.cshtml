@@ -1,12 +1,12 @@
 ﻿@model MCPhase3.Models.DummyLoginViewModel
 
-@if (!string.IsNullOrEmpty(Model.userName))
+@if (!string.IsNullOrEmpty(Model.UserName))
 {
-    <a class="nav-item nav-link">Payroll provider: <b>@Model.employerName</b></a>   
+    <a class="nav-item nav-link">Payroll provider: <b>@Model.EmployerName</b></a>   
     <a class="nav-item nav-link">
 
         You are logged in as:
-        <b>@Model.userName</b>
+        <b>@Model.UserName</b>
     </a>
 }
 else

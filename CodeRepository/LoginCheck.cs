@@ -19,8 +19,8 @@ namespace MCPhase3.CodeRepository
         {
             if (HttpContext.Session.GetString(SessionKeyUserID) != null)
             {
-                dLogin.userName = HttpContext.Session.GetString(SessionKeyUserID);
-                dLogin.employerName = HttpContext.Session.GetString(SessionKeyPayLocName);
+                dLogin.UserName = HttpContext.Session.GetString(SessionKeyUserID);
+                dLogin.EmployerName = HttpContext.Session.GetString(SessionKeyPayLocName);
             }
             else
             {
