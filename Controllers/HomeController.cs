@@ -180,6 +180,14 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(IFormFile files, string monthsList, string yearsList, string posting)
         {
+            var fileUplaodStatus = IsFileValid(files);
+
+            if (!fileUplaodStatus.IsSuccess)
+            {
+                TempData["MsgM"] = fileUplaodStatus.Message;
+                return RedirectToAction("Index", "Home", null, "uploadFile");
+            }
+
             //Add selected name of month into Session, filename and total records in file.
             HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
             HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
@@ -352,6 +360,34 @@ namespace MCPhase3.Controllers
                                       
                 }
             }
+        }
+
+
+        private TaskResults IsFileValid(IFormFile file)
+        {
+            var result = new TaskResults { IsSuccess = false, Message = string.Empty };
+
+            int fileSizeLimit = 5100000;
+
+            if (file.Length > fileSizeLimit)
+            {
+                result.Message = "File size must be less than :" + (fileSizeLimit / 1024) / 1024 + " MB";
+            }
+
+            if (!(file.ContentType.Contains("vnd.ms-excel") || file.ContentType.Contains("vnd.openxmlformats")))
+            {
+                result.Message += "<br /> Invalid file contents, ";
+            }
+
+            if (!Path.GetExtension(file.FileName).Contains("xls"))
+            {
+                result.Message += "<br /> Invalid file type";
+            }
+
+            result.IsSuccess = string.IsNullOrEmpty(result.Message);
+
+
+            return result;
         }
 
         /// <summary>

@@ -1,6 +1,5 @@
 ﻿using Effortless.Net.Encryption;
-
-
+using System.Web;
 
 namespace MCPhase3.CodeRepository
 {
@@ -8,33 +7,22 @@ namespace MCPhase3.CodeRepository
     {
         static byte[] key = Bytes.GenerateKey();
         static byte[] iv = Bytes.GenerateIV();
+        
 
         public static string Encrypt(string inputString)
         {
             string encrypted = Strings.Encrypt(inputString, key, iv);
-            var encodeEncrypted = System.Net.WebUtility.UrlEncode(encrypted);
-            return encodeEncrypted;
+            return encrypted;
         }
-
-
 
         public static string Decrypt(string inputString)
         {
-            //var encrypedIDfromURL = HttpUtility.HtmlEncode(inputString);
+            var encrypedIDfromURL = HttpUtility.HtmlEncode(inputString);
 
-
-
-            //var encrypedIDfromURL = System.Web.HttpUtility.UrlEncode(inputString);
-            var decoded = System.Net.WebUtility.UrlDecode(inputString);
-
-
-
-            string decoddedDecrypted = Strings.Decrypt(decoded, key, iv);
-            return decoddedDecrypted;
+            string decrypted = Strings.Decrypt(encrypedIDfromURL, key, iv);
+            return decrypted;
         }
-
-
-
+       
 
     }
 }
