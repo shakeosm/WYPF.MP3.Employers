@@ -26,7 +26,7 @@ namespace MCPhase3.Models
         /// </summary>
         /// <param name="remId"></param>
         /// <returns></returns>
-        public async Task<string> CallAPIRem(int remId, string url)
+        public string CallAPIRem(int remId, string url)
         {
 
             using (var client = new HttpClient())
@@ -34,15 +34,15 @@ namespace MCPhase3.Models
                 //client.BaseAddress = new Uri("http://172.22.80.130:89/api/TotalRecordsInserted/");
                 client.BaseAddress = new Uri(url);
                 //send parameters as input
-                var responseTask = await client.GetAsync(remId.ToString());
-                //responseTask.Wait();
-                //var result = responseTask.Result;
-                var readTask = await responseTask.Content.ReadAsStringAsync();
-                //readTask.Wait();
+                var responseTask = client.GetAsync(remId.ToString());
+                responseTask.Wait();
+                var result = responseTask.Result;
+                var readTask = result.Content.ReadAsStringAsync();
+                readTask.Wait();
 
-                //string messageResult = readTask.Result;
+                string messageResult = readTask.Result;
 
-                return readTask;
+                return messageResult;
             }
         }
         /// <summary>
