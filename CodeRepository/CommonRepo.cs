@@ -60,9 +60,9 @@ namespace MCPhase3.CodeRepository
             
             using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             {
-                if (fileName.IndexOf(".xlsx") > 0)
+                if (Path.GetExtension(fileName) == "xlsx")
                     xssWorkbook = new XSSFWorkbook(stream);
-                else if (fileName.IndexOf(".xls") > 0)
+                else if (Path.GetExtension(fileName) == "xls")
                     xssWorkbook = new HSSFWorkbook(stream);
 
                 sheet = xssWorkbook.GetSheetAt(0);

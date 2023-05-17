@@ -1,4 +1,5 @@
-﻿using MCPhase3.CodeRepository;
+﻿using DocumentFormat.OpenXml.EMMA;
+using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
@@ -140,7 +142,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public IActionResult UpdatePassword()
         {
-            LoginBO loginBO = new LoginBO();
+            LoginBO loginBO = new LoginBO() { userName = CurrentUserId() };
             //loginBO.isStaff = 0;
             return View(loginBO);
         }
@@ -149,6 +151,19 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdatePassword(LoginBO loginBO)
         {
+            if (!ModelState.IsValid) {
+                ModelState.AddModelError("Password","Invalid password. Please use a strong password.");
+                return View(loginBO);
+            }
+
+            string passwordPattern = @"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{9,255}$";
+            var passwordStrength = Regex.Match(loginBO.password, passwordPattern);
+            if (!passwordStrength.Success)
+            {
+                ModelState.AddModelError("Password", "Invalid password. Please use a strong password.");
+                return View(loginBO);
+            }
+
             List<string> passwordReq  = new List<string>
             {
                 "at least nine characters",
@@ -157,6 +172,7 @@ namespace MCPhase3.Controllers
                 "one or more numbers",
                 "one or more special characters, for example !,”.#",
             };
+
             ViewBag.isStaff = 1;
             loginBO.userName = ContextGetValue(Constants.SessionKeyUserID);
             int result = await UpdatePasswordMethod(loginBO);
