@@ -64,14 +64,12 @@
             <p><input type="file" name="files" class="form-control"></p>
             <div class="form-group col-md-6">
                 <input type="submit" value="Upload File" class="btn btn-primary" />
-                    <small id="uploadHelp" class="form-text text-muted">Maxium file size 5MB. File type Excel only. </small>
             </div>
             @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
         </div>
         @if (TempData["MsgM"] != null)
         {
-                var alterClass = TempData["MsgM"].ToString().Contains("success") ? "alert-success" : "alert-danger";
-                <div class="alert @alterClass border-2">
+            <div class="alert alert-danger border-2">
         <!--Html.Raw to apply Html tags inside a string-->
                 @Html.Raw(@TempData["MsgM"].ToString())      
             </div>
@@ -81,7 +79,7 @@
                 <div class="alert alert-success" role="alert">
                     <a asp-action="Remad" class="btn btn-primary">Next </a> to check all totals are correct.
                 </div>
-            }            
+            }
         }
     </div>
 </div>
