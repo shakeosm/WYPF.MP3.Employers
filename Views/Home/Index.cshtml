@@ -7,67 +7,67 @@
 
 
 
-<form asp-action="Create" enctype="multipart/form-data" method="post">
+<form asp-action="Create" enctype="multipart/form-data" method="post" id="UploadFileForm">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     @*<h1 class="mainheading"> LG - Contribution advice</h1>
     <p class="mainheading">If you need to contact us phone 01274 434563 or 01274 435310</p>*@
-<div class="border shadow-lg p-4 mb-4 bg-white">
-    @*<div class="container-fluid bg-3 text-center">
+    <div class="border shadow-lg p-4 mb-4 bg-white">
+        @*<div class="container-fluid bg-3 text-center">
         <div class="container">*@
-    <div class="row justify-content-center">
-        <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
-            <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+        <div class="row justify-content-center">
+            <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
 
-                <!-- progressbar -->
-                <ul id="progressbar">
-                    <li class="active" id="account"><strong>File Upload</strong></li>
-                    <li id="personal"><strong>Check Totals</strong></li>
-                    <li id="personal"><strong>Data Summary</strong></li>
-                    <li id="personal"><strong>Error and Warning Summary</strong></li>
-                    <li id="personal"><strong>Bulk Approval</strong></li>
-                    <li id="payment"><strong>Submit to Database</strong></li>
-                    <li id="confirm"><strong>Finish</strong></li>
-                </ul>
+                    <!-- progressbar -->
+                    <ul id="progressbar">
+                        <li class="active" id="account"><strong>File Upload</strong></li>
+                        <li id="personal"><strong>Check Totals</strong></li>
+                        <li id="personal"><strong>Data Summary</strong></li>
+                        <li id="personal"><strong>Error and Warning Summary</strong></li>
+                        <li id="personal"><strong>Bulk Approval</strong></li>
+                        <li id="payment"><strong>Submit to Database</strong></li>
+                        <li id="confirm"><strong>Finish</strong></li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-    @* </div>
+        @* </div>
         </div>*@
-    <div class="container">
-        <div class="jumbotron col-md-12">
-            <h4>List of Paylocations:</h4>
-            <select class="form-control col-md-6" asp-for="paylocationList" asp-items="ViewBag.Paylocations"></select>
+        <div class="container">
+            <div class="jumbotron col-md-12">
+                <h4>List of Paylocations:</h4>
+                <select class="form-control col-md-6" asp-for="paylocationList" asp-items="ViewBag.Paylocations"></select>
+            </div>
         </div>
-    </div>
-    </br>
-    <div class="container" id="uploadFile">
-        <div class="jumbotron">
+        </br>
+        <div class="container" id="uploadFile">
+            <div class="jumbotron">
+                <h4>Step 1 - select payroll information</h4><hr />
 
-            <h4>Step 1 - upload monthly contribution spreadsheet</h4><hr />
+                <div class="col-md-12">
+                    <label class="col-md-6">Select Payroll month:</label>
+                    <select class="form-control col-md-6" asp-for="monthsList" asp-items="ViewBag.Months"></select><br><br>
+                </div>
+                <div class="col-md-12">
+                    <label class="col-md-6">Select Payroll year:</label>
+                    <select class="form-control col-md-6" asp-for="yearsList" asp-items="ViewBag.Years"></select><br><br>
+                </div>
 
-            <div class="col-md-12">
-                <label class="col-md-6">Select Payroll month:</label>
-                <select class="form-control col-md-6" asp-for="monthsList" asp-items="ViewBag.Months"></select><br><br>
-            </div>
-            <div class="col-md-12">
-                <label class="col-md-6">Select Payroll year:</label>
-                <select class="form-control col-md-6" asp-for="yearsList" asp-items="ViewBag.Years"></select><br><br>
-            </div>
+                <div class="col-md-12">
+                    <label class="col-md-6">Posting for:</label>
+                    <select class="form-control col-md-6" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting"></select><br><br>
+                </div>
 
-            <div class="col-md-12">
-                <label class="col-md-6">Posting for:</label>
-                <select class="form-control col-md-6" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting"></select><br><br>
-            </div>
+                <h4>Step 2: upload monthly contribution spreadsheet</h4>
 
-            <h4>Step 2: Browse file</h4>
-            <p><input type="file" name="files" class="form-control"></p>
-            <div class="form-group col-md-6">
-                <input type="submit" value="Upload File" class="btn btn-primary" />
+                <p><input type="file" name="paymentFile" id="UploadFileInput" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="form-control"></p>
+                <div class="form-group col-md-6">
+                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" disabled />
                     <small id="uploadHelp" class="form-text text-muted">Maxium file size 5MB. File type Excel only. </small>
+                </div>
+                @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
             </div>
-            @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
-        </div>
             @if (TempData["MsgM"] != null)
             {
                 var alterClass = TempData["MsgM"].ToString().Contains("success") ? "alert-success" : "alert-danger";
@@ -85,9 +85,9 @@
                 }
             }
         </div>
-</div>
+    </div>
 </form>
-   
+
 
 
 

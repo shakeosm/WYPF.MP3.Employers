@@ -90,7 +90,7 @@
                 <h3><b>Step 3 – enter any additional payments</b></h3><hr />
                 <div class="row">
                     <h4 class="col-md-10">Deficit</h4>
-                    <input asp-for="@Model.DeficitRec" onkeypress="return validate(event)" onkeyup="foo()" id="Deficit" placeholder="£0" class="col-md-2" data-toggle="tooltip" title="if your additional payment relates to a WYPF invoice, please quote the invoice reference and the customer number in the additional information box below">
+                    <input asp-for="@Model.DeficitRec" onkeypress="return validate(event)" id="Deficit" placeholder="£0" class="col-md-2" data-toggle="tooltip" title="if your additional payment relates to a WYPF invoice, please quote the invoice reference and the customer number in the additional information box below">
 
                 </div>
                 <div class="row"><h4 class="col-md-10">Previous year-end adjustments</h4><input asp-for="@Model.YearEndBalanceRec" onkeypress="return validate(event)" id="YearEndBalance" placeholder="£0" class="col-md-2"></div>

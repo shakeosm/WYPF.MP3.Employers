@@ -27,7 +27,6 @@
     <Folder Include="wwwroot\FilesForFTP\" />
     <Folder Include="wwwroot\DesignXML\" />
     <Folder Include="wwwroot\lib\fontawesome\" />
-    <Folder Include="wwwroot\UploadedFiles\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -23,6 +23,8 @@ using System.Threading.Tasks;
 using System.Web;
 using MCPhase3.CodeRepository.InsertDataProcess;
 using MCPhase3.Common;
+using static MCPhase3.Common.Constants;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MCPhase3.Controllers
 {
@@ -58,8 +60,7 @@ namespace MCPhase3.Controllers
         DataTable excelDt;
         DataTable excelDt1;
         MyModel modelDT = new MyModel();        
-        CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();
-        
+        CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();               
 
         public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host,IHostingEnvironment environment, IConfiguration configuration) : base (configuration)
         {
@@ -67,7 +68,7 @@ namespace MCPhase3.Controllers
             _host = host;
             _Configure = configuration;
             _Environment = environment;
-            
+        
         }
         
         /// <summary>
@@ -173,14 +174,14 @@ namespace MCPhase3.Controllers
         /// <summary>
         /// following Create is to work with LG pages
         /// </summary>
-        /// <param name="files"></param>
+        /// <param name="paymentFile"></param>
         /// <param name="monthsList"></param>
         /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(IFormFile files, string monthsList, string yearsList, string posting)
+        public async Task<IActionResult> Create(IFormFile paymentFile, string monthsList, string yearsList, string posting)
         {
-            var fileUplaodStatus = IsFileValid(files);
+            var fileUplaodStatus = IsFileValid(paymentFile);
 
             if (!fileUplaodStatus.IsSuccess)
             {
@@ -188,20 +189,29 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("Index", "Home", null, "uploadFile");
             }
 
+            if (monthsList.Equals("month") || yearsList.Equals("Select Year")) {
+                TempData["MsgM"] = "Error: You must select Year and Month to continue";
+                return RedirectToAction("Index", "Home", null, "uploadFile");
+            }
+
             //Add selected name of month into Session, filename and total records in file.
-            HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
-            HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList);
+            HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList);
             HttpContext.Session.SetString(Constants.SessionKeyPosting, posting);
             HttpContext.Session.SetString(Constants.SessionKeySchemeName, "LGPS");
 
             TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
-            CheckFileUploadedBO fileCheckBO = new CheckFileUploadedBO();
-            fileCheckBO.P_Month = monthsList;
-            fileCheckBO.P_Year = yearsList;
-            string userName = ContextGetValue(Constants.SessionKeyUserID);
+            var fileCheckBO = new CheckFileUploadedBO
+            {
+                P_Month = monthsList,
+                P_Year = yearsList
+            };
+            string userName = ContextGetValue(SessionKeyUserID);
             string empName = ContextGetValue(Constants.SessionKeyEmployerName);
             string empID = ContextGetValue(Constants.SessionKeyPayrollProvider);
+            
             fileCheckBO.P_EMPID = empID;
+
             //Member titles coming from config - 
             string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             //Check all invalid signs from file and show error to employer
@@ -210,7 +220,8 @@ namespace MCPhase3.Controllers
             //update Event Details table File is uploaded successfully.
             string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             string apiBaseUrlForCheckFileAvailable = ConfigGetValue("WebapiBaseUrlForCheckFileAvailable");
-            //check if file is uploaded for the selected month and year.
+            
+            //check if records were uploaded previously for the selected month and year.
             int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
 
             string fileExt = string.Empty;
@@ -225,148 +236,144 @@ namespace MCPhase3.Controllers
             //List<NameOfMonths> payLocations = GetPaylocations();
             List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
             //bypass year and month check 
-            if (posting.Equals("1"))
+            
+            //if (postingNumber == (int)PostingType.First)
+            if (posting == "1") // ## PostingType.First
             {
                 if (result1 == 1)
                 {
-                    TempData["MsgM"] = "File is already uploaded for the month: " + monthsList + " and " + " payrol period: " + yearsList + " <br> You can goto Dashboard and start process on file from there. ";
+                    TempData["MsgM"] = $"File is already uploaded for the month: {monthsList} and payrol period: {yearsList} <br/> You can goto Dashboard and start process on file from there. ";
                     return RedirectToAction("Index", "Home", null, "uploadFile");
                 }
             }
           
            
-            if (files == null)
+
+            if (excelDt != null)
             {
-                TempData["MsgM"] = "Please choose a file first";
+                excelDt.Clear();
+            }
+
+            //clear Datatable when upload file button is clicked.
+            var fileNameWithoutExt = Path.GetFileNameWithoutExtension(paymentFile.FileName);
+            fileExt = Path.GetExtension(paymentFile.FileName);
+
+            fileNameWithoutExt  = $"{empName.Replace(" ", "-")}_{yearsList}_{monthsList}_{posting}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.{fileExt}";
+
+            path = Path.Combine(webRootPath + "/UploadedFiles/", fileNameWithoutExt);
+            //copy file to local folder
+            string _customerUploadsLocalPath = ConfigGetValue("FileUploadPath");
+            if (!Path.Exists(_customerUploadsLocalPath)) {
+                TempData["MsgM"] = "Error: File upload area not defined. Please contact support.";
                 return RedirectToAction("Index", "Home", null, "uploadFile");
             }
-            else if (monthsList.Equals("month") || yearsList.Equals("Select Year"))
+
+            using (System.IO.FileStream fileStream = new FileStream(path, FileMode.Create))
             {
-                TempData["MsgM"] = "Please select a payroll month and payroll year from drop down list.";
+                await paymentFile.CopyToAsync(fileStream);
+                _logger.LogInformation("File is copied to local folder.");
+            }
+
+            //CopyFileToFolderAsync(fileNameWithoutExt, _host.WebRootPath, "/UploadedFiles/");
+
+            //saved file
+            //string fullPathWithFileName = Path.Combine(path,fileExt);
+            try
+            {
+                excelDt = CommonRepo.ExcelToDT(path, out errorMessage);
+            }
+            catch (Exception ex)
+            {
+                TempData["MsgM"] = "File has an error or missing something " + ex.Message;
                 return RedirectToAction("Index", "Home", null, "uploadFile");
-            }           
+            }
+              
+
+            if (excelDt == null)
+            {
+                TempData["MsgM"] = errorMessage;
+                //model.myErrorMessageText += errorMessage;
+                return RedirectToAction("Index", "Home", null, "uploadFile");                    
+            }
+            //allow a sign in a column
+            // excelDt = AllowedSigns(excelDt);
+                
+
+            // change column heading Name
+            if (!CommonRepo.ChangeColumnHeadings(excelDt, out errorMessage))
+            {
+                TempData["MsgM"] = errorMessage;
+                // model.myErrorMessageText += errorMessage;
+                return RedirectToAction("Index", "Home", null, "uploadFile");
+                //return RedirectToAction("Index", "Home");
+            }
+
+            // convert all fields in data table to string
+            // modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt, monthsList, fileNameWithoutExt);
+            modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt);
+
+                                
+            int numberOfRows = modelDT.stringDT.Rows.Count;
+
+            //Add selected name of month into Session, filename and total records in file.
+            HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
+            //HttpContext.Session.SetString(Constants.SessionKeyClientId,3.ToString());
+
+            HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameWithoutExt.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
+
+            // var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+
+            //Seperated LG and Fire functions
+            //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
+            string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, monthsList, posting, yearsList, subPayList,validTitles, invalidSigns, ref errorMessage);
+
+            if (!errorMessage.Equals(""))
+            {
+                TempData["MsgM"] = null;
+                //following tempdata is showing list of errors in file.
+                TempData["MsgM"] = "<h2> Please remove following errors from file and upload again </h2><br />" + CheckSpreadSheetErrorMsg;
+                //HtmlString str = new HtmlString( "<h2> Please remove following errors from file and upload again </h2>" + CheckSpreadSheetErrorMsg);
+                return RedirectToAction("Index", "Home",null, "uploadFile");
+            }
             else
             {
-                if (excelDt != null)
-                {
-                    excelDt.Clear();
-                }
-
-                //clear Datatable when upload file button is clicked.
-                var fileNameWithoutExt = Path.GetFileNameWithoutExtension(files.FileName);
-                fileExt = Path.GetExtension(files.FileName);
-                //Only excel files allowed
-                bool result = OnlyExelFileCheck(fileExt);
-                fileNameWithoutExt = fileNameWithoutExt+"_"+empName + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + fileExt;
-                path = Path.Combine(webRootPath + "/UploadedFiles/", fileNameWithoutExt);
-                //copy file to local folder
-                using (System.IO.FileStream fileStream = new FileStream(path, FileMode.Create))
-                {
-                    await files.CopyToAsync(fileStream);
-                    _logger.LogInformation("File is copied to local folder.");
-                }
-
-                //CopyFileToFolderAsync(fileNameWithoutExt, _host.WebRootPath, "/UploadedFiles/");
-                if (result == true)
-                {
-                    TempData["MsgM"] = "Only excel files can be uploaded";
-                    return RedirectToAction("Index", "Home", null, "uploadFile");
-                }
-                //saved file
-                //string fullPathWithFileName = Path.Combine(path,fileExt);
+                    
+                //string designDocPath = GetConfigValue("DesginXMLFilePath");
+                //read design XML from wwwroot folder
+                string designDocPath = string.Concat(this._Environment.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
                 try
                 {
-                    excelDt = CommonRepo.ExcelToDT(path, out errorMessage);
+                    //save datatable for future use
+                    dataTableToDB.PassDt(0, "", "", "", "", excelDt, designDocPath);
+                    TempData["MsgM"] = "File is uploaded successfully";
+                      
+                    return RedirectToAction("Index", "Home", null, "uploadFile");
                 }
                 catch (Exception ex)
                 {
-                    TempData["MsgM"] = "File has an error or missing something " + ex.Message;
+                    TempData["MsgM"] = "File is not uploaded, please check error in qoutes : '" + " < b > "+ ex.Message + " </ b > '";
                     return RedirectToAction("Index", "Home", null, "uploadFile");
                 }
-              
-
-                if (excelDt == null)
+                finally
                 {
-                    TempData["MsgM"] = errorMessage;
-                    //model.myErrorMessageText += errorMessage;
-                    return RedirectToAction("Index", "Home", null, "uploadFile");                    
+                    excelDt.Dispose();
+                    modelDT.stringDT.Dispose();
                 }
-                //allow a sign in a column
-               // excelDt = AllowedSigns(excelDt);
-                
-
-                // change column heading Name
-                if (!CommonRepo.ChangeColumnHeadings(excelDt, out errorMessage))
-                {
-                    TempData["MsgM"] = errorMessage;
-                    // model.myErrorMessageText += errorMessage;
-                    return RedirectToAction("Index", "Home", null, "uploadFile");
-                    //return RedirectToAction("Index", "Home");
-                }
-
-                // convert all fields in data table to string
-                // modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt, monthsList, fileNameWithoutExt);
-                modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt);
-
-                                
-                int numberOfRows = modelDT.stringDT.Rows.Count;
-
-                //Add selected name of month into Session, filename and total records in file.
-                HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
-                HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
-                //HttpContext.Session.SetString(Constants.SessionKeyClientId,3.ToString());
-
-                HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameWithoutExt.ToString());
-                HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
-
-               // var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-
-                //Seperated LG and Fire functions
-                //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
-                string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, monthsList, posting, yearsList, subPayList,validTitles, invalidSigns, ref errorMessage);
-
-                if (!errorMessage.Equals(""))
-                {
-                    TempData["MsgM"] = null;
-                    //following tempdata is showing list of errors in file.
-                    TempData["MsgM"] = "<h2> Please remove following errors from file and upload again </h2><br />" + CheckSpreadSheetErrorMsg;
-                    //HtmlString str = new HtmlString( "<h2> Please remove following errors from file and upload again </h2>" + CheckSpreadSheetErrorMsg);
-                    return RedirectToAction("Index", "Home",null, "uploadFile");
-                }
-                else
-                {
-                    
-                    //string designDocPath = GetConfigValue("DesginXMLFilePath");
-                    //read design XML from wwwroot folder
-                    string designDocPath = string.Concat(this._Environment.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
-                    try
-                    {
-                        //save datatable for future use
-                        dataTableToDB.PassDt(0, "", "", "", "", excelDt, designDocPath);
-                        TempData["MsgM"] = "File is uploaded successfully";
-                      
-                        return RedirectToAction("Index", "Home", null, "uploadFile");
-                    }
-                    catch (Exception ex)
-                    {
-                        TempData["MsgM"] = "File is not uploaded, please check error in qoutes : '" + " < b > "+ ex.Message + " </ b > '";
-                        return RedirectToAction("Index", "Home", null, "uploadFile");
-                    }
-                    finally
-                    {
-                        excelDt.Dispose();
-                        modelDT.stringDT.Dispose();
-                    }
                                       
-                }
             }
+            
         }
 
 
         private TaskResults IsFileValid(IFormFile file)
         {
             var result = new TaskResults { IsSuccess = false, Message = string.Empty };
-
+            if (file is null) {
+                result.Message += "No file selected.";
+                return result;
+            }
             int fileSizeLimit = 5100000;
 
             if (file.Length > fileSizeLimit)
@@ -376,12 +383,12 @@ namespace MCPhase3.Controllers
 
             if (!(file.ContentType.Contains("vnd.ms-excel") || file.ContentType.Contains("vnd.openxmlformats")))
             {
-                result.Message += "<br /> Invalid file contents, ";
+                result.Message += "<br/> Invalid file contents, ";
             }
 
             if (!Path.GetExtension(file.FileName).Contains("xls"))
             {
-                result.Message += "<br /> Invalid file type";
+                result.Message += "<br/> Invalid file type";
             }
 
             result.IsSuccess = string.IsNullOrEmpty(result.Message);
@@ -400,6 +407,13 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateFire(IFormFile files, string monthsList, string yearsList, string posting)
         {
+            var fileUplaodStatus = IsFileValid(files);
+            if (!fileUplaodStatus.IsSuccess)
+            {
+                TempData["MsgM"] = "Only excel files can be uploaded";
+                return RedirectToAction("IndexFire", "Home", null, "uploadFile");
+
+            }
             TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
             CheckFileUploadedBO fileCheckBO = new CheckFileUploadedBO();
             fileCheckBO.P_Month = monthsList;
@@ -457,7 +471,7 @@ namespace MCPhase3.Controllers
                 var fileNameWithoutExt = Path.GetFileNameWithoutExtension(files.FileName);
                 fileExt = Path.GetExtension(files.FileName);
                 //Only excel files allowed
-                bool result = OnlyExelFileCheck(fileExt);
+                
                 fileNameWithoutExt = fileNameWithoutExt+"_" +empName+ DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + fileExt;
                 path = Path.Combine(webRootPath + "/UploadedFiles/", fileNameWithoutExt);
                 
@@ -467,11 +481,7 @@ namespace MCPhase3.Controllers
                     await files.CopyToAsync(fileStream);
                     _logger.LogInformation("File is copied to local folder.");
                 }
-                if (result == true)
-                {
-                    TempData["MsgM"] = "Only excel files can be uploaded";
-                    return RedirectToAction("IndexFire", "Home", null, "uploadFile");
-                }
+              
                 //saved file
                 //string fullPathWithFileName = Path.Combine(path,fileExt);
                 try
@@ -1080,19 +1090,7 @@ namespace MCPhase3.Controllers
             return yearList;
         }
         
-        /// <summary>
-        /// Check file is execl
-        /// </summary>
-        /// <param name="fileExt"></param>
-        /// <returns></returns>
-        private bool OnlyExelFileCheck(string fileExt)
-        {
-            if (fileExt.ToUpper() == "XLX" || fileExt.ToUpper() == "XLSX")
-            {
-                return true;
-            }
-            return false;
-        }
+
         /// <summary>
         /// following method will show list of sub payroll provider with login name and id
         /// </summary>

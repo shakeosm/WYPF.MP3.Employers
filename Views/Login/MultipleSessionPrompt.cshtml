@@ -7,7 +7,8 @@
 <div class="container">
     
     <div class="alert alert-warning mt-5" style="margin-top:3em;">        
-        <h2>Warning: Duplicate session found!</h2>
+        <h2><i class="fa-regular fa-user-group-simple"></i>
+            Warning: Duplicate session found!</h2>
     </div>
     <div>
         <h4>
@@ -16,13 +17,13 @@
         </h4>
         <p>
             <ul>
-                <li>
+                <li><i class="fa-solid fa-computer"></i>
                     Computer: <span class="badge badge-secondary">@Model.WindowsId</span>
                 </li>
-                <li>
+                <li><i class="fa-brands fa-chrome"></i>
                     Browser: <span class="badge badge-secondary">@Model.BrowserId</span>
                 </li>
-                <li>
+                <li><i class="fa-regular fa-clock"></i>
                     Last loged in: <span class="badge badge-secondary">@Model.LastLoggedIn</span>
                 </li>
             </ul>

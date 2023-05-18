@@ -30,5 +30,12 @@
         public const string SessionGuidKeyName = "SessionGUID";    //## for Redis cross check
         public const string UserIdKeyName = "LoggedInAs";    //## for Redis cross check
 
+
+        public enum PostingType
+        {
+            First= 1,
+            Second= 2,
+            PreviousMonth= 3,
+        }
     }
 }
