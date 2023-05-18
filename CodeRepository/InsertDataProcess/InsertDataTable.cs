@@ -24,8 +24,13 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             //DataTable newData;
            //newData table does not have rem and client id in start but when it was called 1st time I added both in datatable
            //so If I needed to call again this function I do not need to add them and only need to add their values.
-            if (!string.IsNullOrEmpty(remittanceID))
+            if (string.IsNullOrEmpty(remittanceID))
             {
+                readAndSaveXML(newData, path);
+            }
+            else
+            {
+
                 int total = dtInsert.Rows.Count;
                 dtInsert.Columns.Add("REMITTANCE_ID");
                 dtInsert.Columns.Add("DATAROWID_RECD", typeof(int));
@@ -46,15 +51,11 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
 
                     dtInsert.Rows[i]["MODUSER"] = userName;
                     dtInsert.Rows[i]["MODDATE"] = Convert.ToDateTime(DateTime.Now.ToString("dd/MM/yyyy"));
-                    dtInsert.Rows[i]["MODTYPE"] = "A"; 
+                    dtInsert.Rows[i]["MODTYPE"] = "A";
                     dtInsert.Rows[i]["POSTDATE"] = Convert.ToDateTime(DateTime.Now.ToString("dd/MM/yyyy"));
                 }
                 dtInsert.AcceptChanges();
                 newData.Dispose();
-            }
-            else
-            {
-                readAndSaveXML(newData, path);               
             }
         }
 

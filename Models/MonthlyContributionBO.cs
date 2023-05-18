@@ -56,5 +56,10 @@ namespace MCPhase3.Models
 
         public string UploadedFileName { get; set; }
         public string payRollYear { get; set; }
+
+        public double EmployeeTotal () => MemberContribSS + MemberContrib5050SS + MemberContribAPCSS + MemberContribPOESSS + MemberContribARCSS;
+        public double EmployersEmployeeTotalValue() => EmployeeTotal() + EmployersTotalSS;
+        public double DedifitTotalLblValue() => DeficitRec + YearEndBalanceRec + FundedBenefitsRec + Miscellaneous_Rec;
+        public double GrandTotalValue() => DedifitTotalLblValue() + EmployersEmployeeTotalValue();
     }
 }
