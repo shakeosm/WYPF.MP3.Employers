@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using NPOI.POIFS.Crypt;
 using System;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
@@ -24,7 +25,7 @@ namespace MCPhase3.Controllers
 
     
 
-    public class SummaryNManualMController : Controller
+    public class SummaryNManualMController : BaseController
     {
         private readonly ILogger<SummaryNManualMController> _logger;
         private readonly IWebHostEnvironment _host;
@@ -42,9 +43,9 @@ namespace MCPhase3.Controllers
         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         EventDetailsBO eBO = new EventDetailsBO();
         EventsTableUpdates eventUpdate;
-        
 
-        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration)
+
+        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration) : base(configuration)
         {
             _Configure = configuration;
             _host = host;
@@ -91,18 +92,16 @@ namespace MCPhase3.Controllers
             string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
 
                 
-                //pass remittance id to next action
-                ViewBag.remID = alertSumBO.remittanceId;
+            //pass remittance id to next action
+            
+            int remID = 0;
 
-                int remID = 0;
-            if(!string.IsNullOrEmpty(alertSumBO.remittanceId))
-            {
-                remID = Convert.ToInt32(CustomDataProtection.Decrypt(alertSumBO.remittanceId));
-            }
+                remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.remittanceId));
+                ViewBag.remID = remID;
                 //checks remittance id and login if session expired then returns to login page.
                 alertSumBO.remittanceId = CheckRem(remID).ToString();
 
-                ViewBag.empName = HttpContext.Session.GetString(SessionKeyEmployerName);
+            ViewBag.empName = HttpContext.Session.GetString(SessionKeyEmployerName);
 
             //add remittance id into session for future use.
 

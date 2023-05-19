@@ -1,8 +1,9 @@
 ﻿//using HtmlAgilityPack;
 using MCPhase3.CodeRepository;
+using MCPhase3.CodeRepository.InsertDataProcess;
+using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,20 +12,15 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
-using MCPhase3.CodeRepository.InsertDataProcess;
-using MCPhase3.Common;
+using Weather.UI.Utilties;
 using static MCPhase3.Common.Constants;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MCPhase3.Controllers
 {
@@ -33,22 +29,12 @@ namespace MCPhase3.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-        private readonly IHostingEnvironment _Environment;
-        //public const string SessionKeyClientId = "_clientId";
-        //public const string SessionKeyUserID = "_UserName";
-        //public const string SessionKeyMonth = "_month";
-        //public const string SessionKeyFileName = "_fileName";
-        //public const string SessionKeyTotalRecords = "_totalRecords";
-        //public const string SessionKeyRemittanceID = "_remittanceID";
-        //public const string SessionKeyEmployerName = "_employerName";
-        //public const string SessionKeyClientType = "_clientType";
-        //public const string SessionKeyPayLocId = "_Id";
-        //public const string SessionKeyPayrollProvider = "_payrollProvider";
-        //public const string SessionKeyYears = "_years";
-        //public const string SessionKeyReturnInit = "_returnInit";
-        //public const string SessionKeyPosting = "_posting";
-        //public const string SessionKeySchemeName = "_scheme";
+        private readonly IRedisCache _cache;
+        
+        //private readonly IHostingEnvironment _Environment;        //Obsolete now.. 
+        private readonly IWebHostEnvironment _Environment;
 
+        
 
         string apiBaseUrlForRemittanceInsert = string.Empty;
         string apiBaseUrlForAutoMatch = string.Empty;
@@ -62,11 +48,12 @@ namespace MCPhase3.Controllers
         MyModel modelDT = new MyModel();        
         CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();               
 
-        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host,IHostingEnvironment environment, IConfiguration configuration) : base (configuration)
+        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IWebHostEnvironment environment, IConfiguration configuration, IRedisCache Cache) : base (configuration)
         {
             _logger = logger;
             _host = host;
             _Configure = configuration;
+            _cache = Cache;
             _Environment = environment;
         
         }
@@ -77,9 +64,8 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> Index()
         {
-            string clientType = string.Empty;           
+            string clientType = ContextGetValue(Constants.SessionKeyClientType);
             //Session can set here to check if logged in user is Fire or LG.
-            clientType = ContextGetValue(Constants.SessionKeyClientType);
             //check if year, month and type of posting is already selected from session
             string monthSelected = ContextGetValue(Constants.SessionKeyMonth)?? string.Empty;
             string yearSelected = ContextGetValue(Constants.SessionKeyYears) ?? string.Empty;
@@ -225,7 +211,7 @@ namespace MCPhase3.Controllers
             int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
 
             string fileExt = string.Empty;
-            string path = string.Empty;
+            string filePath = string.Empty;
             string spreadSheetName = string.Empty;
             string errorMessage = string.Empty;
             bool answer = true;
@@ -258,17 +244,18 @@ namespace MCPhase3.Controllers
             var fileNameWithoutExt = Path.GetFileNameWithoutExtension(paymentFile.FileName);
             fileExt = Path.GetExtension(paymentFile.FileName);
 
-            fileNameWithoutExt  = $"{empName.Replace(" ", "-")}_{yearsList}_{monthsList}_{posting}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.{fileExt}";
+            fileNameWithoutExt  = $"{empName.Replace(" ", "-")}_{yearsList.Replace("/", "-")}_{monthsList}_{posting}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
 
-            path = Path.Combine(webRootPath + "/UploadedFiles/", fileNameWithoutExt);
             //copy file to local folder
-            string _customerUploadsLocalPath = ConfigGetValue("FileUploadPath");
-            if (!Path.Exists(_customerUploadsLocalPath)) {
+            string _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
+            filePath = Path.Combine(_customerUploadsLocalFolder, fileNameWithoutExt);
+
+            if (!Path.Exists(_customerUploadsLocalFolder)) {
                 TempData["MsgM"] = "Error: File upload area not defined. Please contact support.";
                 return RedirectToAction("Index", "Home", null, "uploadFile");
             }
 
-            using (System.IO.FileStream fileStream = new FileStream(path, FileMode.Create))
+            using (FileStream fileStream = new(filePath, FileMode.Create))
             {
                 await paymentFile.CopyToAsync(fileStream);
                 _logger.LogInformation("File is copied to local folder.");
@@ -280,7 +267,10 @@ namespace MCPhase3.Controllers
             //string fullPathWithFileName = Path.Combine(path,fileExt);
             try
             {
-                excelDt = CommonRepo.ExcelToDT(path, out errorMessage);
+                excelDt = CommonRepo.ExcelToDT(filePath, out errorMessage);
+
+                //## all good.. now store this file details in the Redis cache for further processing, if required
+                _cache.SetString($"{CurrentUserId()}_{UploadedFilePathKey}", filePath);
             }
             catch (Exception ex)
             {
@@ -320,7 +310,7 @@ namespace MCPhase3.Controllers
             HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
             //HttpContext.Session.SetString(Constants.SessionKeyClientId,3.ToString());
 
-            HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameWithoutExt.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameWithoutExt);
             HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
 
             // var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -431,7 +421,7 @@ namespace MCPhase3.Controllers
             //check if file is uploaded for the selected month and year.
             int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
             string fileExt = string.Empty;
-            string path = string.Empty;
+            string filePath = string.Empty;
             string spreadSheetName = string.Empty;
             string errorMessage = string.Empty;
             bool answer = true;
@@ -467,16 +457,24 @@ namespace MCPhase3.Controllers
                     excelDt.Clear();
                 }
                 //clear Datatable when upload file button is clicked.
-               
+                               
                 var fileNameWithoutExt = Path.GetFileNameWithoutExtension(files.FileName);
                 fileExt = Path.GetExtension(files.FileName);
-                //Only excel files allowed
-                
-                fileNameWithoutExt = fileNameWithoutExt+"_" +empName+ DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + fileExt;
-                path = Path.Combine(webRootPath + "/UploadedFiles/", fileNameWithoutExt);
-                
+
+                fileNameWithoutExt = $"{empName.Replace(" ", "-")}_{yearsList.Replace("/", "-")}_{monthsList}_{posting}_{DateTime.Now:yyyy-MM-dd-HH-mm-ss}{fileExt}";
+
                 //copy file to local folder
-                using (System.IO.FileStream fileStream = new FileStream(path, FileMode.Create))
+                string _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
+                filePath = Path.Combine(_customerUploadsLocalFolder, fileNameWithoutExt);
+
+                if (!Path.Exists(_customerUploadsLocalFolder))
+                {
+                    TempData["MsgM"] = "Error: File upload area not defined. Please contact support.";
+                    return RedirectToAction("Index", "Home", null, "uploadFile");
+                }               
+
+                //copy file to local folder
+                using (FileStream fileStream = new (filePath, FileMode.Create))
                 {
                     await files.CopyToAsync(fileStream);
                     _logger.LogInformation("File is copied to local folder.");
@@ -486,7 +484,7 @@ namespace MCPhase3.Controllers
                 //string fullPathWithFileName = Path.Combine(path,fileExt);
                 try
                 {
-                    excelDt = CommonRepo.ExcelToDT(path, out errorMessage);
+                    excelDt = CommonRepo.ExcelToDT(filePath, out errorMessage);
                 }
                 catch (Exception ex)
                 {
@@ -699,10 +697,7 @@ namespace MCPhase3.Controllers
                                         return View(contributionBO);
                                     }
 
-                                    if (!string.IsNullOrEmpty(remittanceID))
-                                    {
-                                        remittanceID = CustomDataProtection.Decrypt(remittanceID);
-                                    }
+                                    remittanceID = EncryptUrlValue(remittanceID);                                    
 
                             //return RedirectToAction("RemittanceInsertDB", "Home", new { id = remittanceID });
                             return RedirectToAction("MoveFileForFTP", "Home", new { id = remittanceID });
@@ -747,27 +742,30 @@ namespace MCPhase3.Controllers
             ErrorAndWarningViewModelWithRecords errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords();
 
             errorAndWarningViewModelWithRecords.remittanceID = id;
-            
+
             //decode remittance id in url
-            if (!string.IsNullOrEmpty(id))
-            {
-                id = CustomDataProtection.Encrypt(id);
-            }
-            string path = string.Empty;
-            string uploadedFileName = ContextGetValue(Constants.SessionKeyFileName);
+            id = DecryptUrlValue(id);
+
+            string filePathName = _cache.GetString($"{CurrentUserId()}_{UploadedFilePathKey}");
+            //string uploadedFileName = ContextGetValue(Constants.SessionKeyFileName);
             //Get api url from appsetting.json           
             string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             
 
-            path = Path.Combine(_host.WebRootPath + "/UploadedFiles/", uploadedFileName);
+            //string _customerUploadsLocalPath = ConfigGetValue("FileUploadPath");            
+            //filePath = Path.Combine(_customerUploadsLocalPath, uploadedFileName);
+
             //copied to folder 
             //string destPathWithFileName = Path.Combine(_host.WebRootPath + "/TransferTo/", contributionBO.UploadedFileName);
-            string destPath = Path.Combine(_host.WebRootPath + "/TransferTo/");
+
+            //string destPath = Path.Combine(_host.WebRootPath + "/TransferTo/");
+            string destPath = ConfigGetValue("FileUploadPath") + "Done/";
+            
             //copy file to local folder
 
             try
             {
-                bool result = CommonRepo.CopyFileToFolder(path, destPath, uploadedFileName);
+                bool result = CommonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));                
                 //Update Event Details table and add File Uploaded and ready to FTP
                 eBO.remittanceID = Convert.ToInt32(id);
                 eBO.remittanceStatus = 1;
@@ -783,7 +781,7 @@ namespace MCPhase3.Controllers
                 string userName = ContextGetValue(Constants.SessionKeyUserID);
                 //get total records from in file from datatable.
                 int totalRecordsInF = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
-                totalRecordsInF += 1;
+                totalRecordsInF ++;
                 rangeOfRowsModel.P_USERID = userName;
                 rangeOfRowsModel.P_REMITTANCE_ID = Convert.ToInt32(id);
                 rangeOfRowsModel.P_NUMBER_OF_VALUES_REQUIRED = totalRecordsInF;
@@ -796,18 +794,19 @@ namespace MCPhase3.Controllers
                 
                 //following datatable will change column names of datatable to DB column names and insert data from excelDT.
                 DataTable newDT = dataTableToDB.KeepDataTable(row + 1, userName, schemeName, clientID, id.ToString()) ;
-                //upload file to database using api
+                
+                //Insert all the records to the database using api
                 string insertDataConn = ConfigGetValue("WebapiBaseUrlForInsertData");
                 newDT.AcceptChanges();
-                bool result1 = await callApi.InsertDataApi(newDT, insertDataConn);
+                bool InsertToDbSuccess = await callApi.InsertDataApi(newDT, insertDataConn);
                 newDT.Dispose();
 
 
-                if (result1)
+                if (InsertToDbSuccess)
                 {
                     eBO.remittanceID = Convert.ToInt32(id);
-                    eBO.remittanceStatus = 1;
-                    eBO.eventTypeID = 4;
+                    eBO.remittanceStatus = 1;   //TODO: use enums
+                    eBO.eventTypeID = 4;        //TODO: use enums
                     eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
                     eBO.notes = "Bulk data insert into database.";
                     //update Event Details table File is uploaded successfully.                               
@@ -821,7 +820,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error where file moves to FTP folder on WebServer.");
+                _logger.LogError($"Error where file moves to FTP folder on WebServer. Details: {ex.ToString()}");
                 TempData["MsgError"] = "System is showing some error, Please try again";
             }
             //return RedirectToAction("RemittanceInsertDB", "Home", new { id = remittanceID });
@@ -836,11 +835,12 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> RemittanceInsertDB(string id)
         {
-            int id1 = 0;
-            if (!string.IsNullOrEmpty(id))
-            {
-                id1 = Convert.ToInt32(CustomDataProtection.Encrypt(id));
-            }
+            int id1 = Convert.ToInt32(DecryptUrlValue(id));
+            //if (!string.IsNullOrEmpty(id))
+            //{
+            //    string decodeRedID = HttpUtility.UrlDecode(id);
+            //    id1 = Convert.ToInt32(CustomDataProtection.Decrypt(decodeRedID));
+            //}
             HelpTextBO helpTextBO = new HelpTextBO();
            
             ReturnCheckBO result = new ReturnCheckBO();
@@ -906,7 +906,7 @@ namespace MCPhase3.Controllers
                 eBO.remittanceID = id1;
                 eBO.remittanceStatus = 1;
                 eBO.eventTypeID = 50;
-                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
+                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));   //TODO: why not sending 'DateTime.Now' directly? why formatting?
                 eBO.notes = "Initial Processing Completed.";
                 callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
 
@@ -957,7 +957,7 @@ namespace MCPhase3.Controllers
             catch (Exception ex)
             {
 
-                _logger.LogError("Bulk Data or AutoMatch is failed, it is implemented in Home controller.");
+                _logger.LogError($"Bulk Data or AutoMatch is failed, it is implemented in Home controller. Detail: {ex.StackTrace}");
                 TempData["MsgError"] = "Please refresh your page in couple of minutes.";
                 //RedirectToAction("RemittanceInsertDB","Home", id);
             }
@@ -980,21 +980,7 @@ namespace MCPhase3.Controllers
         {
             return RedirectToAction("RemittanceInsertDB", new { id = remID});
         }
-        /// <summary>
-        /// get only number from a string. Not in use
-        /// </summary>
-        /// <param name="source"></param>
-        /// <returns></returns>        
-        public string GetIntValueFromString(string source)
-        {
-            if (String.IsNullOrWhiteSpace(source))
-                return string.Empty;
-            var number = Regex.Match(source, @"\d+");
-            if (number != null)
-                return number.Value;
-            else
-                return string.Empty;
-        }
+
         public IActionResult Privacy()
         {
             return View();
@@ -1028,14 +1014,14 @@ namespace MCPhase3.Controllers
                     new NameOfMonths(){text = "DECEMBER",value = "DECEMBER"}
                 }.ToList();
 
-            if (!string.IsNullOrEmpty(valueItem))
-            {
-                return nameOfMonths.OrderByDescending(x => x.value == valueItem).ThenBy(x=>x.value).ToList();
-            }
-            else
-            {
-                return nameOfMonths;
-            }
+            //if (!string.IsNullOrEmpty(valueItem))
+            //{
+            //    return nameOfMonths.OrderByDescending(x => x.value == valueItem).ThenBy(x=>x.value).ToList();
+            //}
+            //else
+            //{
+            return nameOfMonths;
+            //}
         }
 
         public List<NameOfMonths> GetOption(string valueItem)
@@ -1047,14 +1033,14 @@ namespace MCPhase3.Controllers
                new NameOfMonths{ text = "File has previous month data", value = "3" }
 
             }.ToList();
-            if (!string.IsNullOrEmpty(valueItem))
-            {
-                return postings.OrderByDescending(x => x.value == valueItem).ThenBy(x => x.value).ToList();
-            }
-            else
-            {
-                return postings;
-            }
+            //if (!string.IsNullOrEmpty(valueItem))
+            //{
+            //    return postings.OrderByDescending(x => x.value == valueItem).ThenBy(x => x.value).ToList();
+            //}
+            //else
+            //{
+            return postings;
+            //}
 
         }
         /// <summary>
@@ -1078,16 +1064,15 @@ namespace MCPhase3.Controllers
                     years = item
                 });
             }
-            if (!string.IsNullOrEmpty(valueItem))
-            {
-                return yearList.OrderByDescending(x => x.years == valueItem).ThenBy(x => x.years).ToList();
-            }
-            else
-            {
-                return yearList;
-            }
-
+            //if (!string.IsNullOrEmpty(valueItem))
+            //{
+            //    return yearList.OrderByDescending(x => x.years == valueItem).ThenBy(x => x.years).ToList();
+            //}
+            //else
+            //{
             return yearList;
+            //}
+
         }
         
 
@@ -1141,7 +1126,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw new InvalidDataException($"Error at 'sign' in the title field. Description: {ex.ToString()}");
             }
             finally
             {

@@ -56,13 +56,13 @@
 
                 <input type="hidden" asp-for="@Model.EmployeePay5050">
                 <input type="hidden" asp-for="@Model.EmployeePayMain">
-                <div class="row"><h4 class="col-md-10">Total employees contribution</h4><h4 class="col-md-2">£ @Model.MemberContribSS</h4></div>
-                <div class="row"><h4 class="col-md-10">Total employees contribution 50/50  </h4><h4 class="col-md-2">£ @Model.MemberContrib5050SS</h4></div>
-                <div class="row"><h4 class="col-md-10">Total employees purchase of extra service (contacts only) </h4><h4 class="col-md-2">£ @Model.MemberContribPOESSS</h4></div>
-                <div class="row"><h4 class="col-md-10">Total employees additional regular contributions (ARC) 2008 reg</h4><h4 class="col-md-2">£ @Model.MemberContribARCSS</h4></div>
-                <div class="row"><h4 class="col-md-10">Total employees additional pension contribution (APC) reg 16 </h4><h4 class="col-md-2">£ @Model.MemberContribAPCSS</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees contribution</h4><h4 class="col-md-2">£ @Model.MemberContribSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees contribution 50/50  </h4><h4 class="col-md-2">£ @Model.MemberContrib5050SS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees purchase of extra service (contacts only) </h4><h4 class="col-md-2">£ @Model.MemberContribPOESSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees additional regular contributions (ARC) 2008 reg</h4><h4 class="col-md-2">£ @Model.MemberContribARCSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employees additional pension contribution (APC) reg 16 </h4><h4 class="col-md-2">£ @Model.MemberContribAPCSS.ToString("N")</h4></div>
                 <hr />
-                <div class="row"><h4 class="col-md-10"><b>Total employees contribution</b></h4><h4 class="col-md-2" id="id=" MembersTotalValue""><b>£ @Model.EmployerContribSS</b></h4></div>
+                <div class="row"><h4 class="col-md-10"><b>Total employees contribution</b></h4><h4 class="col-md-2" id="id=" MembersTotalValue""><b>£ @Model.EmployerContribSS.ToString("N")</b></h4></div>
             </div>
         </div>
         <br /><br />
@@ -76,17 +76,17 @@
                 <input type="hidden" asp-for="@Model.EmployersTotal">
                 <input type="hidden" asp-for="@Model.payrollProviderID">
 
-                <div class="row"><h4 class="col-md-10">Total employer contribution</h4><h4 class="col-md-2">£ @Model.EmployersTotalSS</h4></div>
-                <div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2">£ @Model.EmployerContribAPCSS</h4></div><hr />
+                <div class="row"><h4 class="col-md-10">Total employer contribution</h4><h4 class="col-md-2">£ @Model.EmployersTotalSS.ToString("N")</h4></div>
+                <div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2">£ @Model.EmployerContribAPCSS.ToString("N")</h4></div><hr />
 
-                <div class="row"><h4 class="col-md-10"><b>Employer total:</b></h4><h4 class="col-md-2" id="EmployersTotalValue"><b>£ @(Model.EmployerContribAPCSS + Model.EmployerContribSS)</b></h4></div><br>
-                <div class="row"><h4 class="col-md-10"><b>Total employees and employer contribution</b></h4><h4 class="col-md-2" id="EmployersEmployeeTotalValue"><b>£ @(Model.EmployerContribAPCSS  + Model.EmployersTotalSS)</b></h4></div>
+                <div class="row"><h4 class="col-md-10"><b>Employer total:</b></h4><h4 class="col-md-2" id="EmployersTotalValue"><b>£ @Convert.ToDouble(Model.EmployerContribAPCSS + Model.EmployerContribSS).ToString("N")</b></h4></div><br>
+                <div class="row"><h4 class="col-md-10"><b>Total employees and employer contribution</b></h4><h4 class="col-md-2" id="EmployersEmployeeTotalValue"><b>£ @Model.EmployersEmployeeTotalValue().ToString("N")</b></h4></div>
 
             </div>
         </div>
 
         <div class="container">
-            <div class="jumbotron">
+            <div class="jumbotron mt-5">
                 <h3><b>Step 3 – enter any additional payments</b></h3><hr />
                 <div class="row">
                     <h4 class="col-md-10">Deficit</h4>
@@ -98,19 +98,19 @@
                 <div class="row"><h4 class="col-md-10">Miscellaneous</h4><input asp-for="@Model.Miscellaneous_Rec" onkeypress="return validate(event)" id="Miscellaneous" placeholder="£0" class="col-md-2"></div>
                 @*<div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2" id="MemberContribAPCLblValue">£ @Model.MemberContribAPCSS</h4></div><hr />*@
 
-                <div class="row"><h4 class="col-md-10"><b>Total additional payments</b></h4><label class="col-md-2" id="DedifitTotalLblValue">£ @Model.DedifitTotalLblValue()</label></div><br>
+                <div class="row"><h4 class="col-md-10"><b>Total additional payments</b></h4><label class="col-md-2" id="DedifitTotalLblValue">£ @Model.DedifitTotalLblValue().ToString("N")</label></div><br>
 
             </div>
         </div>
         <div class="container">
-            <div class="jumbotron">
+            <div class="jumbotron mt-5">
 
                 <h3><b>Step 4 – check grand total</b></h3><hr />
-                <div class="row"><h4 class="col-md-10"><b>Total (Employees, employers and additional payments)</b></h4><h4 class="col-md-2" id="GrandTotalValue"><b>£ @Model.GrandTotalValue()</b></H4></div><br>
+                <div class="row"><h4 class="col-md-10"><b>Total (Employees, employers and additional payments)</b></h4><h4 class="col-md-2" id="GrandTotalValue"><b>£ @Model.GrandTotalValue().ToString("N")</b></H4></div><br>
             </div>
         </div>
         <div class="container">
-            <div class="jumbotron">
+            <div class="jumbotron mt-5">
 
                 <h3><b>Step 5 – add any additional information</b></h3><hr />
                 <textarea asp-for="@Model.AdditionalInfo" class="form-control" rows="5" id="comment"></textarea>
@@ -118,7 +118,7 @@
             </div>
         </div>
         <div class="container">
-            <div class="jumbotron">
+            <div class="jumbotron mt-5">
                 <h3><b>Step 6 – enter payment date</b></h3><hr />
                 <div class="radio">
                     <label class="col-md-10"><input asp-for=@Model.PaidDirectlyWYPF value="Paid directly into WYPF's' bank account." type="radio" checked />Paid directly into relevant bank account</label><input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value=@DateTime.Now placeholder="dd-MM-yyyy" type="date" asp-format="{0:dd-MM-yyyy}" class="col-md-2" required oninvalid="this.setCustomValidity('* Paid by date is required.')" oninput="setCustomValidity('')" class="col-md-2" />
