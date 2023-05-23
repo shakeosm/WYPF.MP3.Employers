@@ -672,8 +672,8 @@ namespace MCPhase3.Controllers
                                     try
                                     {
                                         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
-                                        var totalRecords = callApi.CallAPI(contributionBO.UploadedFileName.ToUpper(), apiBaseUrlForRemittanceGet);
-                                        string num = totalRecords.Substring(totalRecords.IndexOf(":") + 1);
+                                        var createdRemittanceID = callApi.CallAPI(contributionBO.UploadedFileName.ToUpper(), apiBaseUrlForRemittanceGet);
+                                        string num = createdRemittanceID.Substring(createdRemittanceID.IndexOf(":") + 1);
                                         remittanceID = num.Trim(new char[] { '"', '}', ']' });
                                         _logger.LogInformation("API to get Remittance id is successfull");
 
@@ -696,9 +696,8 @@ namespace MCPhase3.Controllers
 
                                     remittanceID = EncryptUrlValue(remittanceID);
 
-                            //return RedirectToAction("RemittanceInsertDB", "Home", new { id = remittanceID });                            
+                            //return RedirectToAction("RemittanceInsertDB", "Home", new { id = remittanceID });
                             //return RedirectToAction("MoveFileForFTP", "Home", new { id = remittanceID });
-                            //return RedirectToAction("MoveFileForFTP", new { id = remittanceID });
                             return Redirect($"/Home/MoveFileForFTP?id={remittanceID}");
 
                         }
@@ -736,6 +735,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> MoveFileForFTP(string id)
         {
+            
             RangeOfRowsModel rangeOfRowsModel = new RangeOfRowsModel();
             //only remittance id is provided in following model class for view
             ErrorAndWarningViewModelWithRecords errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords();
@@ -745,17 +745,27 @@ namespace MCPhase3.Controllers
             id = DecryptUrlValue(id);
 
             string filePathName = _cache.GetString($"{CurrentUserId()}_{UploadedFilePathKey}");
-            if(!Path.Exists(Path.GetFullPath(filePathName)))
+
+            string destPath = ConfigGetValue("FileUploadPath") + ConfigGetValue("FileUploadDonePath");
+
+            if (!Path.Exists(Path.GetFullPath(filePathName)))
             {
                 TempData["MsgError"] = $"File not found/accessible: {filePathName}";
                 return View(errorAndWarningViewModelWithRecords);
-
             }
+
+            if (!Path.Exists(destPath))
+            {
+                TempData["MsgError"] = $"Destination file path not found/accessible: {destPath}";
+                return View(errorAndWarningViewModelWithRecords);
+            }
+
+
             //string uploadedFileName = ContextGetValue(Constants.SessionKeyFileName);
             //Get api url from appsetting.json           
             string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             
-            string destPath = ConfigGetValue("FileUploadPath") + ConfigGetValue("FileUploadDonePath");
+            
             
             //copy file to local folder
 
@@ -763,15 +773,7 @@ namespace MCPhase3.Controllers
             {
                 _logger.LogInformation($"Going to move user uploaded file, from: {filePathName}, to: {destPath}");
                 bool result = CommonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));
-                //Update Event Details table and add File Uploaded and ready to FTP
-                eBO.remittanceID = Convert.ToInt32(id);
-                eBO.remittanceStatus = 1;
-                eBO.eventTypeID = 1;
-                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
-                eBO.notes = "Monthly Posting file uploaded onto web portal.";
-
-                //update Event Details table File is uploaded successfully.                               
-                callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                WriteToDBEventLog(Convert.ToInt32(id), $"Going to move user uploaded file, from: {filePathName}, to: {destPath}" );
 
                 string clientID = ContextGetValue(Constants.SessionKeyClientId);
                 string schemeName = ContextGetValue(Constants.SessionKeySchemeName);
@@ -825,6 +827,23 @@ namespace MCPhase3.Controllers
             
             return View(errorAndWarningViewModelWithRecords);
         }
+
+        public void WriteToDBEventLog(int remitID,  string eventNotes, int remittanceStatus = 1, int eventTypeID = 1)
+        {
+            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
+            var eBO = new EventDetailsBO();
+            //Update Event Details table and add File Uploaded and ready to FTP
+            eBO.remittanceID = remitID;
+            eBO.remittanceStatus = remittanceStatus;
+            eBO.eventTypeID = eventTypeID;
+            eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
+            eBO.notes = eventNotes;
+
+
+            //update Event Details table File is uploaded successfully.                               
+            callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+        }
+            
         /// <summary>
         /// Here to start encode remittance
         /// </summary>

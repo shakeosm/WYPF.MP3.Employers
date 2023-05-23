@@ -147,13 +147,12 @@
                                         if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
                                         {
                                             if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
-                                            {                                                
-                                                    <a href="/SummaryNManualMC/NewMatchingCritera?id=@item.EncryptedId" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                                            {
+                                                    <a href="/SummaryNManualM/NewMatchingCritera?id=@item.EncryptedID" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>                                                    
                                             }
                                             if (item.ALERT_CLEARING_METHOD.Equals("EDIT_CONTS_PAGE"))
                                             {
-                                                    <a href="/SummaryNManualMC/UpdateSingleRecord?id=@item.EncryptedId" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
-
+                                                    <a href="/SummaryNManualM/UpdateSingleRecord?id=@item.EncryptedID" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
                                             }
 
                                         }
@@ -196,22 +195,23 @@
                         </tbody>
                     </table>
 
-                </form>
-                <div class="row">
-                    <div class="col-6">
-                        @if (I == 1)
-                        {
-                            <a asp-action="WarningApproval" id="ack" asp-all-route-data="nextParms" class="btn btn-primary btn-lg"> Acknowledge All</a>
-                            @*<a asp-action="WarningApproval" asp-all-route-data="nextParms" class="btn btn-primary btn-block"> Acknowledge All</a> *@
-                        }
+                
+                    <div class="row">
+                        <div class="col-6">
+                            @if (I == 1)
+                            {
+                                <a asp-action="WarningApproval" id="ack" asp-all-route-data="nextParms" class="btn btn-primary btn-lg"> Acknowledge All</a>
+                                @*<a asp-action="WarningApproval" asp-all-route-data="nextParms" class="btn btn-primary btn-block"> Acknowledge All</a> *@
+                            }
+                        </div>
+
+                        <div class="col-6">
+                            <a asp-action="GoToSummaryPage" class="btn btn-primary btn-lg"> Exit</a>                            
+                        </div>
                     </div>
+                    </form>
 
-                    <div class="col-6">
-                        <a asp-action="Index" class="btn btn-primary btn-lg"> Exit</a>
-                    </div>
-
-
-                </div>
+                
             </div>
         </div>
     </div>

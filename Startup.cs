@@ -7,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using Weather.UI.Utilties;
 
 namespace MCPhase3
 {
@@ -69,7 +68,7 @@ namespace MCPhase3
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-
+             
             }
             else
             {
@@ -77,7 +76,7 @@ namespace MCPhase3
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-                   
+
             //call error view directly -- this works
             //app.UseStatusCodePagesWithReExecute("/Home/Error", "?code={0}");
 

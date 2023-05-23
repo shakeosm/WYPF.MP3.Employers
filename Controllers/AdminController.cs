@@ -119,7 +119,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> ScoreHist(string remittanceId)
         {
-            int remID = Convert.ToInt32(CustomDataProtection.Encrypt(remittanceId));
+            int remID = Convert.ToInt32(EncryptUrlValue(remittanceId));
             List<DashboardHistScoreBO> dashboardScoreHistBO = new List<DashboardHistScoreBO>();
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);            
             dashboardScoreHistBO = await getDashboardScoreHist(remID);
@@ -299,7 +299,7 @@ namespace MCPhase3.Controllers
 
                 if (!string.IsNullOrEmpty(remid))
                 {
-                    remid = CustomDataProtection.Encrypt(remid);
+                    remid = EncryptUrlValue(remid);
                     BO.L_REMITTANCE_ID = remid;
                     ViewData["selectedRow"] = remid;
                     BO.L_STATUSTYPE = "ALL";
@@ -384,7 +384,7 @@ namespace MCPhase3.Controllers
                 //viewModel.BO.remittance_Id = protector.Encode(viewModel.BO.remittance_Id);
                 foreach (var model in viewModel.dashboardBO)
                 {
-                    viewModel.dashboardBO[i].remittance_IdEnc = CustomDataProtection.Encrypt(model.remittance_Id);
+                    viewModel.dashboardBO[i].remittance_IdEnc = EncryptUrlValue(model.remittance_Id);
                     i++;
                 }
                 //viewModel.dashboardB
@@ -466,7 +466,7 @@ namespace MCPhase3.Controllers
                 // remID = Convert.ToInt32(GetContextValue(SessionKeyRemittanceID));
                 return RedirectToAction("Logout", "Home");
             }
-            rBO.p_REMITTANCE_ID = CustomDataProtection.Encrypt(rBO.p_REMITTANCE_ID);
+            rBO.p_REMITTANCE_ID = EncryptUrlValue(rBO.p_REMITTANCE_ID);
             //rBO.P_PAYLOC_FILE_ID = paylocID;
             rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
             //rBO.p_REMITTANCE_ID = remID;
@@ -509,7 +509,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> DeleteRemittance(string id)
         {
-            int remID =Convert.ToInt32(CustomDataProtection.Encrypt(id));
+            int remID =Convert.ToInt32(EncryptUrlValue(id));
             string result = string.Empty;
             string apiCallDeleteRemittance = ConfigGetValue("WebapiBaseUrlForDeleteRemittance");
             using (var httpClient = new HttpClient())

@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Text;
 
-namespace Weather.UI.Utilties
+namespace MCPhase3.CodeRepository
 {
     public class RedisCache : IRedisCache
     {

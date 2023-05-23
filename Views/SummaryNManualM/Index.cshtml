@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Error and Warnings Summary";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    //string remID = (ViewBag.remID).ToString();
+    string remID = ViewBag.remID;
     int countErrors = 0;
 }
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -82,13 +82,11 @@
                                         @*<td>
                                                 @Html.DisplayFor(modelItem => item.ALERT_COUNT)
                                             </td>*@
-                                        @Html.HiddenFor(modelItem => item.L_PAYLOC_FILE_ID)
+                                    @Html.HiddenFor(modelItem => item.L_PAYLOC_FILE_ID)
                                         @Html.HiddenFor(modelItem => item.ALERT_TYPE_REF)
                                         @Html.HiddenFor(modelItem => item.remittanceID)
                                         @{
-                                            //## The receipient controller takes this [item] entire class 
-                                            // we must not pass the Raw remittanceId in the Url.. so- we will replace the raw one with the encrypted Id value
-                                            item.remittanceID = item.EncryptedId;
+                                            item.remittanceID = remID;
                                         }
                                         <td>
                                             @Html.ActionLink("View", "WarningsListforBulkApproval", "SummaryNManualM", item)

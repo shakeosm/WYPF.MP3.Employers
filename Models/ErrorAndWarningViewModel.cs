@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MCPhase3.CodeRepository;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using MCPhase3.CodeRepository;
+using System.Web;
 
 namespace MCPhase3.Models
 {
@@ -63,9 +63,12 @@ namespace MCPhase3.Models
 
         public string GenEncryptedID()
         {
-            return CustomDataProtection.Encrypt(DATAROWID_RECD);
+            var result = CustomDataProtection.Encrypt(DATAROWID_RECD);
+            return HttpUtility.UrlEncode(result);
+            //return BaseController.EncryptUrlValue(DATAROWID_RECD);
         }
-        public string EncryptedId { get; set; }
+
+        public string EncryptedID { get; set; }
     }
 
     public class ErrorAndWarningViewModelLists
