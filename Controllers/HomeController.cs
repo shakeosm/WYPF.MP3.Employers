@@ -19,7 +19,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Weather.UI.Utilties;
 using static MCPhase3.Common.Constants;
 
 namespace MCPhase3.Controllers

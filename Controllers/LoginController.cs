@@ -1,10 +1,7 @@
-﻿using DocumentFormat.OpenXml.Presentation;
-using Grpc.Core;
-using MCPhase3.CodeRepository;
+﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
@@ -15,9 +12,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Weather.UI.Utilties;
-using System.Net;
-using NPOI.OpenXmlFormats.Dml;
 
 namespace MCPhase3.Controllers
 {

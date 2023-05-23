@@ -55,9 +55,12 @@
 
                             <td>@item.event_Notes</td>
 
-                            <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_ID class="btn btn-cyan">Select</a></td>
-                            @*<td><a asp-action="RemittanceInsertDB" asp-controller="Home" asp-route-id=@item.remittance_ID class="btn btn-cyan">Select</a></td>*@
-                            <td><a asp-action="ScoreHist" asp-controller="Admin" asp-route-remittanceID=@item.remittance_ID class="btn btn-outline-info">Score History</a>@*|<a asp-action="Index" asp-controller="SummaryNManualM" class="btn btn-outline-danger">Delete</a></td>*@
+                            <td>
+                                        <a href="/SummaryNManualM/index?remittanceID=@item.remittance_ID" class="btn btn-cyan">Select</a>
+                                </td>
+                            <td>
+                                        <a href="/Admin/ScoreHist?id=@item.remittance_ID" class="btn btn-outline-info">Score History</a>
+                            </td>
                         </tr>
                             }
                         }

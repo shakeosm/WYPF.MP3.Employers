@@ -3,7 +3,6 @@ using MCPhase3.Models;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading.Tasks;
-using Weather.UI.Utilties;
 
 namespace MCPhase3.CodeRepository
 {

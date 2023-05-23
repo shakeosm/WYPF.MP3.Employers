@@ -133,7 +133,7 @@ namespace MCPhase3.Controllers
                 //## shawkat's version... check if works
                 foreach (var item in newModel)
                 {
-                    item.EncryptedId = EncryptUrlValue(remID.ToString());
+                    //item.EncryptedId = EncryptUrlValue(remID.ToString());
                     item.remittanceID = remID.ToString();
                 }
 
