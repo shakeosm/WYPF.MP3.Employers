@@ -1,21 +1,12 @@
 using MCPhase3.CodeRepository;
-using MCPhase3.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Weather.UI.Utilties;
 
 namespace MCPhase3
@@ -78,7 +69,7 @@ namespace MCPhase3
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-             
+
             }
             else
             {
@@ -86,7 +77,7 @@ namespace MCPhase3
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
+                   
             //call error view directly -- this works
             //app.UseStatusCodePagesWithReExecute("/Home/Error", "?code={0}");
 

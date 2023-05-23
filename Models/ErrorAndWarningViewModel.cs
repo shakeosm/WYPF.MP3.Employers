@@ -65,6 +65,7 @@ namespace MCPhase3.Models
         {
             return CustomDataProtection.Encrypt(DATAROWID_RECD);
         }
+        public string EncryptedId { get; set; }
     }
 
     public class ErrorAndWarningViewModelLists

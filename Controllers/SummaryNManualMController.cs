@@ -58,11 +58,18 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <returns></returns>
         public async Task<IActionResult> Index(AlertSumBO alertSumBO, int? pageNumber)
-        {
-           
+         {
+
+            //remove the browser response issue of pen testing
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            {
+                model.Clear();// = null;
+                return RedirectToAction("Index", "Login");
+            }
+
             //inc will keep check manual matching stage and it will not be successfully untill 
             //Process successfully completed. 
-            int inc = 2;
+            //int inc = 2;
             string apiBaseUrlForErrorAndWarnings = string.Empty;
 
             try
@@ -83,7 +90,6 @@ namespace MCPhase3.Controllers
             }
 
                 alertSumBO.L_USERID = HttpContext.Session.GetString("_UserName");
-
             ViewData["paylocID"] = alertSumBO.L_PAYLOC_FILE_ID;
 
             //List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
@@ -94,39 +100,31 @@ namespace MCPhase3.Controllers
                 
             //pass remittance id to next action
             
-            int remID = 0;
-
-                remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.remittanceId));
-                ViewBag.remID = remID;
-                //checks remittance id and login if session expired then returns to login page.
-                alertSumBO.remittanceId = CheckRem(remID).ToString();
+            int remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.remittanceId));
+                ViewBag.remID = remID;  //## raw Remittance id, before encryption                
+                alertSumBO.remittanceId = remID.ToString();
 
             ViewBag.empName = HttpContext.Session.GetString(SessionKeyEmployerName);
 
             //add remittance id into session for future use.
 
 
-            Dictionary<string, string> keyValuePairs = new Dictionary<string, string>();
+            //Dictionary<string, string> keyValuePairs = new Dictionary<string, string>();
             //work on remittance level if null else Paylocation level
             apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarnings");
 
-
             model = await callApi.CallAPISummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
             var newModel1 = model.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
-
                 
            // ViewBag.remID = remID;
-
-            //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-            {
-                model.Clear();// = null;
-                RedirectToAction("Index", "Login");
-            }
-
             var newModel = model.AsQueryable();
             newModel = newModel.OrderByDescending(x => x.remittanceID);
 
+                foreach (var item in newModel)
+                {
+                    item.EncryptedId = EncryptUrlValue(remID.ToString());
+                    item.remittanceID = remID.ToString();
+                }
 
             int pageSize = 7;
             // vLSContext = vLSContext.OrderByDescending(x => x.CreatedDate);
@@ -222,7 +220,7 @@ namespace MCPhase3.Controllers
                 {
                     errorModel.L_PAYLOC_FILE_ID = 0;
                    // apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarningsSelection");
-                    errorAndWarningTo.remittanceID = Convert.ToDouble(errorModel.remittanceID);
+                    errorAndWarningTo.remittanceID = Convert.ToInt16(errorModel.remittanceID);
                     errorAndWarningTo.L_USERID = userName;
 
                     errorAndWarningTo.alertType = errorModel.ALERT_TYPE_REF;
@@ -265,6 +263,12 @@ namespace MCPhase3.Controllers
                 {
                     recordsList.Clear();// = null;
                     RedirectToAction("Index", "Login");
+                }
+                foreach (var item in recordsList)
+                {
+                    item.remittanceID = errorModel.remittanceID;
+                    item.EncryptedId = EncryptUrlValue(item.DATAROWID_RECD);
+
                 }
                 return View(recordsList);
             }

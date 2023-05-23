@@ -214,7 +214,7 @@ namespace MCPhase3.Controllers
         {
             //## Get the session info from Redis cache
             string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{vm.UserName}";    //## this KeyName should be used in Logout- to Delete the Redis entry
-            var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
+             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
 
             if (sessionInfo is null)
             {

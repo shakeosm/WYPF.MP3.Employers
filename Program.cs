@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.EventLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,17 @@ namespace MCPhase3
                 {
                     webBuilder.UseStartup<Startup>();
                     webBuilder.ConfigureKestrel(options => options.AddServerHeader = false);
-                });
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddEventLog(new EventLogSettings()
+                    {
+                        SourceName = ".NET Runtime",
+                        LogName = "Application",
+                    });
+                })
+                         ;
        
     }
 }

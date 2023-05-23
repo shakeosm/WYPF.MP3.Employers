@@ -12,15 +12,24 @@ namespace MCPhase3.CodeRepository
         public static string Encrypt(string inputString)
         {
             string encrypted = Strings.Encrypt(inputString, key, iv);
-            return encrypted;
+            var value = HttpUtility.HtmlEncode(encrypted);
+            return value;
         }
 
         public static string Decrypt(string inputString)
         {
-            var encrypedIDfromURL = HttpUtility.HtmlEncode(inputString);
+            try
+            {
+                var value = HttpUtility.UrlDecode(inputString);
 
-            string decrypted = Strings.Decrypt(encrypedIDfromURL, key, iv);
-            return decrypted;
+                string decrypted = Strings.Decrypt(value, key, iv);
+                return decrypted;
+            }
+            catch (System.Exception)
+            {
+
+                return Strings.Decrypt(inputString, key, iv);
+            }
         }
        
 

@@ -31,11 +31,8 @@ namespace MCPhase3.Controllers
         private readonly IConfiguration _Configure;
         private readonly IRedisCache _cache;
         
-        //private readonly IHostingEnvironment _Environment;        //Obsolete now.. 
         private readonly IWebHostEnvironment _Environment;
-
-        
-
+       
         string apiBaseUrlForRemittanceInsert = string.Empty;
         string apiBaseUrlForAutoMatch = string.Empty;
         //following class I am using to consume api's
@@ -697,12 +694,14 @@ namespace MCPhase3.Controllers
                                         return View(contributionBO);
                                     }
 
-                                    remittanceID = EncryptUrlValue(remittanceID);                                    
+                                    remittanceID = EncryptUrlValue(remittanceID);
 
-                            //return RedirectToAction("RemittanceInsertDB", "Home", new { id = remittanceID });
-                            return RedirectToAction("MoveFileForFTP", "Home", new { id = remittanceID });
+                            //return RedirectToAction("RemittanceInsertDB", "Home", new { id = remittanceID });                            
+                            //return RedirectToAction("MoveFileForFTP", "Home", new { id = remittanceID });
+                            //return RedirectToAction("MoveFileForFTP", new { id = remittanceID });
+                            return Redirect($"/Home/MoveFileForFTP?id={remittanceID}");
 
-                                }
+                        }
                                 else
                                     {
                                         ModelState.Clear();
@@ -741,31 +740,29 @@ namespace MCPhase3.Controllers
             //only remittance id is provided in following model class for view
             ErrorAndWarningViewModelWithRecords errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords();
 
-            errorAndWarningViewModelWithRecords.remittanceID = id;
-
             //decode remittance id in url
+            errorAndWarningViewModelWithRecords.remittanceID = id;
             id = DecryptUrlValue(id);
 
             string filePathName = _cache.GetString($"{CurrentUserId()}_{UploadedFilePathKey}");
+            if(!Path.Exists(Path.GetFullPath(filePathName)))
+            {
+                TempData["MsgError"] = $"File not found/accessible: {filePathName}";
+                return View(errorAndWarningViewModelWithRecords);
+
+            }
             //string uploadedFileName = ContextGetValue(Constants.SessionKeyFileName);
             //Get api url from appsetting.json           
             string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             
-
-            //string _customerUploadsLocalPath = ConfigGetValue("FileUploadPath");            
-            //filePath = Path.Combine(_customerUploadsLocalPath, uploadedFileName);
-
-            //copied to folder 
-            //string destPathWithFileName = Path.Combine(_host.WebRootPath + "/TransferTo/", contributionBO.UploadedFileName);
-
-            //string destPath = Path.Combine(_host.WebRootPath + "/TransferTo/");
-            string destPath = ConfigGetValue("FileUploadPath") + "Done/";
+            string destPath = ConfigGetValue("FileUploadPath") + ConfigGetValue("FileUploadDonePath");
             
             //copy file to local folder
 
             try
             {
-                bool result = CommonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));                
+                _logger.LogInformation($"Going to move user uploaded file, from: {filePathName}, to: {destPath}");
+                bool result = CommonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));
                 //Update Event Details table and add File Uploaded and ready to FTP
                 eBO.remittanceID = Convert.ToInt32(id);
                 eBO.remittanceStatus = 1;
@@ -836,11 +833,7 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> RemittanceInsertDB(string id)
         {
             int id1 = Convert.ToInt32(DecryptUrlValue(id));
-            //if (!string.IsNullOrEmpty(id))
-            //{
-            //    string decodeRedID = HttpUtility.UrlDecode(id);
-            //    id1 = Convert.ToInt32(CustomDataProtection.Decrypt(decodeRedID));
-            //}
+
             HelpTextBO helpTextBO = new HelpTextBO();
            
             ReturnCheckBO result = new ReturnCheckBO();

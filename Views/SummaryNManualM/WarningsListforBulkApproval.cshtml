@@ -147,12 +147,13 @@
                                         if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
                                         {
                                             if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
-                                            {
-                                                <a asp-action="NewMatchingCritera" asp-route-Id="@item.GenEncryptedID()" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                                            {                                                
+                                                    <a href="/SummaryNManualMC/NewMatchingCritera?id=@item.EncryptedId" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
                                             }
                                             if (item.ALERT_CLEARING_METHOD.Equals("EDIT_CONTS_PAGE"))
                                             {
-                                                <a asp-action="UpdateSingleRecord" asp-route-Id="@item.GenEncryptedID()" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                                                    <a href="/SummaryNManualMC/UpdateSingleRecord?id=@item.EncryptedId" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+
                                             }
 
                                         }

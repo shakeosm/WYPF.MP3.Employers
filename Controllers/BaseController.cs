@@ -41,8 +41,8 @@ namespace MCPhase3.Controllers
             if (string.IsNullOrEmpty(value)) {
                 throw new ArgumentException("Parameter cannot be null", "Url parameter");
             }
-            var result = HttpUtility.UrlDecode(value);
-            return CustomDataProtection.Decrypt(result);
+            //var result = HttpUtility.UrlDecode(value);
+            return CustomDataProtection.Decrypt(value);
         }
 
         /// <summary>Only to be used to Encrypt a value to prepare to use in a Query string, which usually requires to be in Encoded format</summary>
@@ -51,8 +51,8 @@ namespace MCPhase3.Controllers
             if (string.IsNullOrEmpty(value)){
                 throw new ArgumentException("Parameter cannot be null", "Url parameter");
             }
-            var result = CustomDataProtection.Encrypt(value);
-            return HttpUtility.UrlEncode(result);
+            return CustomDataProtection.Encrypt(value);
+            //return HttpUtility.UrlEncode(value);
         }
 
     }

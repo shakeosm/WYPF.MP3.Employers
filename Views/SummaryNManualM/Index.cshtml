@@ -2,29 +2,10 @@
 @{
     ViewData["Title"] = "Error and Warnings Summary";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    string remID = ViewBag.remID;
+    //string remID = (ViewBag.remID).ToString();
     int countErrors = 0;
 }
 <div class="border shadow-lg p-4 mb-4 bg-white">
-    @*@if (TempData["msg1"] != null)
-    {
-        countErrors++;
-        <div class="container">
-            <div class="jumbotron">
-
-                <div class="alert alert-danger">
-
-                    <h2>@TempData["msg1"].ToString()</h2>
-                    <p>click button to finish process</p>
-                    <a href="/Admin/Home" class="btn btn-outline-warning" value="Finish"> Finish Process</a>
-                </div>
-
-
-            </div>
-        </div>
-    }
-    else
-    {*@
         <div class="container-fluid bg-3 text-center">
             <div class="container">
                 <div class="row justify-content-center">
@@ -101,11 +82,13 @@
                                         @*<td>
                                                 @Html.DisplayFor(modelItem => item.ALERT_COUNT)
                                             </td>*@
-                                        @Html.HiddenFor(modelItem => item.remittanceID)
+                                        @Html.HiddenFor(modelItem => item.L_PAYLOC_FILE_ID)
                                         @Html.HiddenFor(modelItem => item.ALERT_TYPE_REF)
                                         @Html.HiddenFor(modelItem => item.remittanceID)
                                         @{
-                                            item.remittanceID = remID;
+                                            //## The receipient controller takes this [item] entire class 
+                                            // we must not pass the Raw remittanceId in the Url.. so- we will replace the raw one with the encrypted Id value
+                                            item.remittanceID = item.EncryptedId;
                                         }
                                         <td>
                                             @Html.ActionLink("View", "WarningsListforBulkApproval", "SummaryNManualM", item)
