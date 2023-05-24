@@ -36,11 +36,10 @@ namespace MCPhase3.Controllers
         //#########################
         public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKeyName);
 
-        /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encoded format.</summary>
-        /// <param name="returnEncryptedIdOnly">Will return an Encrypted value if True, set false to get Number value</param>
-        /// <param name="forceDecode">If the previous parameter is already in decoded format then we set this as False, no need for an extra Decode operation before Decrypttion</param>
-        /// <returns></returns>
-        public string RemittanceId(bool returnEncryptedIdOnly = true) {
+        /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
+        /// <param name="returnEncryptedIdOnly">Will return an Encrypted value if True, set false to get Number value</param>        
+        /// <returns>Remittance Id in Encrypted format</returns>
+        public string GetRemittanceId(bool returnEncryptedIdOnly = true) {
             string sessionKeyRemittanceID = $"{CurrentUserId()}_{Constants.SessionKeyRemittanceID}";
             string encryptedValue = _cache.GetString(sessionKeyRemittanceID);
 
