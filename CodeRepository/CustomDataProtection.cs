@@ -16,13 +16,16 @@ namespace MCPhase3.CodeRepository
             return value;
         }
 
-        public static string Decrypt(string inputString)
+        public static string Decrypt(string inputString, bool forceDecode = true)
         {
             try
             {
-                var value = HttpUtility.UrlDecode(inputString);
+                string decrypted = "";
+                if (forceDecode) { 
+                    decrypted = HttpUtility.UrlDecode(inputString);
+                }
 
-                string decrypted = Strings.Decrypt(value, key, iv);
+                decrypted = Strings.Decrypt(decrypted, key, iv);
                 return decrypted;
             }
             catch (System.Exception)

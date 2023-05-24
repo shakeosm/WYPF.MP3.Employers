@@ -20,15 +20,10 @@ namespace MCPhase3.Controllers
 {
     public class AdminController : BaseController
     {
-        //public const string SessionKeyUserID = "_UserName";
-        //public const string SessionKeyEmployerName = "_employerName";
-        //public const string SessionKeyPaylocFileID = "_PaylocFileID";
-        //public const string SessionKeyRemittanceID = "_remittanceID";
-        //public const string SessionKeyPayLocId = "_Id";
         private readonly IConfiguration _configuration;
         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         
-        public AdminController(IConfiguration configuration) : base(configuration)
+        public AdminController(IConfiguration configuration, IRedisCache cache) : base(configuration, cache)
         {
             _configuration = configuration;        
         }

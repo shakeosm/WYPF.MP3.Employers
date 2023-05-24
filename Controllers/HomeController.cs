@@ -28,7 +28,7 @@ namespace MCPhase3.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-        private readonly IRedisCache _cache;
+        //private readonly IRedisCache _cache;
         
         private readonly IWebHostEnvironment _Environment;
        
@@ -44,12 +44,12 @@ namespace MCPhase3.Controllers
         MyModel modelDT = new MyModel();        
         CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();               
 
-        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IWebHostEnvironment environment, IConfiguration configuration, IRedisCache Cache) : base (configuration)
+        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IWebHostEnvironment environment, IConfiguration configuration, IRedisCache Cache) : base (configuration, Cache)
         {
             _logger = logger;
             _host = host;
             _Configure = configuration;
-            _cache = Cache;
+            //_cache = Cache;
             _Environment = environment;
         
         }

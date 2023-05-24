@@ -24,12 +24,12 @@ namespace MCPhase3.Controllers
 
         string uploadedFileName = string.Empty;     
         private readonly IConfiguration _configuration;
-        private readonly IRedisCache _cache;
+        //private readonly IRedisCache _cache;
 
-        public LoginController(IConfiguration configuration, IRedisCache cache) : base (configuration)
+        public LoginController(IConfiguration configuration, IRedisCache cache) : base (configuration, cache)
         {
             _configuration = configuration;
-            _cache = cache;
+            //_cache = cache;
         }
        
         public IActionResult Index()

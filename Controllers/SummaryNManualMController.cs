@@ -25,7 +25,7 @@ namespace MCPhase3.Controllers
         private readonly ILogger<SummaryNManualMController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-        private readonly IRedisCache _cache;
+        //private readonly IRedisCache _cache;
         public const string SessionKeyPaylocFileID = "_PaylocFileID";
         public const string SessionKeyClientId = "_clientId";
 
@@ -41,10 +41,10 @@ namespace MCPhase3.Controllers
         EventsTableUpdates eventUpdate;
 
 
-        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache) : base(configuration)
+        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache) : base(configuration, cache)
         {
             _Configure = configuration;
-            _cache = cache;
+            //_cache = cache;
             _host = host;
             _logger = logger;
             //CustomDataProtection = customIDataProtection;
@@ -311,6 +311,13 @@ namespace MCPhase3.Controllers
         //[HttpPost]      
         public async Task<IActionResult> WarningApproval(Dictionary<string, string> alertId, string id)
         {
+            //## do we really need this following line????
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            {
+                RedirectToAction("Index", "Login");
+            }
+
+
             try
             {
                 string result = string.Empty;
@@ -318,8 +325,9 @@ namespace MCPhase3.Controllers
                 string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
 
                 ErrorAndWarningApprovalOB errorAndWarningTo = new ErrorAndWarningApprovalOB();
-                errorAndWarningTo.userID = HttpContext.Session.GetString(SessionKeyUserID);
-                int remittanceID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
+                errorAndWarningTo.userID = CurrentUserId();
+                //int remittanceID =  (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
+                int remittanceID = Convert.ToInt16(RemittanceId());
                 //if we call this action from update record page then alertId will be null so I assign id that comes from update record.
                 if (alertId.Count == 0)
                 {
@@ -355,12 +363,6 @@ namespace MCPhase3.Controllers
                     }
                 }
 
-                if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-                {
-                    remittanceID = -1;
-                    RedirectToAction("Index", "Login");
-                }
-
                 return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remittanceID);
                 //return RedirectToAction("Index", remittanceID);
             }
@@ -383,7 +385,7 @@ namespace MCPhase3.Controllers
                 List<ErrorAndWarningViewModelWithRecords> recordsList = new List<ErrorAndWarningViewModelWithRecords>();
                 ErrorAndWarningViewModelWithRecords records = new ErrorAndWarningViewModelWithRecords();
                 
-                int.TryParse(DecryptUrlValue(id), out int dataRowID);
+                int.TryParse(DecryptUrlValue(id, forceDecode:false), out int dataRowID);
 
                 IEnumerable<HelpForEAndAUpdateRecord> helpText = null;
                 //show employer name
@@ -468,8 +470,6 @@ namespace MCPhase3.Controllers
         {
             try
             {
-
-
                 updateRecordBO.modUser = HttpContext.Session.GetString(SessionKeyUserID);
 
                 string encryptedRemID = DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{SessionKeyRemittanceID}"));
