@@ -261,7 +261,6 @@ namespace MCPhase3.Controllers
                                 //call following api to get this uploaded remittance id of file.
                                 string result = await Response.Content.ReadAsStringAsync();
                                 recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);
-                                //errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningToShowListViewModel>(result);
                             }
                         }
                     }
@@ -373,8 +372,6 @@ namespace MCPhase3.Controllers
                             if (errorAndWarningTo.returnStatusTxt.Contains("not found"))
                             {
                                 Console.WriteLine(errorAndWarningTo.returnStatusTxt);
-                                //    //HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
-                                //    _cache.Set(CurrentUserId() + "ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
                                 //TODO-> need to inform the user about the failure
                             }
                             else {
