@@ -20,7 +20,7 @@ namespace MCPhase3.CodeRepository
         {
             try
             {
-                string decrypted = "";
+                string decrypted = inputString;
                 if (forceDecode) { 
                     decrypted = HttpUtility.UrlDecode(inputString);
                 }

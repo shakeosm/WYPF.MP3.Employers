@@ -86,11 +86,11 @@
                                         if (item.ALERT_CLASS.Contains("W") && item.CLEARED_FG.Contains("N"))
                                         {
                                             nextParms.Add("id" + x, item.MC_ALERT_ID);
-                                            @* <td><a asp-action="WarningApproval" asp-all-route-data="nextParms" style="color:blue;"> Acknowledge</a></td> *@
-                                            <td>
-                                                <!-- <a asp-action="WarningApproval" asp-route-Id="@item.MC_ALERT_ID" style="color:blue;"> Acknowledge</a> -->
-                                                <a href="/SummaryNManualM/WarningApproval?id=@item.MC_ALERT_ID" style="color:blue;"> Acknowledge</a>
-                                            </td>
+                                            @*<td><a asp-action="WarningApproval" asp-all-route-data="nextParms" style="color:blue;"> Acknowledge</a></td>
+                        <td><a asp-action="WarningApproval" asp-route-Id="@item.MC_ALERT_ID" style="color:blue;"> Acknowledge</a></td>*@
+                                        <td>
+                                            <a href="/SummaryNManualM/WarningApproval?Id=@item.EncryptedID" style="color:blue;"> Acknowledge</a>
+                                        </td>
                                             x++;
                                         }
                                         if (item.CLEARED_FG.Contains("Y"))

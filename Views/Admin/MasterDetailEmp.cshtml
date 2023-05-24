@@ -98,20 +98,18 @@
 
                                             @if (@Model.BO.return_Status_Code == "70" || @Model.BO.return_Status_Code == "65" || @Model.BO.return_Status_Code == "60")
                                             {
-                                                <td>
-                                                //<a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@Model.BO.remittance_Id class="btn btn-outline-secondary disabled">Select</a>
+                                                <td>                                                    
                                                     <a heref="/SummaryNManualM/index?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-secondary disabled">Select</a>
                                                 </td>
 
-                                                <td>
-                                                    //<a asp-action="ScoreHist" asp-controller="Admin" asp-route-remittanceID=@Model.BO.remittance_Id class="btn btn-outline-info disabled">Score History</a>@*|<a asp-action="Index" asp-controller="SummaryNManualM" class="btn btn-outline-danger">Delete</a></td>*@
-                                                    <a href="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info disabled">Score History</a>@*|<a asp-action="Index" asp-controller="SummaryNManualM" class="btn btn-outline-danger">Delete</a></td>*@
+                                                <td>                                                    
+                                                    <a href="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info disabled">Score History</a>
                                                 </td>
                                                 <td>
-                                                    @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })@*<a asp-action="RemittanceInsertDB" asp-controller="Home" asp-route-id=@Convert.ToInt32(Model.BO.remittance_Id) class="btn btn-outline-info">@Model.BO.action_Button_Text</a>*@
+                                                    @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
                                                 </td>
                                                 <td>
-                                                    //<a asp-action="DeleteRemittance" asp-controller="Admin" asp-route-id="@Model.BO.remittance_Id" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
+                                                    
                                                     <a href="/Admin/DeleteRemittance?id=@Model.BO.remittance_Id" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
                                                 </td>
 
@@ -119,19 +117,17 @@
                                             else
                                             {
                                                 <td>
-                                                    //<a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@Model.BO.remittance_Id class="btn btn-outline-primary">Select</a>
+                                                    
                                                     <a asp-action="/SummaryNManualM/Index?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-primary">Select</a>
                                                 </td>
-                                                <td>
-                                                    <a asp-action="ScoreHist" asp-controller="Admin" asp-route-remittanceID=@Model.BO.remittance_Id class="btn btn-outline-info disabled">Score History</a>@*|<a asp-action="Index" asp-controller="SummaryNManualM" class="btn btn-outline-danger">Delete</a></td>*@
-                                                    <a asp-action="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info disabled">Score History</a>
+                                                <td>                                                    
+                                                    <a href="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info disabled">Score History</a>
                                                 </td>
                                                 <td>
                                                     @*<a asp-action="SubmitReturn" asp-controller="Admin" asp-route-remittanceID=@Model.BO.remittance_Id class="btn btn-outline-info">@Model.BO.action_Button_Text</a>*@
                                                     @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
                                                 </td>
-                                                <td>
-                                                    //<a asp-action="DeleteRemittance" asp-controller="Admin" asp-route-id=@Model.BO.remittance_Id class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
+                                                <td>                                                    
                                                     <a href="/Admin/DeleteRemittance?id=@Model.BO.remittance_Id" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
                                                 </td>
                                             }
@@ -337,9 +333,13 @@
                                     }
                                     else
                                     {
-                                        <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary">Select</a></td>
+                                        <td>
+                                            @* <a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary">Select</a>  *@
+                                            <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary">Score History</a>
+                                            </td>
                                         <td>
                                             <a asp-action="ScoreHist" asp-controller="Admin" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-info disabled">Score History</a>
+                                            <a href="/Admin/ScoreHist?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-info disabled">Score History</a>
                                         </td>
                                         <td>
                                             @*<a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@

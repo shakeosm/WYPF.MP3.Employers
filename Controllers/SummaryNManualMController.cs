@@ -44,7 +44,7 @@ namespace MCPhase3.Controllers
         public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache) : base(configuration, cache)
         {
             _Configure = configuration;
-            //_cache = cache;
+            //this._cache = cache;
             _host = host;
             _logger = logger;
             //CustomDataProtection = customIDataProtection;
@@ -57,13 +57,6 @@ namespace MCPhase3.Controllers
             /// <returns></returns>
             public async Task<IActionResult> Index(AlertSumBO alertSumBO, int? pageNumber)
         {
-            //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-            {
-                model.Clear();// = null;
-                return RedirectToAction("Index", "Login");
-            }
-
             if (alertSumBO.remittanceId != null)
             {
                 _cache.SetString($"{CurrentUserId()}_{SessionKeyRemittanceID}", alertSumBO.remittanceId);
@@ -75,7 +68,7 @@ namespace MCPhase3.Controllers
            
             //inc will keep check manual matching stage and it will not be successfully untill 
             //Process successfully completed. 
-            //int inc = 2;
+
             string apiBaseUrlForErrorAndWarnings = string.Empty;
 
             try
@@ -93,7 +86,8 @@ namespace MCPhase3.Controllers
                 alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(SessionKeyPaylocFileID));
             }
 
-                alertSumBO.L_USERID = HttpContext.Session.GetString("_UserName");
+                alertSumBO.L_USERID = CurrentUserId();
+
             ViewData["paylocID"] = alertSumBO.L_PAYLOC_FILE_ID;
 
             //List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
@@ -103,9 +97,9 @@ namespace MCPhase3.Controllers
 
 
                 //pass remittance id to next action
-                string encryptedRemID = alertSumBO.remittanceId;
-            var remitIDStr = DecryptUrlValue(encryptedRemID);
-            int remID = Convert.ToInt32(remitIDStr);
+                string encryptedRemID = alertSumBO.remittanceId;    //## this is coming in Decrypted format.. good boy!
+                var remitIDStr = DecryptUrlValue(encryptedRemID, forceDecode: false);
+                int remID = Convert.ToInt32(remitIDStr);
             
             ViewBag.remID = EncryptUrlValue(remID.ToString());
                 
@@ -125,19 +119,23 @@ namespace MCPhase3.Controllers
                 foreach (var item in newModel1)
                 {
                     item.EncryptedID = encryptedRemID;
-                }                          
+                }
+
+                
+           // ViewBag.remID = remID;
+
+            //remove the browser response issue of pen testing
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            {
+                model.Clear();// = null;
+                RedirectToAction("Index", "Login");
+            }
 
             var newModel = model.AsQueryable();
             newModel = newModel.OrderByDescending(x => x.remittanceID);
 
-                //## shawkat's version... check if works
-                foreach (var item in newModel)
-                {
-                    //item.EncryptedId = EncryptUrlValue(remID.ToString());
-                    item.remittanceID = remID.ToString();
-                }
 
-                int pageSize = 7;
+            int pageSize = 7;
             // vLSContext = vLSContext.OrderByDescending(x => x.CreatedDate);
             return View(PaginatedList<ErrorAndWarningViewModelWithRecords>.CreateAsync(newModel, pageNumber ?? 1, pageSize));
             }
@@ -188,11 +186,13 @@ namespace MCPhase3.Controllers
                 //following functionality is added to keep user on same warning and error page until all sorted.
                 if (string.IsNullOrEmpty(errorModel.remittanceID) && string.IsNullOrEmpty(errorModel.ALERT_CLASS))
                 {
-                 errorModel =  HttpContext.Session.GetObjectFromJson<ErrorAndWarningViewModelWithRecords>("ErrorAndWarningViewModelWithRecords");
+                    //errorModel =  HttpContext.Session.GetObjectFromJson<ErrorAndWarningViewModelWithRecords>("ErrorAndWarningViewModelWithRecords");
+                    errorModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + "ErrorAndWarningViewModelWithRecords"); 
                 }
                 else
                 {
-                    HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorModel);
+                    //HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorModel);
+                    _cache.Set(CurrentUserId() + "ErrorAndWarningViewModelWithRecords", errorModel);
                 }
                 
 
@@ -259,7 +259,6 @@ namespace MCPhase3.Controllers
 
                 foreach (var record in recordsList)
                 {
-                    record.remittanceID = errorModel.remittanceID;
                     record.EncryptedID = EncryptUrlValue(record.DATAROWID_RECD);
                 }
                 // model = ChangeAPIDataToReadAble(result);
@@ -320,18 +319,27 @@ namespace MCPhase3.Controllers
 
             try
             {
+                _ = int.TryParse(DecryptUrlValue(id, forceDecode: false), out int decryptedID);
+
                 string result = string.Empty;
                 string apiBaseUrlForErrorAndWarningsApproval = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarningsApproval");
                 string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
 
                 ErrorAndWarningApprovalOB errorAndWarningTo = new ErrorAndWarningApprovalOB();
+                //errorAndWarningTo.userID = HttpContext.Session.GetString(SessionKeyUserID);
+
+                //string encryptedRemID = DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{SessionKeyRemittanceID}"));
+
+                //int remittanceID = Convert.ToInt32(encryptedRemID);
                 errorAndWarningTo.userID = CurrentUserId();
                 //int remittanceID =  (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
-                int remittanceID = Convert.ToInt16(RemittanceId());
+                int remittanceID = Convert.ToInt16(RemittanceId(returnEncryptedIdOnly: false));
+
+                //int remittanceID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
                 //if we call this action from update record page then alertId will be null so I assign id that comes from update record.
                 if (alertId.Count == 0)
                 {
-                    alertId.Add("id", id);
+                    alertId.Add("id", decryptedID.ToString());
                 }
 
                 foreach (var ids in alertId.Values)
@@ -358,12 +366,15 @@ namespace MCPhase3.Controllers
 
                                 TempData["msg"] = errorAndWarningTo.returnStatusTxt;
 
+                                //HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
+                                _cache.Set(CurrentUserId() + "ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
+
                             }
                         }
                     }
                 }
 
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remittanceID);
+                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", new { remittanceID = id });
                 //return RedirectToAction("Index", remittanceID);
             }
             catch (Exception ex)
@@ -380,12 +391,18 @@ namespace MCPhase3.Controllers
         //[HttpGet]      
         public async Task<IActionResult> UpdateSingleRecord(string id)
         {
+            //remove the browser response issue of pen testing
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            {
+                RedirectToAction("Index", "Login");
+            }
+
             try
             {
                 List<ErrorAndWarningViewModelWithRecords> recordsList = new List<ErrorAndWarningViewModelWithRecords>();
                 ErrorAndWarningViewModelWithRecords records = new ErrorAndWarningViewModelWithRecords();
-                
-                int.TryParse(DecryptUrlValue(id, forceDecode:false), out int dataRowID);
+
+                int.TryParse(DecryptUrlValue(id, forceDecode: false), out int dataRowID);
 
                 IEnumerable<HelpForEAndAUpdateRecord> helpText = null;
                 //show employer name
@@ -423,6 +440,11 @@ namespace MCPhase3.Controllers
                     }
                 }
 
+                foreach (var item in recordsList)
+                {
+                    item.EncryptedID = EncryptUrlValue(item.MC_ALERT_ID);   //## Encrypt them to be used in QueryString
+                }
+
                 ViewBag.HelpText = recordsList;
                 string result = string.Empty;
                 using (HttpClient client = new HttpClient())
@@ -446,13 +468,6 @@ namespace MCPhase3.Controllers
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 //ViewBag.remittanceID = remID;
 
-                //remove the browser response issue of pen testing
-                if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-                {
-                    memberUpdateRecordBO = null;// = null;
-                    RedirectToAction("Index", "Login");
-                }
-
                 return View(memberUpdateRecordBO);
                 //return RedirectToAction("Index");
             }
@@ -474,7 +489,7 @@ namespace MCPhase3.Controllers
 
                 string encryptedRemID = DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{SessionKeyRemittanceID}"));
 
-                int remID = Convert.ToInt32(encryptedRemID);
+                int remID = Convert.ToInt32(encryptedRemID);                
                 
                 string apiLink = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecord");
                 using (HttpClient client = new HttpClient())
@@ -774,9 +789,13 @@ namespace MCPhase3.Controllers
             try
             {
 
-                int.TryParse(CustomDataProtection.Decrypt(Id), out int dataRowID);
+                int.TryParse(CustomDataProtection.Decrypt(Id, forceDecode: false), out int dataRowID);
                 string userID = HttpContext.Session.GetString(SessionKeyUserID);
-                int remID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
+                //int remID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
+                //string encryptedRemID = _cache.GetString($"{CurrentUserId()}_{SessionKeyRemittanceID}");
+                //string decryptedRemID = DecryptUrlValue(encryptedRemID);
+                int remID = Convert.ToInt16(RemittanceId(returnEncryptedIdOnly: false)); // Convert.ToInt32(decryptedRemID);
+
                 bo.P_DATAROWID_RECD = dataRowID;
                 bo.P_USERID = userID;
 

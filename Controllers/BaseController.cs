@@ -1,13 +1,9 @@
-﻿using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Presentation;
-using MCPhase3.CodeRepository;
+﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Reflection.Metadata;
-using System.Web;
 
 namespace MCPhase3.Controllers
 {
@@ -40,7 +36,7 @@ namespace MCPhase3.Controllers
         //#########################
         public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKeyName);
 
-        /// <summary>This will return Remittance Id for the current session</summary>
+        /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encoded format.</summary>
         /// <param name="returnEncryptedIdOnly">Will return an Encrypted value if True, set false to get Number value</param>
         /// <param name="forceDecode">If the previous parameter is already in decoded format then we set this as False, no need for an extra Decode operation before Decrypttion</param>
         /// <returns></returns>
