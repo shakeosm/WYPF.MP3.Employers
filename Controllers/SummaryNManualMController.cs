@@ -1,6 +1,8 @@
 ﻿using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.RefectorUpdateRecord;
+using MCPhase3.Common;
 using MCPhase3.Models;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -41,7 +43,7 @@ namespace MCPhase3.Controllers
         EventsTableUpdates eventUpdate;
 
 
-        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache) : base(configuration, cache)
+        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider) : base(configuration, cache, Provider)
         {
             _Configure = configuration;
             //this._cache = cache;
@@ -57,13 +59,14 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> Index(AlertSumBO alertSumBO, int? pageNumber)
         {
-            if (alertSumBO.remittanceId is null)
+            //## coming here for the first time- save in the Redis cache- and be happy .. now u can always find this record in the Cache
+            if (alertSumBO.remittanceId != null)
             {
                 _cache.SetString($"{CurrentUserId()}_{SessionKeyRemittanceID}", alertSumBO.remittanceId);
             }
             else
             {
-                alertSumBO.remittanceId = GetRemittanceId();
+                alertSumBO.remittanceId = GetRemittanceId();    //## but why are you null?! how can that be?
             }
 
             //inc will keep check manual matching stage and it will not be successfully untill 
@@ -185,15 +188,23 @@ namespace MCPhase3.Controllers
             {
                 //following functionality is added to keep user on same warning and error page until all sorted.
                 //## if we come back here from Acknowledgement page- then the ViewModel 'errorModel' is empty- so need to read from the Cache.. save life..
-                if (string.IsNullOrEmpty(errorModel.remittanceID) == false)
+
+                //if (errorCount < 1) //## means empty... came here from another page not Dashboard
+                if (errorModel.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
                 {
-                    //errorModel =  HttpContext.Session.GetObjectFromJson<ErrorAndWarningViewModelWithRecords>("ErrorAndWarningViewModelWithRecords");
-                    errorModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + "ErrorAndWarningViewModelWithRecords");
+                    //## if Alert.count<1 then its an Empty, but not null// (pain in the back)
+                    //_ = Int32.TryParse(errorModel.ALERT_COUNT.Replace(".0", ""), out int errorCount);
+
+                    errorModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + Constants.ErrorWarningSummaryKeyName);
+                    
+                    if(errorModel is null)
+                    {
+                        return RedirectToAction("Index", "Admin");  //## should not happen
+                    }
                 }
                 else
                 {
-                    //HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorModel);
-                    _cache.Set(CurrentUserId() + "ErrorAndWarningViewModelWithRecords", errorModel);
+                    _cache.Set(CurrentUserId() + Constants.ErrorWarningSummaryKeyName, errorModel);
                 }
 
 
@@ -337,41 +348,48 @@ namespace MCPhase3.Controllers
                     alertId.Add("id", decryptedID.ToString());
                 }
 
-                foreach (var ids in alertId.Values)
+
+                using (HttpClient client = new HttpClient())
                 {
-                    var alertid = Regex.Matches(ids, @"\d+");
-                    string newID = string.Empty;
-                    newID = ConverToString(alertid);
 
-                    errorAndWarningTo.alertID = int.Parse(newID);
-                    using (HttpClient client = new HttpClient())
-                    {
-                        StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
-                        string endpoint = apiBaseUrlForErrorAndWarningsApproval;
+                    string endpoint = apiBaseUrlForErrorAndWarningsApproval;
 
-                        using (var Response = await client.PostAsync(endpoint, content))
+                    foreach (var ids in alertId.Values)
+                    {                                                
+                        var alertid = Regex.Matches(ids, @"\d+");
+                        //string newID = ConverToString(alertid);                        
+                        if (alertId.Count == 1)
                         {
-                            if (Response.StatusCode == System.Net.HttpStatusCode.OK)
+                            errorAndWarningTo.alertID = decryptedID;
+                        }
+                        else {
+                            errorAndWarningTo.alertID = 1324;   // TODO
+                        }
+
+                        StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
+
+                        using var Response = await client.PostAsync(endpoint, content);
+                        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+                            _logger.LogInformation($"BulkApproval API Call successfull-> {endpoint}");
+                            //call following api to get this uploaded remittance id of file.
+                            result = await Response.Content.ReadAsStringAsync();
+                            errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(result);
+
+                            TempData["msg"] = errorAndWarningTo.returnStatusTxt;
+
+                            if (errorAndWarningTo.returnStatusTxt.Contains("not found") )
                             {
-                                // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                                _logger.LogInformation("BulkApproval API Call successfull");
-                                //call following api to get this uploaded remittance id of file.
-                                result = await Response.Content.ReadAsStringAsync();
-                                errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(result);
-
-                                TempData["msg"] = errorAndWarningTo.returnStatusTxt;
-
-                                if (errorAndWarningTo.returnStatusTxt.Contains("not found") == false)
-                                {
-                                    //HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
-                                    _cache.Set(CurrentUserId() + "ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
-                                }
-
+                                Console.WriteLine(errorAndWarningTo.returnStatusTxt);
+                                //    //HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
+                                //    _cache.Set(CurrentUserId() + "ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
+                                //TODO-> need to inform the user about the failure
                             }
                         }
                     }
                 }
-
+                
                 return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", new { remittanceID = id });
                 //return RedirectToAction("Index", remittanceID);
             }
@@ -787,7 +805,7 @@ namespace MCPhase3.Controllers
             try
             {
 
-                int.TryParse(CustomDataProtection.Decrypt(Id, forceDecode: false), out int dataRowID);
+                int.TryParse(DecryptUrlValue(Id, forceDecode: false), out int dataRowID);
                 string userID = HttpContext.Session.GetString(SessionKeyUserID);                
                 int remID = Convert.ToInt16(GetRemittanceId(returnEncryptedIdOnly: false));
 

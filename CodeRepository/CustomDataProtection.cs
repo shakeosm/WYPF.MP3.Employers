@@ -1,4 +1,5 @@
 ﻿using Effortless.Net.Encryption;
+using Microsoft.AspNetCore.DataProtection;
 using System.Web;
 
 namespace MCPhase3.CodeRepository
@@ -35,6 +36,31 @@ namespace MCPhase3.CodeRepository
             }
         }
        
+
+    }
+
+    public class CustomDataProtection_New
+    {
+        static byte[] key = Bytes.GenerateKey();
+        static byte[] iv = Bytes.GenerateIV();
+
+        private readonly IDataProtector protector;
+        //public CustomDataProtection(IDataProtectionProvider dataProtectionProvider, UniqueCode uniqueCode)
+        public CustomDataProtection_New(IDataProtectionProvider dataProtectionProvider)
+        {
+            protector = dataProtectionProvider.CreateProtector("MCPhase3.CodeRepository.CustomDataProtection");
+        }
+        public string Decode(string data)
+        {
+            return protector.Protect(data);
+        }
+        public string Encode(string data)
+        {
+            return protector.Unprotect(data);
+        }
+
+
+
 
     }
 }

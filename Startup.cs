@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Security.Cryptography;
 using System;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 namespace MCPhase3
 {
@@ -53,6 +56,7 @@ namespace MCPhase3
             //remittance protector classes Dependency injection
             //services.AddSingleton<UniqueCode>();
             //services.AddSingleton<CustomDataProtection>();
+            services.AddDataProtection().SetDefaultKeyLifetime(TimeSpan.FromDays(10)).SetApplicationName("MP3.Phase3");
 
             //add following compatibility for tempdata cache memory.
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)

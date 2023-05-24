@@ -29,6 +29,7 @@
         public const string SessionInfoKeyName = "SessionInfo";    //## for Redis use
         public const string SessionGuidKeyName = "SessionGUID";    //## for Redis cross check
         public const string UserIdKeyName = "LoggedInAs";    //## for Redis cross check
+        public const string ErrorWarningSummaryKeyName = "ErrorAndWarningSummaryVM";    //## for Redis cross check
         
         /// <summary>The complete File path and name of the file uploaded by the Customer</summary>
         public const string UploadedFilePathKey = "UploadedFilePathName";    //## for Redis cross check

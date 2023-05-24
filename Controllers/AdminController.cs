@@ -2,6 +2,7 @@
 using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -23,7 +24,7 @@ namespace MCPhase3.Controllers
         private readonly IConfiguration _configuration;
         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         
-        public AdminController(IConfiguration configuration, IRedisCache cache) : base(configuration, cache)
+        public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider) : base(configuration, cache, Provider)
         {
             _configuration = configuration;        
         }
@@ -289,7 +290,7 @@ namespace MCPhase3.Controllers
                 //int pageSize = 10;
 
                 WebapiBaseUrlForDetailEmpList = ConfigGetValue("WebapiBaseUrlForDetailEmpList");
-                BO.L_USERID = ContextGetValue(Constants.SessionKeyUserID);
+                BO.L_USERID = CurrentUserId();
                 int j = 0;
 
                 if (!string.IsNullOrEmpty(remid))
@@ -318,61 +319,6 @@ namespace MCPhase3.Controllers
                     viewModel.dashboardBO = viewModel.dashboardBO.Where(x => x.remittance_Id.ToString() != remid).ToList();
                     TempData["remID"] = remid;
                 }
-                //else
-                //{
-                //    foreach (var item in viewModel.dashboardBO)
-                //    {
-                //        // viewModel.BO = viewModel.dashboardBO.Where(x => x.remittance_Id.ToString() == remid).FirstOrDefault();
-
-                //        BO.L_REMITTANCE_ID = item.remittance_Id;
-                //        ViewData["selectedRow"] = remid;
-                //        BO.L_STATUSTYPE = "ALL";
-                //        using (var httpClient = new HttpClient())
-                //        {
-                //            StringContent content = new StringContent(JsonConvert.SerializeObject(BO), Encoding.UTF8, "application/json");
-                //            // string endPoint = apiLink;
-
-                //            using (var response = await httpClient.PostAsync(WebapiBaseUrlForDetailEmpList, content))
-                //            {
-                //                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                //                {
-                //                    string result = await response.Content.ReadAsStringAsync();
-                //                    viewModel.details = JsonConvert.DeserializeObject<List<DashboardBO>>(result);
-                //                }
-                //            }
-                //            if (viewModel.details != null && viewModel.details.Count() == 1)
-                //            {
-
-                //                foreach (var obj in viewModel.details)
-                //                {
-                //                    viewModel.dashboardBO[j].paylocation_Name = obj.paylocation_Name;
-                //                    j++;
-                //                }
-                //            }
-                //            else
-                //            {
-                //               // foreach (var obj in viewModel.details)
-                //               // {
-                //                    viewModel.dashboardBO[j].paylocation_Name = GetContextValue(SessionKeyEmployerName);
-                //                    j++;
-                //                //}
-                //            }
-                //        }
-                //    }
-                //}
-
-                //to add paylocation name in main remittance detail if it is one and if it is more than one then put the payroll provider name in 
-                
-                //else
-                //{
-                //    foreach (var obj in viewModel.details)
-                //    {
-                //        viewModel.dashboardBO[0].paylocation_Name = obj.paylocation_Name;
-                //    }
-                //    //show paylocation with the remittance if the file has only one paylocation.
-                //    // ViewBag.EmployerName = GetContextValue(SessionKeyEmployerName);
-                    
-                //}
 
                 int pageSize = 10;
                 int i = 0;

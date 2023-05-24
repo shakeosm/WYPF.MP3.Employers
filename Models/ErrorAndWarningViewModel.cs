@@ -61,13 +61,6 @@ namespace MCPhase3.Models
         public string ALERT_CLEARING_METHOD { get; set; }
         public string ACTION_BY { get; set; }
 
-        public string GenEncryptedID()
-        {
-            var result = CustomDataProtection.Encrypt(DATAROWID_RECD);
-            return HttpUtility.UrlEncode(result);
-            //return BaseController.EncryptUrlValue(DATAROWID_RECD);
-        }
-
         public string EncryptedID { get; set; }
     }
 

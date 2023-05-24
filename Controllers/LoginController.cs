@@ -1,6 +1,7 @@
 ﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
@@ -26,7 +27,7 @@ namespace MCPhase3.Controllers
         private readonly IConfiguration _configuration;
         //private readonly IRedisCache _cache;
 
-        public LoginController(IConfiguration configuration, IRedisCache cache) : base (configuration, cache)
+        public LoginController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider) : base(configuration, cache, Provider)
         {
             _configuration = configuration;
             //_cache = cache;

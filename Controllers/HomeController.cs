@@ -3,6 +3,7 @@ using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.InsertDataProcess;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,7 @@ namespace MCPhase3.Controllers
         MyModel modelDT = new MyModel();        
         CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();               
 
-        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IWebHostEnvironment environment, IConfiguration configuration, IRedisCache Cache) : base (configuration, Cache)
+        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IWebHostEnvironment environment, IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider) : base(configuration, Cache, Provider)
         {
             _logger = logger;
             _host = host;
