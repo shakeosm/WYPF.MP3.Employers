@@ -31,6 +31,7 @@ namespace MCPhase3.Models
     public class ErrorAndWarningViewModelWithRecords
     {
         public string MC_ALERT_ID { get; set; }
+        public string EncryptedAlertid { get; set; }
         public string remittanceID { get; set; }
         public string DATAROWID_RECD { get; set; }
         public string DATAROWID_RECD_ENC { get; set; }
@@ -61,7 +62,7 @@ namespace MCPhase3.Models
         public string ALERT_CLEARING_METHOD { get; set; }
         public string ACTION_BY { get; set; }
 
-        public string EncryptedID { get; set; }
+        public string EncryptedRowRecordID { get; set; }
     }
 
     public class ErrorAndWarningViewModelLists

@@ -89,7 +89,7 @@
                                             @*<td><a asp-action="WarningApproval" asp-all-route-data="nextParms" style="color:blue;"> Acknowledge</a></td>
                         <td><a asp-action="WarningApproval" asp-route-Id="@item.MC_ALERT_ID" style="color:blue;"> Acknowledge</a></td>*@
                                         <td>
-                                            <a href="/SummaryNManualM/WarningApproval?Id=@item.EncryptedID" style="color:blue;"> Acknowledge</a>
+                                            <a href="/SummaryNManualM/WarningApproval?Id=@item.EncryptedRowRecordID" style="color:blue;"> Acknowledge</a>
                                         </td>
                                             x++;
                                         }

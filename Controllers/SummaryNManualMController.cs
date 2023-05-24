@@ -1,4 +1,5 @@
-﻿using MCPhase3.CodeRepository;
+﻿using DocumentFormat.OpenXml.Office.CustomUI;
+using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.RefectorUpdateRecord;
 using MCPhase3.Common;
 using MCPhase3.Models;
@@ -121,7 +122,7 @@ namespace MCPhase3.Controllers
 
                 foreach (var item in newModel1)
                 {
-                    item.EncryptedID = encryptedRemID;
+                    item.EncryptedRowRecordID = encryptedRemID;
                 }
 
 
@@ -192,13 +193,10 @@ namespace MCPhase3.Controllers
                 //if (errorCount < 1) //## means empty... came here from another page not Dashboard
                 if (errorModel.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
                 {
-                    //## if Alert.count<1 then its an Empty, but not null// (pain in the back)
-                    //_ = Int32.TryParse(errorModel.ALERT_COUNT.Replace(".0", ""), out int errorCount);
-
+                    //## if Alert.count is NULL then its an Empty, but not null// (pain in the back)
                     errorModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + Constants.ErrorWarningSummaryKeyName);
                     
-                    if(errorModel is null)
-                    {
+                    if(errorModel is null){
                         return RedirectToAction("Index", "Admin");  //## should not happen
                     }
                 }
@@ -216,18 +214,6 @@ namespace MCPhase3.Controllers
                 string userName = CurrentUserId();
 
                 ErrorAndWarningToShowListViewModel errorAndWarningTo = new ErrorAndWarningToShowListViewModel();
-                //to check if remittance is null then session expire and return to login page.
-                //if (string.IsNullOrEmpty(errorModel.remittanceID))
-                //{
-                //    errorModel.remittanceID = RemittanceId(); //## go - read from cache.. save ur time...
-                //}
-                //else
-                //{
-                //    //errorModel.remittanceID = CheckRem(Convert.ToInt32(CustomDataProtection.Decrypt(errorModel.remittanceID))).ToString();                    
-                //    errorModel.remittanceID = errorModel.remittanceID;
-                //}
-
-                //alertSumBO.remittanceId = (int)errorModel.remittanceID;
                 alertSumBO.remittanceId = errorModel.remittanceID;
                 alertSumBO.L_USERID = userName;
 
@@ -260,7 +246,7 @@ namespace MCPhase3.Controllers
                                 _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
                                 //call following api to get this uploaded remittance id of file.
                                 string result = await Response.Content.ReadAsStringAsync();
-                                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);
+                                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
                             }
                         }
                     }
@@ -268,7 +254,9 @@ namespace MCPhase3.Controllers
 
                 foreach (var record in recordsList)
                 {
-                    record.EncryptedID = EncryptUrlValue(record.DATAROWID_RECD);
+                    record.EncryptedRowRecordID = EncryptUrlValue(record.DATAROWID_RECD);
+                    record.EncryptedAlertid = EncryptUrlValue(record.MC_ALERT_ID);
+
                 }
                 // model = ChangeAPIDataToReadAble(result);
                 if (errorModel.ALERT_CLASS.Equals("W"))
@@ -312,7 +300,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         //[HttpPost]      
         public async Task<IActionResult> WarningApproval(Dictionary<string, string> alertId, string id)
-        {
+         {
             //## do we really need this following line????
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
             {
@@ -322,7 +310,10 @@ namespace MCPhase3.Controllers
 
             try
             {
-                _ = int.TryParse(DecryptUrlValue(id, forceDecode: false), out int decryptedID);
+                int decryptedID = 0;
+                if (string.IsNullOrEmpty(id) == false) {
+                    _ = int.TryParse(DecryptUrlValue(id, forceDecode: false), out decryptedID);
+                }
 
                 string result = string.Empty;
                 string apiBaseUrlForErrorAndWarningsApproval = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarningsApproval");
@@ -347,13 +338,14 @@ namespace MCPhase3.Controllers
 
                     foreach (var ids in alertId.Values)
                     {                                                
-                        var alertid = Regex.Matches(ids, @"\d+");
+                        //var alertid = Regex.Matches(ids, @"\d+");
                         if (alertId.Count == 1)
                         {
                             errorAndWarningTo.alertID = decryptedID;
                         }
                         else {
-                            errorAndWarningTo.alertID = 1324;   // TODO
+                            string decryptedAlertId = DecryptUrlValue(ids, forceDecode: false);
+                            errorAndWarningTo.alertID = Convert.ToInt32( decryptedAlertId);   // DecryptUrlValue(ids.ToString());   // TODO
                         }
 
                         StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
@@ -376,10 +368,10 @@ namespace MCPhase3.Controllers
                             }
                             else {
                                 //## Update the 'ErrorAndWarningSummaryVM'- in the cache.. now the Count will be one less... for the current Record Id.. 1 fault is 'Cleared'
-                                var cachedModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + Constants.ErrorWarningSummaryKeyName);
-                                if (cachedModel != null) { 
+                                //var cachedModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + Constants.ErrorWarningSummaryKeyName);
+                                //if (cachedModel != null) { 
                                     
-                                }
+                                //}
                             }
                         }
                     }
@@ -453,7 +445,7 @@ namespace MCPhase3.Controllers
 
                 foreach (var item in recordsList)
                 {
-                    item.EncryptedID = EncryptUrlValue(item.MC_ALERT_ID);   //## Encrypt them to be used in QueryString
+                    item.EncryptedRowRecordID = EncryptUrlValue(item.MC_ALERT_ID);   //## Encrypt them to be used in QueryString
                 }
 
                 ViewBag.HelpText = recordsList;
