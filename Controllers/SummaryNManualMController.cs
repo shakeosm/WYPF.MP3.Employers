@@ -247,8 +247,7 @@ namespace MCPhase3.Controllers
                     errorAndWarningTo.remittanceID = Convert.ToDouble(DecryptUrlValue(errorModel.remittanceID));
                     errorAndWarningTo.L_USERID = userName;
 
-                    errorAndWarningTo.alertType = errorModel.ALERT_TYPE_REF;
-                    string result = string.Empty;
+                    errorAndWarningTo.alertType = errorModel.ALERT_TYPE_REF;                    
                     using (HttpClient client = new HttpClient())
                     {
                         StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
@@ -258,10 +257,9 @@ namespace MCPhase3.Controllers
                         {
                             if (Response.StatusCode == System.Net.HttpStatusCode.OK)
                             {
-                                // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                                _logger.LogInformation("BulkApproval API Call successfull");
+                                _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
                                 //call following api to get this uploaded remittance id of file.
-                                result = await Response.Content.ReadAsStringAsync();
+                                string result = await Response.Content.ReadAsStringAsync();
                                 recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);
                                 //errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningToShowListViewModel>(result);
                             }
@@ -332,13 +330,7 @@ namespace MCPhase3.Controllers
                 string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
 
                 ErrorAndWarningApprovalOB errorAndWarningTo = new ErrorAndWarningApprovalOB();
-                //errorAndWarningTo.userID = HttpContext.Session.GetString(SessionKeyUserID);
-
-                //string encryptedRemID = DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{SessionKeyRemittanceID}"));
-
-                //int remittanceID = Convert.ToInt32(encryptedRemID);
                 errorAndWarningTo.userID = CurrentUserId();
-                //int remittanceID =  (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
                 int remittanceID = Convert.ToInt16(GetRemittanceId(returnEncryptedIdOnly: false));
 
                 //int remittanceID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
@@ -357,7 +349,6 @@ namespace MCPhase3.Controllers
                     foreach (var ids in alertId.Values)
                     {                                                
                         var alertid = Regex.Matches(ids, @"\d+");
-                        //string newID = ConverToString(alertid);                        
                         if (alertId.Count == 1)
                         {
                             errorAndWarningTo.alertID = decryptedID;
@@ -379,12 +370,19 @@ namespace MCPhase3.Controllers
 
                             TempData["msg"] = errorAndWarningTo.returnStatusTxt;
 
-                            if (errorAndWarningTo.returnStatusTxt.Contains("not found") )
+                            if (errorAndWarningTo.returnStatusTxt.Contains("not found"))
                             {
                                 Console.WriteLine(errorAndWarningTo.returnStatusTxt);
                                 //    //HttpContext.Session.SetObjectAsJson("ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
                                 //    _cache.Set(CurrentUserId() + "ErrorAndWarningViewModelWithRecords", errorAndWarningTo);
                                 //TODO-> need to inform the user about the failure
+                            }
+                            else {
+                                //## Update the 'ErrorAndWarningSummaryVM'- in the cache.. now the Count will be one less... for the current Record Id.. 1 fault is 'Cleared'
+                                var cachedModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + Constants.ErrorWarningSummaryKeyName);
+                                if (cachedModel != null) { 
+                                    
+                                }
                             }
                         }
                     }

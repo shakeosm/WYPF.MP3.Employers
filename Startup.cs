@@ -1,15 +1,13 @@
 using MCPhase3.CodeRepository;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Security.Cryptography;
 using System;
-using Microsoft.AspNetCore.DataProtection;
-using System.IO;
 
 namespace MCPhase3
 {

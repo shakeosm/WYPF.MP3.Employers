@@ -67,16 +67,7 @@ namespace MCPhase3.Controllers
             {
                 //## Notify the user ..
                 //## ask whether they wanna kill the existing one and continue here...?
-
-                //## Show the user a new ViewPage- with Question and button- whether to continue or discard the current login
-                //var sessionPwd = loginDetails.Password;
-
-                //sessionInfo.Password = WebUtility.UrlEncode(CustomDataProtection.Encrypt(loginDetails.Password));  //## sending the password to GUI- to use it again to login .. shouldn't send a raw password...
-                //sessionInfo.UserName = WebUtility.UrlEncode(CustomDataProtection.Encrypt(loginDetails.UserName));  //## keep it protected...                
-
-                //string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{loginDetails.UserName}";
-                //_cache.Delete(sessionInfoKeyName);
-                sessionInfo.Password = ""; //sessionInfo.UserName = "";
+               sessionInfo.Password = ""; //sessionInfo.UserName = "";
                 return View("MultipleSessionPrompt", sessionInfo);
                 
             }
