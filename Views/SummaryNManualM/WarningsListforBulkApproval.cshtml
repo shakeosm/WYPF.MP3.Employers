@@ -6,6 +6,8 @@
     var nextParms = new Dictionary<string, string>();
     int x = 0;
 
+    bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y");
+
 
 }
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -55,6 +57,7 @@
                     Individual records may be viewed by clicking view.
                 </p>
 
+                @*This is simply a form, will never get posted.. sends data via url... *@
                 <form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">
                     <table class="table table-bordered">
                         <thead class="thead-light">
@@ -67,8 +70,7 @@
                                 <th>Job Title</th>
                                 <th>Alert Desc</th>
                                 <th>Error Count</th>
-                                <th>View Full Details</th>
-                                <th id="th" style="display:block;"><label for="selectAll">Select All</label><input type="checkbox" id="selectAll" checked disabled /></th>
+                                <th>View Full Details</th>                                
                             </tr>
                         </thead>
                         <tbody>
@@ -115,7 +117,8 @@
                                                 if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
                                                 {
                                                     <td>
-                                                        <a asp-action="ResetRecord" asp-route-Id="@item.DATAROWID_RECD" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a>
+                                                        @* <a asp-action="ResetRecord" asp-route-Id="@item.DATAROWID_RECD" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a> *@
+                                                        <a href="/SummaryNManualM/ResetRecord?Id=@item.EncryptedRowRecordID" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a>
                                                     </td>
                                                 }
                                             }
@@ -141,7 +144,7 @@
                                     }
 
 
-                                    <td>
+                                    <td class="d-none">
                                         <!--if Alert clearing method is null then it will take to existing update form otherwise control will go to new loose match/folder or person match.-->
                                         @{
                                             if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
@@ -158,27 +161,18 @@
                                             }                                            
                                         }
 
-                                    </td>
-                                    <td>
                                         @{
                                             if (!string.IsNullOrEmpty(item.BULK_APPROVAL_FG))
-                                            {
-
-
-                                                if (item.BULK_APPROVAL_FG.Contains("Y"))
-                                                {
-                                                    I = 1;
-                                                    x++;
-
-                                                    <input type="checkbox" asp-for="@item.selected" id="checkedID" name="checkedID" checked disabled />
-                                                }
+                                            {                                               
 
                                                 if (item.CLEARED_FG.Equals("Y") == false)
+                                                {
                                                     nextParms.Add("id" + x, item.EncryptedAlertid);
+                                                    x++;
+                                                }
                                             }
                                         }
-
-                                    </td>
+                                    </td>                                    
                                 </tr>
 
                             }
@@ -188,9 +182,9 @@
 
                     <div class="row">
                         <div class="col-6">
-                            @if (I == 1)
+                            @if (showAcknowledgeAllButton)  //I == 1)
                             {
-                                <a asp-action="WarningApproval" id="ack" asp-all-route-data="nextParms" class="btn btn-primary btn-lg"> Acknowledge All</a>
+                                <a asp-action="WarningApproval" id="acknowledgeButton" asp-all-route-data="nextParms" class="btn btn-primary btn-lg"> Acknowledge All</a>
                             }
                         </div>
 
@@ -208,17 +202,8 @@
 
 
 
+<script src="~/js/warning-list-bulk-approval.js"></script>
 
-
-<script>
-
-    //document.getElementById('selectAll').onclick = function () {
-    //    $("#selectAll").change(function () {
-    //        $("input:checkbox").prop('checked', $(this).prop("checked"));
-    //    });
-    //}
-    document.getElementById('passToWYPF').style.display = 'block';
-</script>
 
 
 

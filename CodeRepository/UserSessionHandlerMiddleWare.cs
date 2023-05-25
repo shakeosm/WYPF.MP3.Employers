@@ -29,16 +29,14 @@ namespace MCPhase3.CodeRepository
             if (!string.IsNullOrEmpty(currentUserId)) {
                 //## Get the session info from Redis cache
                 string sessionGuid = context.Session.GetString(Constants.SessionGuidKeyName);
-                string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{currentUserId}"; 
+                string sessionInfoKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}"; //## this must match the Keyname in the BaseController.. Don't change it here
                 var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
 
                 if (sessionGuid != null && sessionGuid == sessionInfo.SessionId)
                 {
                     //## all good
-                    Console.WriteLine("sessionGuid != null && sessionGuid == sessionInfo.SessionId");
                 }
                 else {
-                    Console.WriteLine("### Someone has deleted the session information.. means this session isn't valid anymore... password changed     ####");
                     context.Response.Redirect("/Login/Logout");
                 }            
             }

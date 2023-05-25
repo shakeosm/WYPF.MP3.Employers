@@ -64,7 +64,7 @@ namespace MCPhase3.CodeRepository
 
         public void Delete(string cacheKeyName)
         {
-            _distributedCache.Remove(cacheKeyName);            
+            _distributedCache.Remove(cacheKeyName);
         }
     }
 

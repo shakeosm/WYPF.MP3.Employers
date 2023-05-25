@@ -4,7 +4,9 @@
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     string remID = ViewBag.remID;
     int countErrors = 0;
+    bool showPaginationControls = Model.Count() > Convert.ToInt32(ViewBag.MaximumPaginationItemsPerPage);
 }
+
 <div class="border shadow-lg p-4 mb-4 bg-white">
         <div class="container-fluid bg-3 text-center">
             <div class="container">
@@ -41,7 +43,7 @@
                 <h3 style="color:black;">Errors and Warnings Summary.</h3>
                 <p style="font-size:small;">Shows all data alerts and their count. User may returns or shows list of all records with specific alert.</p><br />
                 <div class="table table-bordered">
-                    <h4> Errors and Warnings Summary for payroll provider: <b>@ViewBag.empName</b> </h4>
+                    <h4>Payroll provider: <b>@ViewBag.empName</b> </h4>
                     <table class="table table-bordered">
                         <thead class="thead-light">
                             <tr>
@@ -98,37 +100,40 @@
                         </tbody>
                     </table>
                 </div>
-                @{
+                @if (showPaginationControls){
                     var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
                     var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+                    
+                    <a asp-action="Index"
+                       asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @prevDisabled">
+                        &#60;&#60;
+                    </a>
+
+
+                    <a asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageIndex - 1)"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @prevDisabled">
+                        &#60;
+                    </a>
+                    <a asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageIndex + 1)"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @nextDisabled">
+                        >
+                    </a>
+                    <a asp-action="Index"
+                       asp-route-pageNumber="@(Model.TotalPages)"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @nextDisabled">
+                        >>
+                    </a>
+                
                 }
 
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @prevDisabled">
-                    &#60;&#60;
-                </a>
 
-
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.PageIndex - 1)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @prevDisabled">
-                    &#60;
-                </a>
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.PageIndex + 1)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @nextDisabled">
-                    >
-                </a>
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.TotalPages)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @nextDisabled">
-                    >>
-                </a>
 
             </div>
         </div>

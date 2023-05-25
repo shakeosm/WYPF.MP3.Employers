@@ -85,14 +85,14 @@ namespace MCPhase3.Controllers
             var currentBrowserSessionId = Guid.NewGuid().ToString();
             var sessionInfo = GetUserSessionInfo(vm);
             
-            string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{sessionInfo.UserName}";
-            _cache.Delete(sessionInfoKeyName);
+            
+            _cache.Delete(SessionInfoKeyName());
 
             //## Create a new one
             sessionInfo.HasExistingSession = false;
             sessionInfo.LastLoggedIn = DateTime.Now.ToString();
             sessionInfo.SessionId = currentBrowserSessionId;
-            _cache.Set(sessionInfoKeyName, sessionInfo);
+            _cache.Set(SessionInfoKeyName(), sessionInfo);
 
             //## create entries in Session Cookies, too..
             ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session
@@ -195,12 +195,11 @@ namespace MCPhase3.Controllers
 
         /// <summary>This will read Redis cache and find if there is any entry for this user session</summary>
         /// <param name="userId">User Id</param>
-        /// <returns>True/False</returns>
+        /// <returns>UserSessionInfoVM object</returns>
         private UserSessionInfoVM GetUserSessionInfo(DummyLoginViewModel vm)
         {
-            //## Get the session info from Redis cache
-            string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}-{vm.UserName}";    //## this KeyName should be used in Logout- to Delete the Redis entry
-             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
+            //## Get the session info from Redis cache            
+             var sessionInfo = _cache.Get<UserSessionInfoVM>(SessionInfoKeyName());   //## this KeyName should be used in Logout- to Delete the Redis entry
 
             if (sessionInfo is null)
             {
@@ -220,7 +219,7 @@ namespace MCPhase3.Controllers
                     LastLoggedIn = DateTime.Now.ToString(),
                     SessionId = currentBrowserSessionId
                 };
-                _cache.Set(sessionInfoKeyName, sessionInfo);
+                _cache.Set(SessionInfoKeyName(), sessionInfo);
 
                 return sessionInfo;
             }
@@ -230,16 +229,6 @@ namespace MCPhase3.Controllers
                 //##means there is an entry for this user in cache.. and the user is just trying to be cleaver.. don't let them Login
                 sessionInfo.HasExistingSession = true;
                 return sessionInfo;
-                //return new UserSessionInfoVM()
-                //{
-                //    BrowserId = vm.BrowserId,
-                //    WindowsId = vm.WindowsId,
-                //    LastLoggedIn = sessionInfo.LastLoggedIn,
-                //    HasExistingSession = true,
-                //    UserName = vm.UserName,
-                //    Password = vm.Password
-
-                //};
             }
         }
 
@@ -318,13 +307,17 @@ namespace MCPhase3.Controllers
             //## but delete if this is your Redis session.. 
             //## Scenario: user logged in from Browser 2 and wanna kick out Browser1 session.
             //##  When logged in using Browser2- they already have cleared session for Browser_1. So- don't just delete a Redis session if that session doesn't belong to current Browser session Id            
+
+            string currentUserId = CurrentUserId();
+
             var currentBrowserSessionId = ContextGetValue(Constants.SessionGuidKeyName);
-            var sessionKeyName = $"{Constants.SessionInfoKeyName}-{CurrentUserId()}";
+            var sessionKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}";
             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
 
             //## Browser Session Id and Redis SessionId-> are they same..?
             if (currentBrowserSessionId == sessionInfo.SessionId) {
                 _cache.Delete(sessionKeyName);
+                _cache.Delete(currentBrowserSessionId);
             }
 
 
@@ -358,6 +351,14 @@ namespace MCPhase3.Controllers
             {
                 Response.Cookies.Delete(cookie);
             }
+
+            //## Delete all redis keys used in the App for this User related variables
+            var redisKeyList = Constants.RedisKeyList().Split(",");
+            foreach (var redisKey in redisKeyList) {
+                string redisKeyName = $"{currentUserId}_{redisKey}";
+                Console.WriteLine($"Redis key : {redisKeyName}");
+                _cache.Delete(redisKeyName);
+            }            
 
             // await signInManager.SignOutAsync();
             return RedirectToAction("Index", "Login");           

@@ -1,4 +1,5 @@
 ﻿using DocumentFormat.OpenXml.Office.CustomUI;
+using DocumentFormat.OpenXml.Wordprocessing;
 using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.RefectorUpdateRecord;
 using MCPhase3.Common;
@@ -29,12 +30,12 @@ namespace MCPhase3.Controllers
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
         //private readonly IRedisCache _cache;
-        public const string SessionKeyPaylocFileID = "_PaylocFileID";
-        public const string SessionKeyClientId = "_clientId";
+        //public const string SessionKeyPaylocFileID = "_PaylocFileID";
+        //public const string SessionKeyClientId = "_clientId";
 
-        string SessionKeyRemittanceID = "_remittanceID";
-        public const string SessionKeyEmployerName = "_employerName";
-        public const string SessionKeyUserID = "_UserName";
+        //string SessionKeyRemittanceID = "_remittanceID";
+        //public const string SessionKeyEmployerName = "_employerName";
+        //public const string SessionKeyUserID = "_UserName";
         ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
         List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
 
@@ -63,11 +64,11 @@ namespace MCPhase3.Controllers
             //## coming here for the first time- save in the Redis cache- and be happy .. now u can always find this record in the Cache
             if (alertSumBO.remittanceId != null)
             {
-                _cache.SetString($"{CurrentUserId()}_{SessionKeyRemittanceID}", alertSumBO.remittanceId);
+                _cache.SetString(RemittanceIdKeyName(), alertSumBO.remittanceId);
             }
             else
             {
-                alertSumBO.remittanceId = GetRemittanceId();    //## but why are you null?! how can that be?
+                alertSumBO.remittanceId = GetRemittanceId();
             }
 
             //inc will keep check manual matching stage and it will not be successfully untill 
@@ -82,12 +83,12 @@ namespace MCPhase3.Controllers
                 //when come back to this page after 1st process/during process I can get that from session.
                 if (alertSumBO.L_PAYLOC_FILE_ID != null)
                 {
-                    HttpContext.Session.SetString(SessionKeyPaylocFileID, alertSumBO.L_PAYLOC_FILE_ID.ToString());
+                    HttpContext.Session.SetString(Constants.SessionKeyPaylocFileID, alertSumBO.L_PAYLOC_FILE_ID.ToString());
                 }
 
-                if (HttpContext.Session.GetString(SessionKeyPaylocFileID) != null)
+                if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
                 {
-                    alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(SessionKeyPaylocFileID));
+                    alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
                 }
 
                 alertSumBO.L_USERID = CurrentUserId();
@@ -107,7 +108,7 @@ namespace MCPhase3.Controllers
 
                 ViewBag.remID = EncryptUrlValue(remID.ToString());
 
-                ViewBag.empName = HttpContext.Session.GetString(SessionKeyEmployerName);
+                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
 
                 //add remittance id into session for future use.
 
@@ -125,21 +126,12 @@ namespace MCPhase3.Controllers
                     item.EncryptedRowRecordID = encryptedRemID;
                 }
 
-
-                // ViewBag.remID = remID;
-
-                //remove the browser response issue of pen testing
-                if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-                {
-                    model.Clear();// = null;
-                    RedirectToAction("Index", "Login");
-                }
-
                 var newModel = model.AsQueryable();
                 newModel = newModel.OrderByDescending(x => x.remittanceID);
 
 
-                int pageSize = 7;
+                int pageSize = Convert.ToInt32(ConfigGetValue("PaginationSize"));
+                ViewBag.MaximumPaginationItemsPerPage = pageSize;       //## to show/hide the pagination control
                 // vLSContext = vLSContext.OrderByDescending(x => x.CreatedDate);
                 return View(PaginatedList<ErrorAndWarningViewModelWithRecords>.CreateAsync(newModel, pageNumber ?? 1, pageSize));
             }
@@ -160,11 +152,11 @@ namespace MCPhase3.Controllers
             {
                 if (remittanceID == 0)
                 {
-                    remittanceID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
+                    remittanceID = (int)HttpContext.Session.GetInt32(Constants.SessionKeyRemittanceID);
                 }
                 else
                 {
-                    HttpContext.Session.SetInt32(SessionKeyRemittanceID, remittanceID);
+                    HttpContext.Session.SetInt32(Constants.SessionKeyRemittanceID, remittanceID);
                 }
             }
             catch (Exception ex)
@@ -183,26 +175,26 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         // public async Task<IActionResult> WarningsListforBulkApproval(ErrorAndWarningToShowListViewModel errorAndWarningTo)
 
-        public async Task<IActionResult> WarningsListforBulkApproval(ErrorAndWarningViewModelWithRecords errorModel)
+        public async Task<IActionResult> WarningsListforBulkApproval(ErrorAndWarningViewModelWithRecords summaryVM)
         {
             try
             {
+                string errorWarningSummaryKeyName = $"{CurrentUserId()}_{Constants.ErrorWarningSummaryKeyName}";
                 //following functionality is added to keep user on same warning and error page until all sorted.
-                //## if we come back here from Acknowledgement page- then the ViewModel 'errorModel' is empty- so need to read from the Cache.. save life..
+                //## if we come back here from Acknowledgement page- then the ViewModel 'summaryVM' is empty- so need to read from the Cache.. save life..
 
-                //if (errorCount < 1) //## means empty... came here from another page not Dashboard
-                if (errorModel.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
+                if (summaryVM.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
                 {
                     //## if Alert.count is NULL then its an Empty, but not null// (pain in the back)
-                    errorModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + Constants.ErrorWarningSummaryKeyName);
+                    summaryVM = _cache.Get<ErrorAndWarningViewModelWithRecords>(errorWarningSummaryKeyName);
                     
-                    if(errorModel is null){
+                    if(summaryVM is null){
                         return RedirectToAction("Index", "Admin");  //## should not happen
                     }
                 }
                 else
                 {
-                    _cache.Set(CurrentUserId() + Constants.ErrorWarningSummaryKeyName, errorModel);
+                    _cache.Set(errorWarningSummaryKeyName, summaryVM);
                 }
 
 
@@ -214,26 +206,26 @@ namespace MCPhase3.Controllers
                 string userName = CurrentUserId();
 
                 ErrorAndWarningToShowListViewModel errorAndWarningTo = new ErrorAndWarningToShowListViewModel();
-                alertSumBO.remittanceId = errorModel.remittanceID;
+                alertSumBO.remittanceId = summaryVM.remittanceID;
                 alertSumBO.L_USERID = userName;
 
                 //show Employer name 
-                ViewBag.empName = HttpContext.Session.GetString(SessionKeyEmployerName);
+                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 //show error and worning on Remittance or paylocation level.
                 apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForAlertDetailsPLNextSteps");
-                if (HttpContext.Session.GetString(SessionKeyPaylocFileID) != null)
+                if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
                 {
-                    alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(SessionKeyPaylocFileID));
+                    alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
                     recordsList = await callApi.CallAPISummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
                 }
                 else
                 {
-                    errorModel.L_PAYLOC_FILE_ID = 0;
+                    summaryVM.L_PAYLOC_FILE_ID = 0;
                     // apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarningsSelection");
-                    errorAndWarningTo.remittanceID = Convert.ToDouble(DecryptUrlValue(errorModel.remittanceID));
+                    errorAndWarningTo.remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.remittanceID));
                     errorAndWarningTo.L_USERID = userName;
 
-                    errorAndWarningTo.alertType = errorModel.ALERT_TYPE_REF;                    
+                    errorAndWarningTo.alertType = summaryVM.ALERT_TYPE_REF;                    
                     using (HttpClient client = new HttpClient())
                     {
                         StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
@@ -259,18 +251,18 @@ namespace MCPhase3.Controllers
 
                 }
                 // model = ChangeAPIDataToReadAble(result);
-                if (errorModel.ALERT_CLASS.Equals("W"))
+                if (summaryVM.ALERT_CLASS.Equals("W"))
                 {
                     ViewBag.alertClass = "Warning";
                 }
-                else if (errorModel.ALERT_CLASS.Equals("E"))
+                else if (summaryVM.ALERT_CLASS.Equals("E"))
                 {
                     ViewBag.alertClass = "Error";
                 }
 
-                ViewBag.status = errorModel.ALERT_DESC + "";
+                ViewBag.status = summaryVM.ALERT_DESC + "";
                 //ViewBag.total = errorModel.COUNT == 0 ? model.Count : errorModel.COUNT;
-                ViewBag.total = errorModel.ALERT_COUNT.Replace(".0", "");
+                ViewBag.total = summaryVM.ALERT_COUNT.Replace(".0", "");
 
                 return View(recordsList);
             }
@@ -302,10 +294,10 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> WarningApproval(Dictionary<string, string> alertId, string id)
          {
             //## do we really need this following line????
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-            {
-                RedirectToAction("Index", "Login");
-            }
+            //if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+            //{
+            //    RedirectToAction("Index", "Login");
+            //}
 
 
             try
@@ -345,7 +337,7 @@ namespace MCPhase3.Controllers
                         }
                         else {
                             string decryptedAlertId = DecryptUrlValue(ids, forceDecode: false);
-                            errorAndWarningTo.alertID = Convert.ToInt32( decryptedAlertId);   // DecryptUrlValue(ids.ToString());   // TODO
+                            errorAndWarningTo.alertID = Convert.ToInt32( decryptedAlertId);
                         }
 
                         StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
@@ -409,7 +401,7 @@ namespace MCPhase3.Controllers
 
                 IEnumerable<HelpForEAndAUpdateRecord> helpText = null;
                 //show employer name
-                ViewBag.empName = HttpContext.Session.GetString(SessionKeyEmployerName);
+                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 string userName = CurrentUserId();
                 MemberUpdateRecordBO memberUpdateRecordBO = new MemberUpdateRecordBO();
 
@@ -488,11 +480,11 @@ namespace MCPhase3.Controllers
         {
             try
             {
-                updateRecordBO.modUser = HttpContext.Session.GetString(SessionKeyUserID);
+                updateRecordBO.modUser = HttpContext.Session.GetString(Constants.SessionKeyUserID);
 
-                string encryptedRemID = DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{SessionKeyRemittanceID}"));
+                string remittanceID = GetRemittanceId(returnEncryptedIdOnly: false);
 
-                int remID = Convert.ToInt32(encryptedRemID);
+                int remID = Convert.ToInt32(remittanceID);
 
                 string apiLink = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecord");
                 using (HttpClient client = new HttpClient())
@@ -547,7 +539,7 @@ namespace MCPhase3.Controllers
             {
                 // IEnumerable<HelpForEAndAUpdateRecord> helpText = null;
                 //show employer name
-                ViewBag.empName = HttpContext.Session.GetString(SessionKeyEmployerName);
+                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 MemberUpdateRecordBO memberUpdateRecordBO = new MemberUpdateRecordBO();
                 //shows error and warnings data
                 string apiBaseUrlForUpdateRecordGetValues = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecordGetValues");
@@ -557,7 +549,7 @@ namespace MCPhase3.Controllers
                 string apiBaseUrlForErrorAndWarningsList = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecordGetErrorWarningList");
 
                 helpTextBO.L_DATAROWID_RECD = dataRowID;
-                helpTextBO.L_USERID = HttpContext.Session.GetString(SessionKeyUserID);
+                helpTextBO.L_USERID = HttpContext.Session.GetString(Constants.SessionKeyUserID);
                 string result = string.Empty;
                 using (HttpClient client = new HttpClient())
                 {
@@ -581,7 +573,7 @@ namespace MCPhase3.Controllers
                 }
 
                 //To cal all values/data of member record. that is already in UPM.
-                getMatchesBO.userId = HttpContext.Session.GetString(SessionKeyUserID);
+                getMatchesBO.userId = HttpContext.Session.GetString(Constants.SessionKeyUserID);
                 //int remID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
                 getMatchesBO.dataRowId = dataRowID;
                 //method to get matching records from UPM
@@ -598,13 +590,13 @@ namespace MCPhase3.Controllers
                 //ViewBag.listOfFolders = listOfMatches.Matches.FirstOrDefault(a => a.folderId == Model.Matches[j].folderId);
 
                 //remove the browser response issue of pen testing
-                if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-                {
-                    listOfMatches.Matches.Clear();// = null;
-                    listOfMatches.activeProcess = null;
-                    listOfMatches.note = null;
-                    RedirectToAction("Index", "Login");
-                }
+                //if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
+                //{
+                //    listOfMatches.Matches.Clear();// = null;
+                //    listOfMatches.activeProcess = null;
+                //    listOfMatches.note = null;
+                //    RedirectToAction("Index", "Login");
+                //}
 
                 return View(listOfMatches);
                 //return RedirectToAction("Index");
@@ -657,9 +649,10 @@ namespace MCPhase3.Controllers
             UpdateRecordModel updateRecordModel = new UpdateRecordModel();
 
             //int remID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
-            string encryptedRemID = DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{SessionKeyRemittanceID}"));
+            string remittanceID = GetRemittanceId(returnEncryptedIdOnly: false);
+            // DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{Constants.SessionKeyRemittanceID}"));
 
-            int remID = Convert.ToInt32(encryptedRemID);
+            int remID = Convert.ToInt32(remittanceID);
 
             string apiLink = _Configure.GetValue<string>("WebapiBaseUrlForMatchingRecordsManual");
             UpdateFolder obj1 = new UpdateFolder();
@@ -713,7 +706,7 @@ namespace MCPhase3.Controllers
 
             bO.personMatch = updateRecordModel.personMatch;
             bO.folderMatch = updateRecordModel.folderMatch;
-            bO.userId = HttpContext.Session.GetString(SessionKeyUserID);
+            bO.userId = CurrentUserId();
             bO.note = getMatchesBO.note;
             try
             {
@@ -735,13 +728,6 @@ namespace MCPhase3.Controllers
                             var result = await response.Content.ReadAsStringAsync();
                         }
                     }
-                }
-
-                //remove the browser response issue of pen testing
-                if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-                {
-                    remID = -1;
-                    RedirectToAction("Index", "Login");
                 }
 
                 return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remID);
@@ -792,12 +778,11 @@ namespace MCPhase3.Controllers
             try
             {
 
-                int.TryParse(DecryptUrlValue(Id, forceDecode: false), out int dataRowID);
-                string userID = HttpContext.Session.GetString(SessionKeyUserID);                
+                _ = int.TryParse(DecryptUrlValue(Id, forceDecode: false), out int dataRowID);
                 int remID = Convert.ToInt16(GetRemittanceId(returnEncryptedIdOnly: false));
 
                 bo.P_DATAROWID_RECD = dataRowID;
-                bo.P_USERID = userID;
+                bo.P_USERID = CurrentUserId(); ;
 
                 using (HttpClient client = new HttpClient())
                 {

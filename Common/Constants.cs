@@ -20,11 +20,7 @@
         public const string SessionKeyPosting = "_posting";
         public const string SessionKeySchemeName = "_scheme";
         public const string SessionKeyTotalRecords = "_totalRecords";
-        public const string SessionKeyRemittanceID = "_remittanceID";
-
-
-        //public const string PasswordChangedKeyName = "_passwordChanged";
-        //public const string CurrentPasswordKeyName = "_currentPassword";
+        public const string SessionKeyRemittanceID = "remittanceID";
         
         public const string SessionInfoKeyName = "SessionInfo";    //## for Redis use
         public const string SessionGuidKeyName = "SessionGUID";    //## for Redis cross check
@@ -34,6 +30,10 @@
         /// <summary>The complete File path and name of the file uploaded by the Customer</summary>
         public const string UploadedFilePathKey = "UploadedFilePathName";    //## for Redis cross check
 
+        public static string RedisKeyList()
+        {
+            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{UserIdKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey}";
+        }
 
         public enum PostingType
         {

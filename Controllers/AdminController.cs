@@ -32,36 +32,36 @@ namespace MCPhase3.Controllers
         /// Home page with all the icons
         /// </summary>
         /// <returns></returns>
-        public IActionResult Home(int? id)
+        public IActionResult Home()
         {
-            int remittanceID = 0;
-            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
-            EventDetailsBO eBO = new EventDetailsBO();
-            if (id == 1)
+            return View();
+        }
+
+
+        public IActionResult SubmitForProcessing(int? id)
+        {
+            if (id == 1)    //TODO: this param is risky.. it can be 1 easily by mistake..
             {
-                try
+                string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
+                EventDetailsBO eBO = new EventDetailsBO
                 {
-                    remittanceID = (int)HttpContext.Session.GetInt32(Constants.SessionKeyRemittanceID);
-                }
-                catch (Exception ex)
-                {
-                    TempData["Msg1"] = "Session expired, please login again.";
-                    return RedirectToAction("Index", "Login");
-                }
-                
-                eBO.remittanceID = remittanceID;
-                //eBO.P_PAYLOC_FILE_ID = Convert.ToInt32(rBO.P_PAYLOC_FILE_ID);
-                eBO.remittanceStatus = 1;
-                eBO.eventTypeID = 105;
-                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
-                eBO.notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing.";
+                    remittanceID = Convert.ToInt32(GetRemittanceId()),
+                    //eBO.P_PAYLOC_FILE_ID = Convert.ToInt32(rBO.P_PAYLOC_FILE_ID);
+                    remittanceStatus = 1,
+                    eventTypeID = 105,
+                    eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")),
+                    notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
+                };
                 //eventUpdate.UpdateEventDetailsTable(eBO);
                 //update Event Details table File is uploaded successfully.
                 //I have disabled it for staff.
                 callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
             }
-            return View();
+
+            return RedirectToAction("Home");
         }
+
+
         /// <summary>
         /// show list of all the remittance to employers
         /// </summary>

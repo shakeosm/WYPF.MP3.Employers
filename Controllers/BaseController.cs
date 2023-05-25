@@ -1,4 +1,5 @@
-﻿using MCPhase3.CodeRepository;
+﻿using Grpc.Core;
+using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -41,19 +42,21 @@ namespace MCPhase3.Controllers
         //## Life saving methods ##
         //#########################
         public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKeyName);
+        public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
         /// <param name="returnEncryptedIdOnly">Will return an Encrypted value if True, set false to get Number value</param>        
         /// <returns>Remittance Id in Encrypted format</returns>
-        public string GetRemittanceId(bool returnEncryptedIdOnly = true) {
-            string sessionKeyRemittanceID = $"{CurrentUserId()}_{Constants.SessionKeyRemittanceID}";
-            string encryptedValue = _cache.GetString(sessionKeyRemittanceID);
+        public string GetRemittanceId(bool returnEncryptedIdOnly = true) {            
+            string encryptedValue = _cache.GetString(RemittanceIdKeyName());
 
             string decryptUrlValue = DecryptUrlValue(encryptedValue, forceDecode: false);
 
             return returnEncryptedIdOnly ? encryptedValue : decryptUrlValue;
 
         }
+
+        public string RemittanceIdKeyName() => $"{CurrentUserId()}_{Constants.SessionKeyRemittanceID}";
 
 
         public string ConfigGetValue(string keyName) => _configuration.GetValue<string>(keyName);
