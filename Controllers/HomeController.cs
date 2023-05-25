@@ -28,9 +28,7 @@ namespace MCPhase3.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _host;
-        private readonly IConfiguration _Configure;
-        //private readonly IRedisCache _cache;
-        
+        private readonly IConfiguration _Configure;        
         private readonly IWebHostEnvironment _Environment;
        
         string apiBaseUrlForRemittanceInsert = string.Empty;
@@ -50,7 +48,6 @@ namespace MCPhase3.Controllers
             _logger = logger;
             _host = host;
             _Configure = configuration;
-            //_cache = Cache;
             _Environment = environment;
         
         }

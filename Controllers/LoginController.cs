@@ -335,6 +335,7 @@ namespace MCPhase3.Controllers
             HttpContext.Session.Remove(Constants.SessionKeyEmployerName);
             HttpContext.Session.Remove(Constants.SessionKeyPayrollProvider);
             
+            //TODO: followings are never used.. need to delete
             var opts = new CookieOptions
             {
                 HttpOnly = true,
@@ -356,7 +357,6 @@ namespace MCPhase3.Controllers
             var redisKeyList = Constants.RedisKeyList().Split(",");
             foreach (var redisKey in redisKeyList) {
                 string redisKeyName = $"{currentUserId}_{redisKey}";
-                Console.WriteLine($"Redis key : {redisKeyName}");
                 _cache.Delete(redisKeyName);
             }            
 

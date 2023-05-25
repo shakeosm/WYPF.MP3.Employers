@@ -412,16 +412,6 @@ namespace MCPhase3.Controllers
             rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
             //rBO.p_REMITTANCE_ID = remID;
             TempData["msg1"] = "File uploaded to WYPF database successfully.";
-            //eBO.remittanceID = remID;
-            //eBO.P_PAYLOC_FILE_ID = Convert.ToInt32(rBO.P_PAYLOC_FILE_ID);
-            //eBO.remittanceStatus = 1;
-            //eBO.eventTypeID = 330;
-            //eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
-            //eBO.notes = "All errors and warnings cleared by Staff, PayLoc is ready for loading into UPM2";
-            ////eventUpdate.UpdateEventDetailsTable(eBO);
-            ////update Event Details table File is uploaded successfully.
-            ////I have disabled it for staff.
-            //callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
 
             string WebapiBaseUrlForSubmitReturn = ConfigGetValue("WebapiBaseUrlForSubmitReturn");
 
