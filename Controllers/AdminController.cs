@@ -38,15 +38,13 @@ namespace MCPhase3.Controllers
         }
 
 
-        public IActionResult SubmitForProcessing(int? id)
+        public IActionResult SubmitForProcessing()
         {
-            if (id == 1)    //TODO: this param is risky.. it can be 1 easily by mistake..
-            {
                 string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
-                EventDetailsBO eBO = new EventDetailsBO
+            EventDetailsBO eBO = new EventDetailsBO
                 {
-                    remittanceID = Convert.ToInt32(GetRemittanceId()),
-                    //eBO.P_PAYLOC_FILE_ID = Convert.ToInt32(rBO.P_PAYLOC_FILE_ID);
+                    
+                    remittanceID = Convert.ToInt32(GetRemittanceId(returnEncryptedIdOnly: false)), // we can put variable name with variable value when calling a function to make it more readable                    
                     remittanceStatus = 1,
                     eventTypeID = 105,
                     eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")),
@@ -56,8 +54,7 @@ namespace MCPhase3.Controllers
                 //update Event Details table File is uploaded successfully.
                 //I have disabled it for staff.
                 callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
-            }
-
+         
             return RedirectToAction("Home");
         }
 

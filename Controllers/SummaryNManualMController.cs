@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office.CustomUI;
-using DocumentFormat.OpenXml.Wordprocessing;
-using MCPhase3.CodeRepository;
+﻿using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.RefectorUpdateRecord;
 using MCPhase3.Common;
 using MCPhase3.Models;
@@ -29,14 +27,8 @@ namespace MCPhase3.Controllers
         private readonly ILogger<SummaryNManualMController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-        //private readonly IRedisCache _cache;
-        //public const string SessionKeyPaylocFileID = "_PaylocFileID";
-        //public const string SessionKeyClientId = "_clientId";
-
-        //string SessionKeyRemittanceID = "_remittanceID";
-        //public const string SessionKeyEmployerName = "_employerName";
-        //public const string SessionKeyUserID = "_UserName";
-        ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
+       
+               ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
         List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
 
         //following class I am using to consume api's
@@ -330,15 +322,8 @@ namespace MCPhase3.Controllers
 
                     foreach (var ids in alertId.Values)
                     {                                                
-                        //var alertid = Regex.Matches(ids, @"\d+");
-                        if (alertId.Count == 1)
-                        {
-                            errorAndWarningTo.alertID = decryptedID;
-                        }
-                        else {
-                            string decryptedAlertId = DecryptUrlValue(ids, forceDecode: false);
-                            errorAndWarningTo.alertID = Convert.ToInt32( decryptedAlertId);
-                        }
+                        string decryptedAlertId = DecryptUrlValue(ids, forceDecode: false);
+                        errorAndWarningTo.alertID = Convert.ToInt32( decryptedAlertId);
 
                         StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
 

@@ -48,9 +48,8 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav">
                 </div>
-                <div class="navbar-nav ms-auto">
-                    @*<a id="passToWYPF" class="btn btn-danger" asp-action="SubmitForProcessing" asp-controller="Admin" asp-route-id="1" style="display:none;">Submit to WYPF</a>*@
-                    <a id="passToWYPF" class="btn btn-danger" href="/Admin/SubmitForProcessing?id=1" style="display:none;">Submit to WYPF</a>
+                <div class="navbar-nav ms-auto">                    
+                    <a id="passToWYPF" class="btn btn-danger" href="/Admin/SubmitForProcessing" style="display:none;">Submit to WYPF</a>
                     @(await Component.InvokeAsync("LoginCheck"))
                 </div>
             </div>

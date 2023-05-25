@@ -335,10 +335,10 @@
                                     {
                                         <td>
                                             @* <a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary">Select</a>  *@
-                                            <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary">Score History</a>
+                                            <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary">select</a>
                                             </td>
                                         <td>
-                                            <a asp-action="ScoreHist" asp-controller="Admin" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-info disabled">Score History</a>
+                                            @* <a asp-action="ScoreHist" asp-controller="Admin" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-info disabled">Score History</a> *@
                                             <a href="/Admin/ScoreHist?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-info disabled">Score History</a>
                                         </td>
                                         <td>

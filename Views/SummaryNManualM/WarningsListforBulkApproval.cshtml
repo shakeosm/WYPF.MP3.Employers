@@ -6,7 +6,7 @@
     var nextParms = new Dictionary<string, string>();
     int x = 0;
 
-    bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y");
+    bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
 
 
 }
@@ -116,8 +116,7 @@
                                             {
                                                 if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
                                                 {
-                                                    <td>
-                                                        @* <a asp-action="ResetRecord" asp-route-Id="@item.DATAROWID_RECD" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a> *@
+                                                    <td>                                                        
                                                         <a href="/SummaryNManualM/ResetRecord?Id=@item.EncryptedRowRecordID" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a>
                                                     </td>
                                                 }
@@ -144,7 +143,7 @@
                                     }
 
 
-                                    <td class="d-none">
+                                    <td >
                                         <!--if Alert clearing method is null then it will take to existing update form otherwise control will go to new loose match/folder or person match.-->
                                         @{
                                             if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
