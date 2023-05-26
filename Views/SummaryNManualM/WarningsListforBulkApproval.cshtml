@@ -42,7 +42,8 @@
                     <tr>
                         <td>@ViewBag.alertClass</td>
                         <td><b>@ViewBag.status</b></td>
-                        <td>@ViewBag.total</td>
+                        <td class="text-center h3"><span class="badge bg-danger rounded-pill">@ViewBag.total</span></td>
+                        @*<td class="text-center h3 text-danger">@ViewBag.total</td>*@
                     </tr>
                 </thead>
             </table>
@@ -69,8 +70,8 @@
                                 <th>Date Start</th>
                                 <th>Job Title</th>
                                 <th>Alert Desc</th>
-                                <th>Error Count</th>
-                                <th>View Full Details</th>                                
+                                <th class="text-center">Error Count</th>
+                                <th class="text-center">View Full Details</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -109,14 +110,14 @@
                                             i++;
 
 
-                                            <td>
+                                            <td class="text-center">
                                                 <label style="color:red;">Cleared</label>
                                             </td>
                                             if (!string.IsNullOrEmpty(item.ALERT_CLEARING_METHOD))
                                             {
                                                 if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
                                                 {
-                                                    <td>                                                        
+                                                    <td class="text-center">
                                                         <a href="/SummaryNManualM/ResetRecord?Id=@item.EncryptedRowRecordID" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a>
                                                     </td>
                                                 }
@@ -126,7 +127,7 @@
                                         else
                                         {
                                             @*<td>@newCount</td>*@
-                                            <td>1</td>
+                                            <td class="text-center">1</td>
 
                                         }
                                     }
@@ -143,18 +144,18 @@
                                     }
 
 
-                                    <td >
+                                    <td class="text-center">
                                         <!--if Alert clearing method is null then it will take to existing update form otherwise control will go to new loose match/folder or person match.-->
                                         @{
                                             if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
                                             {
                                                 if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
                                                 {
-                                                    <a href="/SummaryNManualM/NewMatchingCritera?id=@item.EncryptedRowRecordID" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                                                    <a href="/SummaryNManualM/NewMatchingCritera?id=@item.EncryptedRowRecordID" class="btn btn-outline-primary"><i class="fa fa-marker fa-lg"></i> view</a>
                                                 }
                                                 if (item.ALERT_CLEARING_METHOD.Equals("EDIT_CONTS_PAGE"))
                                                 {
-                                                    <a href="/SummaryNManualM/UpdateSingleRecord?id=@item.EncryptedRowRecordID" style="color:blue;"><i class="fa fa-marker fa-lg"></i> view</a>
+                                                    <a href="/SummaryNManualM/UpdateSingleRecord?id=@item.EncryptedRowRecordID" class="btn btn-outline-primary"><i class="fa fa-marker fa-lg"></i> view</a>
                                                 }
 
                                             }                                            

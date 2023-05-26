@@ -243,7 +243,8 @@ namespace MCPhase3.Controllers
             //}
 
             //return listBO.Where(x => Convert.ToInt32(x.return_Status_Code) < 110).ToList();           
-            return listBO;
+            var sortedDashboardItems = listBO.OrderByDescending(d => d.remittance_Id).ToList();
+            return sortedDashboardItems;
         }
 
         public async Task<IActionResult> MasterDetailEmp( int? pageNumber, string remid)
@@ -292,7 +293,7 @@ namespace MCPhase3.Controllers
 
                 if (!string.IsNullOrEmpty(remid))
                 {
-                    remid = EncryptUrlValue(remid);
+                    remid = DecryptUrlValue(remid);
                     BO.L_REMITTANCE_ID = remid;
                     ViewData["selectedRow"] = remid;
                     BO.L_STATUSTYPE = "ALL";
@@ -404,7 +405,7 @@ namespace MCPhase3.Controllers
                 // remID = Convert.ToInt32(GetContextValue(SessionKeyRemittanceID));
                 return RedirectToAction("Logout", "Home");
             }
-            rBO.p_REMITTANCE_ID = EncryptUrlValue(rBO.p_REMITTANCE_ID);
+            rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
             //rBO.P_PAYLOC_FILE_ID = paylocID;
             rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
             //rBO.p_REMITTANCE_ID = remID;

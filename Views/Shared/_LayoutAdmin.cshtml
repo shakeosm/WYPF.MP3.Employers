@@ -19,7 +19,8 @@
     <link href="~/css/MCcss.css" rel="stylesheet" />
     <link href="~/css/spiner.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.7/css/perfect-scrollbar.min.css" />
-
+    
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet" />
 
 </head>
 
@@ -49,7 +50,7 @@
                 <div class="navbar-nav">
                 </div>
                 <div class="navbar-nav ms-auto">                    
-                    <a id="passToWYPF" class="btn btn-danger" href="/Admin/SubmitForProcessing" style="display:none;">Submit to WYPF</a>
+                    <a id="passToWYPF" class="btn btn-outline-danger pt-2" href="/Admin/SubmitForProcessing" style="display:none;">Submit to WYPF</a>
                     @(await Component.InvokeAsync("LoginCheck"))
                 </div>
             </div>
@@ -125,6 +126,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js" integrity="sha512-rstIgDs0xPgmG6RX1Aba4KV5cWJbAMcvRCVmglpam9SoHZiUCyQVDdH2LPlxoHtrv17XWblE/V/PP+Tr04hbtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+    @*<script src="~/assets/extra-libs/datatables/datatables.min.js"></script>*@
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+
+    @*//## keep this at the bottom*@
+    @RenderSection("scripts", required: false)
 
 </body>
 </html>

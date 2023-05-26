@@ -30,7 +30,7 @@
             </div>
         </nav>
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+            <div class="tab-pane fade show active pt-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
                 @if (TempData["remID"] != null)
                 {
                     @*<div class="container">
@@ -43,7 +43,7 @@
 
                         @if (Model.details != null)
                         {
-                            <table class="table table-hover">
+                            <table id="PendingSubmissionTable" class="table table-hover">
                                 <thead>
                                     <tr>
                                         <th></th>
@@ -262,7 +262,8 @@
                 {
 
 
-                    <table class="table table-hover">
+                    @*<table id="PendingSubmissionTable" class="">*@
+                    <table id="PendingSubmissionTable" class="table table-hover">
                         <thead>
                             <tr>
                                 <th></th>
@@ -273,11 +274,10 @@
                                 <th><b>Payroll</b></th>
                                 <th><b>Status</b></th>
                                 <th><b>Latest Score</b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                            </tr>
-                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -325,10 +325,13 @@
                                     @if (@item.return_Status_Code == "70" || @item.return_Status_Code == "65" || @item.return_Status_Code == "60")
                                     {
                                         <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_Id class="btn btn-outline-secondary disabled">Select</a></td>
+                                        @*<td colspan="3">*@
                                         <td>
                                             @*<a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@
                                             @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
                                         </td>
+                                        <td></td>
+                                        <td></td>
 
                                     }
                                     else
@@ -336,7 +339,7 @@
                                         <td>
                                             @* <a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary">Select</a>  *@
                                             <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary">select</a>
-                                            </td>
+                                        </td>
                                         <td>                                            
                                             <a href="/Admin/ScoreHist?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-info disabled">Score History</a>
                                         </td>
@@ -357,3 +360,14 @@
         </div>
     </div>
 </div>
+
+
+@section scripts {
+     <script type="text/javascript">
+
+        $(function () {
+            $('#PendingSubmissionTable').DataTable();
+        });
+
+     </script>
+}

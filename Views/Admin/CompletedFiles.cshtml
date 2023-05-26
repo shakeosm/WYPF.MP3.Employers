@@ -26,8 +26,8 @@
             </div>
         </nav>
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                <table class="table table-hover">
+            <div class="tab-pane fade show active pt-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                <table id="CompletedSubmissionTable" class="">
                     <thead>
                         <tr>
                             @*<th><b>No.</b></th>*@
@@ -62,37 +62,51 @@
                     </tbody>
                 </table>
 
-                @{
-                    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
-                    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
-                }
+                <div class="d-none">
+                    @{
+                        var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                        var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+                    }
 
-                <a asp-action="CompletedFiles"
-                   asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @prevDisabled">
-                    <<
-                </a>
-                <a asp-action="CompletedFiles"
-                   asp-route-pageNumber="@(Model.PageIndex - 1)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @prevDisabled">
-                    <
-                </a>
-                <a asp-action="CompletedFiles"
-                   asp-route-pageNumber="@(Model.PageIndex + 1)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @nextDisabled">
-                    >
-                </a>
-                <a asp-action="CompletedFiles"
-                   asp-route-pageNumber="@(Model.TotalPages)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @nextDisabled">
-                    >>
-                </a>
+                    <a asp-action="CompletedFiles"
+                       asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @prevDisabled">
+                        <<
+                    </a>
+                    <a asp-action="CompletedFiles"
+                       asp-route-pageNumber="@(Model.PageIndex - 1)"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @prevDisabled">
+                        <
+                    </a>
+                    <a asp-action="CompletedFiles"
+                       asp-route-pageNumber="@(Model.PageIndex + 1)"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @nextDisabled">
+                        >
+                    </a>
+                    <a asp-action="CompletedFiles"
+                       asp-route-pageNumber="@(Model.TotalPages)"
+                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                       class="btn btn-default @nextDisabled">
+                        >>
+                    </a>
+
+                </div>
             </div>
 
         </div>
     </div>
 </div>
+
+
+@section scripts {
+    <script type="text/javascript">
+
+        $(function () {
+            $('#CompletedSubmissionTable').DataTable();
+        });
+
+    </script>
+}

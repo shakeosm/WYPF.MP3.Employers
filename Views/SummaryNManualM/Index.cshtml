@@ -5,6 +5,7 @@
     string remID = ViewBag.remID;
     int countErrors = 0;
     bool showPaginationControls = Model.Count() > Convert.ToInt32(ViewBag.MaximumPaginationItemsPerPage);
+    string totalValueCss = "text-warning";
 }
 
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -49,7 +50,7 @@
                             <tr>
                                 <th>Status</th>
                                 <th>Description</th>
-                                <th>Total</th>
+                                <th class="text-center">Total</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -59,16 +60,17 @@
                                 if (item.ACTION_BY.Equals("ALL"))
                                 {
                                     countErrors++;
-                                    <tr>
-                                        <td>
-                                            @{
-                                                if (item.ALERT_CLASS.Equals("W"))
+                                <tr>
+                                    <td>
+                                        @{
+                                            totalValueCss = item.ALERT_CLASS.Equals("W") ? "warning" : "danger";
+                                            if (item.ALERT_CLASS.Equals("W"))
                                                 {
-                                                    <label> Warning</label>
+                                                <label class="text-@totalValueCss"> Warning</label>
                                                 }
                                                 else if (item.ALERT_CLASS.Equals("E"))
                                                 {
-                                                    <label>  Error </label>
+                                                <label class="text-@totalValueCss">Error </label>
                                                 }
                                             }
                                         </td>
@@ -78,7 +80,8 @@
 
                                         @{
                                             var newCount = item.ALERT_COUNT.Replace(".0", "");
-                                            <td>@newCount</td>
+                                        //<td class="text-center h4"><span class="badge bg-@totalValueCss rounded-pill">@newCount</span></td>
+                                        <td class="text-center h4">@newCount</td>
                                         }
 
                                         @*<td>
@@ -90,8 +93,10 @@
                                         @{
                                             item.remittanceID = remID;
                                         }
-                                        <td>
-                                            @Html.ActionLink("View", "WarningsListforBulkApproval", "SummaryNManualM", item)
+                                        <td class ="text-center">
+                                        @Html.ActionLink("View", "WarningsListforBulkApproval", "SummaryNManualM", item, new {@class="btn btn-outline-primary"})
+
+                                        @*<a href="/SummaryNManualM/WarningsListforBulkApproval?@item" class="btn btn-outline-primary">View</a>*@
                                             @* <a asp-action="WarningsListforBulkApproval" asp-all-route-data = new Dictionary{"remittanceID = item.remittanceID,"} style="color:blue;"><i class="fa fa-marker fa-lg"></i> Show</a>                *@
                                         </td>
                                     </tr>
@@ -146,10 +151,10 @@
         </script>
         <div class="container">
             <div class="jumbotron">
-                <div class="alert alert-danger">
+                <div class="alert alert-success">
 
                     <h2>You have removed all the error and warnings, File is with WYPF for processing.</h2>
-                    <p>click button to finish process</p>
+                    <p>Click the following button to finish the process.</p>
                     <a href="/Admin/Home" class="btn btn-primary" value="Finish"> Finish Process</a>
                 </div>
             </div>
