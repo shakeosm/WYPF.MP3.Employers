@@ -337,12 +337,10 @@
                                             @* <a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary">Select</a>  *@
                                             <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary">select</a>
                                             </td>
-                                        <td>
-                                            @* <a asp-action="ScoreHist" asp-controller="Admin" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-info disabled">Score History</a> *@
+                                        <td>                                            
                                             <a href="/Admin/ScoreHist?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-info disabled">Score History</a>
                                         </td>
-                                        <td>
-                                            @*<a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@
+                                        <td>                                            
                                             @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
                                         </td>
                                         <td>

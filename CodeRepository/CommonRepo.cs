@@ -31,7 +31,7 @@ namespace MCPhase3.CodeRepository
                     Directory.CreateDirectory(destinationFile); 
 
                 destinationFile = Path.Combine(destinationFile, fileName);
-                 File.Copy(sourceFile, destinationFile, true);
+                 File.Move(sourceFile, destinationFile, true);
             }
             catch (IOException ex)
             {

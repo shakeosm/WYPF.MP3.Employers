@@ -59,43 +59,49 @@
 
 
 
-        <div class="container" id="myDiv2" style="display:none;">
-            <div class="jumbotron">
-                <h3>Data Summary</h3>
-                <p style="font-size:small;">Page displayed after financial totals have been accepted</p><br />
-                @if (TempData["MsgError"] == null)
-                {
-                    <div class="table-bordered">
-                        <div class="alert alert-danger">
-                            <h3>@ViewBag.empName</h3><br />
-                            <h3>File Loaded and Checked</h3><br />
-                            @Html.Raw(@TempData["msgExtra"].ToString())
-                        </div>
-                        <div class="alert alert-danger">
-                            <h3>Error and Warnings</h3>
-                            <p style="font-size:small;">Shows all data alerts and their count.   User may return or show list of all records with specific alert.</p><br />
-                        <b>@Html.ActionLink("View errors and warnings summary", "Index", "SummaryNManualM", new { remittanceID = @Model.remittanceID })</b><br />
-                            @*@Html.ActionLink("View and amend records with errors and warnings", "WarningsListforBulkApproval", "SummaryNManualM", @Model)<br />*@
-                            @*@Html.ActionLink("Loose match records", "LooseMatchRecords", "Home", new { remID = @Model.remittanceID })<br />*@
-                        <b> @Html.ActionLink("Exit and return later", "Index", "Admin", @Model)</b><br />
-                            @*@Html.ActionLink("Submit file to WYPF for posting", "AutoMatching", "Home", @Model)<br />*@
-                            @* <a asp-controller="Home" asp-action="AutoMatching" asp-all-route-data="myObject" class="btn btn-primary">click here</a> <b>to Start Next Steps.</b><br><br>               *@
-                        </div>
+    <div class="container" id="myDiv2" style="display:none;">
+        <div class="jumbotron">
+            <h3>Data Summary</h3>
+            <p style="font-size:small;">Page displayed after financial totals have been accepted</p><br />
+            @if (TempData["MsgError"] == null)
+            {
+                <div class="table-bordered">
+                    <div class="alert alert-primary">
+                        <h3>@ViewBag.empName</h3><br />
+                        <h3>File Loaded and Checked</h3><br />
+                        @Html.Raw(@TempData["msgExtra"].ToString())
                     </div>
-                }
-
-                else
-                {
-                    <div class="table-bordered">
-                        <div class="alert alert-danger">
-                            @Html.Raw(@TempData["MsgError"].ToString())
-                        </div>
+                    <div class="alert alert-info">
+                        <h3>Error and Warnings</h3>
+                        <p style="font-size:small;">Shows all data alerts and their count.   User may return or show list of all records with specific alert.</p><br />
                     </div>
-                }
+                    @*@Html.ActionLink("View errors and warnings summary", "Index", "SummaryNManualM", new { remittanceID = @Model.remittanceID })*@
+                    <a href="/SummaryNManualM/index?remittanceID=@Model.remittanceID" class="btn btn-primary mr-2">View errors and warnings summary</a>
+                    
+                    @*@Html.ActionLink("View and amend records with errors and warnings", "WarningsListforBulkApproval", "SummaryNManualM", @Model)<br />*@
+                    @*@Html.ActionLink("Loose match records", "LooseMatchRecords", "Home", new { remID = @Model.remittanceID })<br />*@
+                    @*<b> @Html.ActionLink("Exit and return later", "Index", "Admin", @Model)</b><br />*@
 
-            </div>
+                    <a href="/Admin/index?remittanceID=@Model.remittanceID" class="btn btn-danger">Exit and return later</a>
+                    @*@Html.ActionLink("Exit and return later", "Index", "Admin", @Model)*@
+
+                    @*@Html.ActionLink("Submit file to WYPF for posting", "AutoMatching", "Home", @Model)<br />*@
+                    @* <a asp-controller="Home" asp-action="AutoMatching" asp-all-route-data="myObject" class="btn btn-primary">click here</a> <b>to Start Next Steps.</b><br><br>               *@
+
+                </div>
+            }
+
+            else
+            {
+                <div class="table-bordered">
+                    <div class="alert alert-danger">
+                        @Html.Raw(@TempData["MsgError"].ToString())
+                    </div>
+                </div>
+            }
+
         </div>
-    @*</div>*@
+    </div>
 </div>
 
 <script>  

@@ -74,12 +74,12 @@
                 <div class="alert @alterClass border-2">
 
                     <!--Html.Raw to apply Html tags inside a string-->
-                @Html.Raw(@TempData["MsgM"].ToString())
+                    @Html.Raw(@TempData["MsgM"].ToString())
                 </div>
 
                 @if (@TempData["MsgM"].ToString() == "File is uploaded successfully")
                 {
-                    <div class="alert alert-success" role="alert">
+                    <div class="col-12">
                         <a asp-action="Remad" class="btn btn-primary">Next </a> to check all totals are correct.
                     </div>
                 }
