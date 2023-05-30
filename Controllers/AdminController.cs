@@ -4,6 +4,7 @@ using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -247,7 +248,8 @@ namespace MCPhase3.Controllers
             return sortedDashboardItems;
         }
 
-        public async Task<IActionResult> MasterDetailEmp( int? pageNumber, string remid)
+        //TODO: following should be renamed to 'Dashboard'?
+        public async Task<IActionResult> MasterDetailEmp( )
         {
             try
             {
@@ -287,10 +289,13 @@ namespace MCPhase3.Controllers
                 //newBO = newBO.OrderByDescending(x => x.event_DateTime);
                 //int pageSize = 10;
 
+                //## Followings moved to a new Action "GetSubmissionDetails" - will be consumed via ajax() call.
+                /*
                 WebapiBaseUrlForDetailEmpList = ConfigGetValue("WebapiBaseUrlForDetailEmpList");
                 BO.L_USERID = CurrentUserId();
                 int j = 0;
 
+                //TODO: remove this MasterDetail processing from here.. and put it in a separate ActionController for separate call via ajax();
                 if (!string.IsNullOrEmpty(remid))
                 {
                     remid = DecryptUrlValue(remid);
@@ -318,7 +323,8 @@ namespace MCPhase3.Controllers
                     TempData["remID"] = remid;
                 }
 
-                int pageSize = 10;
+                */
+
                 int i = 0;
                 //viewModel.BO.remittance_Id = protector.Encode(viewModel.BO.remittance_Id);
                 foreach (var model in viewModel.dashboardBO)
@@ -334,6 +340,46 @@ namespace MCPhase3.Controllers
                 TempData["MsgError"] = "System is showing error, please try again later";
                 return RedirectToAction("Index", "Login");
             }
+        }
+
+        /// <summary>
+        /// This will be used from Admin dashboard- to show the details of a Pending submission file
+        /// </summary>
+        /// <param name="remittanceId">Remittance Id</param>
+        /// <returns>A Partial view with list of all records in that suubmission</returns>
+        [HttpGet]
+        public async Task<ActionResult> GetSubmissionDetails(string remittanceId)
+        {
+
+            if (!string.IsNullOrEmpty(remittanceId) )
+            {
+                string WebapiBaseUrlForDetailEmpList = ConfigGetValue("WebapiBaseUrlForDetailEmpList");
+                string remid = DecryptUrlValue(remittanceId);
+
+                var paramList = new MasterDetailEmpListBO()
+                {
+                    L_USERID = CurrentUserId(),
+                    L_REMITTANCE_ID = remid,
+                    L_STATUSTYPE = "ALL"
+                };
+
+                var submissionDetails = new List<DashboardBO>();
+                using (var httpClient = new HttpClient())
+                {
+                    var content = new StringContent(JsonConvert.SerializeObject(paramList), Encoding.UTF8, "application/json");
+
+                    using var response = await httpClient.PostAsync(WebapiBaseUrlForDetailEmpList, content);
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string result = await response.Content.ReadAsStringAsync();
+                        submissionDetails = JsonConvert.DeserializeObject<List<DashboardBO>>(result);
+                    }
+                }
+
+                return PartialView("_SubmissionDetails", submissionDetails);
+            }
+
+            return Json("<h3>Failed ot load data.</h3>");
         }
 
         /// <summary>

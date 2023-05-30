@@ -41,7 +41,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model)
+                        @foreach (var item in Model.OrderByDescending(m=> m.remittance_Id))
                         {
                             //if (Convert.ToInt32(item.return_Status_Code) >= 105)
                             //{

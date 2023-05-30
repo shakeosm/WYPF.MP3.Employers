@@ -31,6 +31,8 @@
         </nav>
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade show active pt-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                
+                @*## following will be always NULL.. we have removed this feature from Controller*@
                 @if (TempData["remID"] != null)
                 {
                     @*<div class="container">
@@ -283,6 +285,7 @@
                         <tbody>
                             @foreach (var item in Model.dashboardBO)
                             {
+                                /*
                                 string selectRow = "";
                                 if (TempData["remID"] != null)
                                 {
@@ -293,22 +296,28 @@
                                         selectRow = "table-success";
                                     }
                                 }
-
+                                */
                                 //if (Convert.ToInt32(item.return_Status_Code) < 110)
                                 //{
                                 //remid = item.remittance_ID.ToString();
 
-                                <tr class="@selectRow">
-                                    <td><a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remid=@item.remittance_IdEnc>+</a></td>
+                                @*<tr class="@selectRow">*@
+                                <tr>
+                                    @*<td><a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remid=@item.remittance_IdEnc class="ShowSubmissionDetailsButton">+</a></td>*@
+                                    <td>
+                                        <span class="btn btn-sm btn-outline-primary ShowSubmissionDetailsButton" 
+                                                data-remittance-id="@item.remittance_IdEnc" 
+                                                data-modal-title="Reference: @item.remittance_Id || Score: @item.return_Score_Emp">+</span>
+                                        </td>
                                     @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
 
                                     <td>@item.return_Month_Name</td>
                                     <td>@item.return_Year</td>
-                                    <td>@item.remittance_Id</td>
+                                    <td class="remittance-id">@item.remittance_Id</td>
                                     <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
                                     <td>@item.paylocation_Name</td>@*<td>@item.return_Records</td>*@
                                     <td>@item.return_Status_Text</td>
-                                    <td>@item.return_Score_Emp</td>
+                                    <td class="latest-score">@item.return_Score_Emp</td>
                                     @*<td> @Html.ActionLink("Select", "Index", "SummaryNManualM", new { remittanceID = "176448" })<br /></td>*@
                                     @{
                                         ReturnSubmitBO alertSumBO = new ReturnSubmitBO();
@@ -361,13 +370,27 @@
     </div>
 </div>
 
+<div id="SubmissionDetailPopupModal" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="SubmissionDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="SubmissionDetailModalTitle">Details: </h5>
+                <button type="button" class="close submission-detail-modal-close-button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="SubmissionDetailPlaceholderDiv">
+                    @*Here we will dump the submission details to show in this popup modal window...*@
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary submission-detail-modal-close-button" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section scripts {
-     <script type="text/javascript">
-
-        $(function () {
-            $('#PendingSubmissionTable').DataTable();
-        });
-
-     </script>
+     <script type="text/javascript" src="~/js/dashboard.js"></script>
 }

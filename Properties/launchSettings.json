@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "MCPhase3 - Copy": {
+    "MCPhase3": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
