@@ -27,8 +27,8 @@ namespace MCPhase3.Controllers
         private readonly ILogger<SummaryNManualMController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-       
-               ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
+        
+        ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
         List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
 
         //following class I am using to consume api's
@@ -231,6 +231,10 @@ namespace MCPhase3.Controllers
                                 //call following api to get this uploaded remittance id of file.
                                 string result = await Response.Content.ReadAsStringAsync();
                                 recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
+
+                                if (recordsList.Count < 1) {
+                                    return View(Constants.Error403_Page);
+                                }
                             }
                         }
                     }
@@ -414,6 +418,12 @@ namespace MCPhase3.Controllers
                             apiResponse = await Response.Content.ReadAsStringAsync();
                             recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResponse);
 
+
+                            if (recordsList.Count < 1)
+                            {
+                                return View(Constants.Error403_Page);
+                            }
+
                             // TempData["msg"] = errorAndWarningTo.returnStatusTxt;
 
                         }
@@ -563,6 +573,11 @@ namespace MCPhase3.Controllers
                 getMatchesBO.dataRowId = dataRowID;
                 //method to get matching records from UPM
                 listOfMatches.Matches = await GetRecords(getMatchesBO);
+
+                if (listOfMatches.Matches.Count < 1)
+                {
+                    return View(Constants.Error403_Page);
+                }
 
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 ViewBag.fileData = memberUpdateRecordBO;

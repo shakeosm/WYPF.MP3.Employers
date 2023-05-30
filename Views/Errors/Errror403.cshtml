@@ -1,0 +1,17 @@
+﻿@model MCPhase3.Models.MyModel
+
+@{
+    ViewData["Title"] = "LG";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="alert alert-warning col-8 offset-2 mt-5">
+
+    <h1 class="text-danger">Access denied</h1>
+    <h1 class="text-danger">Error: 403</h1>
+    <h4 class="mt-4">You are not authorized to view these records.</h4>
+    <h5>Multiple invalid requests may result your account getting locked.</h5>
+    <h5> If you think system has produced this error by mistake, please contact the Helpdesk ASAP.</h5>
+
+    <button onclick="history.back()" class="btn btn-primary mt-5">Go Back</button>
+</div>

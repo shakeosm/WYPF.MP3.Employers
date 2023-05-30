@@ -30,6 +30,8 @@
         /// <summary>The complete File path and name of the file uploaded by the Customer</summary>
         public const string UploadedFilePathKey = "UploadedFilePathName";    //## for Redis cross check
 
+        public const string Error403_Page = @"~/Views/Errors/Errror403.cshtml";
+
         public static string RedisKeyList()
         {
             return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{UserIdKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey}";
