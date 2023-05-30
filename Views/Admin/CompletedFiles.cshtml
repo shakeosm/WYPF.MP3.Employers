@@ -3,7 +3,7 @@
     ViewData["Title"] = "Files History";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     int i = 0;
-    int j = 0;
+    int j = 0;    
 }
 <br />
 <br />
@@ -41,7 +41,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.OrderByDescending(m=> m.remittance_Id))
+                        @foreach (var item in Model.OrderByDescending(m => m.remittance_Id))
                         {
                             //if (Convert.ToInt32(item.return_Status_Code) >= 105)
                             //{
@@ -102,11 +102,5 @@
 
 
 @section scripts {
-    <script type="text/javascript">
-
-        $(function () {
-            $('#CompletedSubmissionTable').DataTable();
-        });
-
-    </script>
+    <script type="text/javascript" src="~/js/dashboard.js"></script>
 }

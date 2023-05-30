@@ -315,9 +315,11 @@ namespace MCPhase3.Controllers
             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
 
             //## Browser Session Id and Redis SessionId-> are they same..?
-            if (currentBrowserSessionId == sessionInfo.SessionId) {
-                _cache.Delete(sessionKeyName);
-                _cache.Delete(currentBrowserSessionId);
+            if (sessionInfo != null) { 
+                if (currentBrowserSessionId == sessionInfo.SessionId) {
+                    _cache.Delete(sessionKeyName);
+                    _cache.Delete(currentBrowserSessionId);
+                }            
             }
 
 

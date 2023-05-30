@@ -8,7 +8,7 @@ namespace MCPhase3.Models
     public class DashboardBO
     {
         public string userId { get; set; }
-        public string remittance_Id { get; set; }
+        public int remittance_Id { get; set; }
         public string remittance_IdEnc { get; set; }
         public string statusType { get; set; }
         public string statusCode { get; set; }

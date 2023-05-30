@@ -329,7 +329,7 @@ namespace MCPhase3.Controllers
                 //viewModel.BO.remittance_Id = protector.Encode(viewModel.BO.remittance_Id);
                 foreach (var model in viewModel.dashboardBO)
                 {
-                    viewModel.dashboardBO[i].remittance_IdEnc = EncryptUrlValue(model.remittance_Id);
+                    viewModel.dashboardBO[i].remittance_IdEnc = EncryptUrlValue(model.remittance_Id.ToString());
                     i++;
                 }
                 //viewModel.dashboardB

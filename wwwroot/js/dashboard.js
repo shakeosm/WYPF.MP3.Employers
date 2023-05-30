@@ -1,12 +1,15 @@
 ﻿$(function () {
     $('#PendingSubmissionTable').DataTable();
+    
+    $('#CompletedSubmissionTable').DataTable({
+        order: [[2, 'desc']],
+    });
+    
 
-    $(".ShowSubmissionDetailsButton").click(function () {
+    $("#PendingSubmissionTable .ShowSubmissionDetailsButton").click(function () {
         
         var params = { remittanceId: $(this).attr("data-remittance-id") };
         var modalTitle = $(this).attr("data-modal-title");
-
-        //console.log("modalTitle: " + modalTitle);
 
         $.ajax({
             type: "GET",
@@ -26,16 +29,10 @@
             }
         });
 
-        //$.get('/Admin/GetSubmissionDetails/', params, onSuccessShowSubmissionDetail);//, datatype);
     });
 
     $(".submission-detail-modal-close-button").click(function () {
         $("#SubmissionDetailPopupModal").modal("hide");
     });
 
-    function onSuccessShowSubmissionDetail(response, status) {
-        // do something here 
-        console.log("response: " + response);
-        $("#SubmissionDetailPlaceholderDiv").html(data);
-    }
 });
