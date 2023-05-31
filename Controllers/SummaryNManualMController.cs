@@ -113,6 +113,11 @@ namespace MCPhase3.Controllers
                 model = await callApi.CallAPISummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
                 var newModel1 = model.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
 
+                if (newModel1.Count < 1)
+                {
+                    return View(Constants.Error403_Page);
+                }
+
                 foreach (var item in newModel1)
                 {
                     item.EncryptedRowRecordID = encryptedRemID;
