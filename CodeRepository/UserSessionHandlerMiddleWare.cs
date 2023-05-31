@@ -32,6 +32,12 @@ namespace MCPhase3.CodeRepository
                 string sessionInfoKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}"; //## this must match the Keyname in the BaseController.. Don't change it here
                 var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
 
+                if (sessionInfo == null)
+                {
+                    //## can happen- if the RedisCache is restarted/cleared on the Server- then what to do!
+                    context.Response.Redirect("/Login/Logout");
+                }
+
                 if (sessionGuid != null && sessionGuid == sessionInfo.SessionId)
                 {
                     //## all good

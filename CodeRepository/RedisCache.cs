@@ -58,7 +58,8 @@ namespace MCPhase3.CodeRepository
         {
             return new DistributedCacheEntryOptions
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(EXPIRY_MINUTES)
+                //AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(EXPIRY_MINUTES),
+                SlidingExpiration = TimeSpan.FromMinutes(EXPIRY_MINUTES)
             };
         }
 
