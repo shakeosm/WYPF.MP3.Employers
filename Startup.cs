@@ -2,20 +2,23 @@ using MCPhase3.CodeRepository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace MCPhase3
 {
     public class Startup
     {
+        private readonly int EXPIRY_MINUTES;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            EXPIRY_MINUTES = Configuration.GetValue<int>("RedisExpiryMinutes");
         }
 
         public IConfiguration Configuration { get; }
@@ -26,12 +29,12 @@ namespace MCPhase3
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(10);
+                options.IdleTimeout = TimeSpan.FromMinutes(EXPIRY_MINUTES);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
 
-
+                      
             //to increase a rest api wait to maximum.
             services.Configure<FormOptions>(options =>
             {
@@ -42,9 +45,8 @@ namespace MCPhase3
                 options.MultipartHeadersLengthLimit = int.MaxValue;
             });
 
-            services.AddSingleton<IRedisCache, RedisCache>();
-            services.AddDistributedMemoryCache();
             // Add Redis services to the container.
+            services.AddSingleton<IRedisCache, RedisCache>();
             services.AddStackExchangeRedisCache(options => {
                 options.Configuration = Configuration.GetConnectionString("RedisCacheUrl");
                 //    options.InstanceName = builder.Configuration.GetValue<string>("RedisInstance");
@@ -67,7 +69,7 @@ namespace MCPhase3
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -107,9 +109,9 @@ namespace MCPhase3
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
-                    name: "default",
+                    name: "default",                    
                     pattern: "{controller=Login}/{action=Index}/{id?}");
-            });
+            });            
         }
     }
 }
