@@ -37,7 +37,7 @@
         <div class="container">
             <div class="jumbotron col-md-12">
                 <h4>List of Paylocations:</h4>
-                <select class="form-control col-md-6" asp-for="paylocationList" asp-items="ViewBag.Paylocations"></select>
+                <select class="form-select col-md-6" asp-for="paylocationList" asp-items="ViewBag.Paylocations"></select>
             </div>
         </div>
         </br>
@@ -47,16 +47,16 @@
 
                 <div class="col-md-12">
                     <label class="col-md-6">Select Payroll month:</label>
-                    <select class="form-control col-md-6" asp-for="monthsList" asp-items="ViewBag.Months"></select><br><br>
+                    <select class="form-select col-md-6" asp-for="monthsList" asp-items="ViewBag.Months"></select><br><br>
                 </div>
                 <div class="col-md-12">
                     <label class="col-md-6">Select Payroll year:</label>
-                    <select class="form-control col-md-6" asp-for="yearsList" asp-items="ViewBag.Years"></select><br><br>
+                    <select class="form-select col-md-6" asp-for="yearsList" asp-items="ViewBag.Years"></select><br><br>
                 </div>
 
                 <div class="col-md-12">
                     <label class="col-md-6">Posting for:</label>
-                    <select class="form-control col-md-6" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting"></select><br><br>
+                    <select class="form-select col-md-6" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting"></select><br><br>
                 </div>
 
                 <h4>Step 2: upload monthly contribution spreadsheet</h4>

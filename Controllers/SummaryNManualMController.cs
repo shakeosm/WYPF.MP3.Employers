@@ -115,7 +115,6 @@ namespace MCPhase3.Controllers
 
                 if (newModel1.Count < 1)
                 {
-                    //return View(Constants.Error403_Page);
                     return RedirectToAction("MasterDetailEmp", "Admin");
                 }
 

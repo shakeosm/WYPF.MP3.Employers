@@ -94,7 +94,7 @@ namespace MCPhase3.CodeRepository
                         if (dr[i].ToString().ToUpper().Contains(checkSign1) && dt.Columns[i].ToString().ToUpper() != "NOTES")
                         {
                             //var idx = dt.Rows.IndexOf(dr);
-                            CheckSpreadSheetErrorMsg += "<BR /> You have added invalid sign <B> " + checkSign1 + " </B> in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<BR />Please remove this sign to upload file<BR />";
+                            CheckSpreadSheetErrorMsg += "<BR /> You have added invalid sign in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<BR />Please remove this sign to upload file<BR />";
                             result = false;
                         }
                     }
@@ -1453,8 +1453,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "DATE_JOINED_SCHEME", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "You have entered invalid date joined scheme 'DATE_JOINED_SCHEME':<B>"
-                        + wrongDateInFormat + "</B> in spreadsheet.<BR />'DATE_JOINED_SCHEME' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "You have entered invalid date joined scheme 'DATE_JOINED_SCHEME' in spreadsheet.<BR />'DATE_JOINED_SCHEME' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1468,8 +1467,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "DATE_OF_LEAVING_SCHEME", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "You have entered invalid date of leaving scheme 'DATE_OF_LEAVING_SCHEME':<B>"
-                        + wrongDateInFormat + "</B> in spreadsheet.<BR />'DATE_OF_LEAVING_SCHEME' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "You have entered invalid date of leaving scheme 'DATE_OF_LEAVING_SCHEME' in spreadsheet.<BR />'DATE_OF_LEAVING_SCHEME' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1483,8 +1481,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "OPTOUT_DATE", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid opt out date 'OPTOUT_DATE':<B>"
-                        + wrongDateInFormat + "</B> in spreadsheet.<BR />'OPTOUT_DATE' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid opt out date 'OPTOUT_DATE' in spreadsheet.<BR />'OPTOUT_DATE' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1498,8 +1495,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "50_50_START_DATE", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid '50_50_START_DATE':<B>"
-                        + wrongDateInFormat + "</B> in spreadsheet.<BR />'50_50_START_DATE' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid '50_50_START_DATE' in spreadsheet.<BR />'50_50_START_DATE' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1513,8 +1509,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "50_50_END_DATE", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid '50_50_END_DATE':<B>"
-                        + wrongDateInFormat + "</B> in spreadsheet.<BR />'50_50_END_DATE' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid '50_50_END_DATE' in spreadsheet.<BR />'50_50_END_DATE' value should be like '30/10/2014'.";
                 result = false;
             }
 

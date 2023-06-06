@@ -35,23 +35,15 @@ namespace MCPhase3.Controllers
        
         public IActionResult Index()
         {
-            bool sessionResult = false;
-            ///following function will check if session has value then login user with out showing login page again.
-            sessionResult = SessionHasValue();
+            //## following function will check if session has value then login user with out showing login page again.
+            bool sessionResult = SessionHasValue(); 
+            
             if (sessionResult)
             {
                 return RedirectToAction("Home", "Admin");
             }
 
-            //encode decode test
-
-            //int remID = 20;
-            //string enRemid = protector.Decode(remID.ToString());
-            //ViewData["remid"] = enRemid;
-            //ViewData["enRemid"] = protector.Encode(enRemid);
-
-
-            // Page_Load();
+            ClearTempData();
             return View(loginDetails);
         }
 
@@ -297,10 +289,14 @@ namespace MCPhase3.Controllers
             {  
                 result = true;               
             }
+            
+            TempData["Msg1"] = null;  //## to clear any previously stored garbage.. we should avoid using this TempDtat completely
+            TempData["msg"] = null;
+
             return result;
         }
 
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
         {
 
             //## clear the Redis cache... so the user can login next time easily            
@@ -315,20 +311,20 @@ namespace MCPhase3.Controllers
             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
 
             //## Browser Session Id and Redis SessionId-> are they same..?
-            if (sessionInfo != null) { 
-                if (currentBrowserSessionId == sessionInfo.SessionId) {
+            if (sessionInfo != null)
+            {
+                if (currentBrowserSessionId == sessionInfo.SessionId)
+                {
                     _cache.Delete(sessionKeyName);
                     _cache.Delete(currentBrowserSessionId);
-                }            
+                }
             }
 
 
-            TempData["ps"] = null;          
-            TempData["Msg"] = null;
-            TempData["Msg1"] = null;
-            TempData["MsgM"] = null;
+            ClearTempData();
+
             HttpContext.Session.Clear();
-            
+
             HttpContext.Session.Remove(Constants.SessionKeyUserID);
             HttpContext.Session.Remove(Constants.SessionKeyPayLocName);
             HttpContext.Session.Remove(Constants.SessionKeyPayLocId);
@@ -336,15 +332,6 @@ namespace MCPhase3.Controllers
             HttpContext.Session.Remove(Constants.SessionKeyClientType);
             HttpContext.Session.Remove(Constants.SessionKeyEmployerName);
             HttpContext.Session.Remove(Constants.SessionKeyPayrollProvider);
-            
-            //TODO: followings are never used.. need to delete
-            var opts = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = DateTimeOffset.Now.AddHours(12),
-                SameSite = SameSiteMode.Lax,
-                Secure = true
-            };
 
             HttpContext.Response.Cookies.Delete(Constants.SessionKeyUserID);
             HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
@@ -357,13 +344,22 @@ namespace MCPhase3.Controllers
 
             //## Delete all redis keys used in the App for this User related variables
             var redisKeyList = Constants.RedisKeyList().Split(",");
-            foreach (var redisKey in redisKeyList) {
+            foreach (var redisKey in redisKeyList)
+            {
                 string redisKeyName = $"{currentUserId}_{redisKey}";
                 _cache.Delete(redisKeyName);
-            }            
+            }
 
             // await signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Login");           
-        }       
+            return RedirectToAction("Index", "Login");
+        }
+
+        private void ClearTempData()
+        {
+            TempData["ps"] = null;
+            TempData["Msg"] = null;
+            TempData["Msg1"] = null;
+            TempData["MsgM"] = null;
+        }
     }
 }
