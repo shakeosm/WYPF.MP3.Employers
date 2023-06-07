@@ -235,14 +235,14 @@ namespace MCPhase3.Controllers
             }
 
             //clear Datatable when upload file button is clicked.
-            var fileNameWithoutExt = Path.GetFileNameWithoutExtension(paymentFile.FileName);
+            var fileNameForUpload = Path.GetFileNameWithoutExtension(paymentFile.FileName);
             fileExt = Path.GetExtension(paymentFile.FileName);
 
-            fileNameWithoutExt  = $"{empName.Replace(" ", "-")}_{yearsList.Replace("/", "-")}_{monthsList}_{posting}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
+            fileNameForUpload  = $"{empName.Replace(" ", "-")}_{yearsList.Replace("/", "-")}_{monthsList}_{posting}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
 
             //copy file to local folder
             string _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
-            filePath = Path.Combine(_customerUploadsLocalFolder, fileNameWithoutExt);
+            filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
 
             if (!Path.Exists(_customerUploadsLocalFolder)) {
                 TempData["MsgM"] = "Error: File upload area not defined. Please contact support.";
@@ -251,8 +251,18 @@ namespace MCPhase3.Controllers
 
             using (FileStream fileStream = new(filePath, FileMode.Create))
             {
-                await paymentFile.CopyToAsync(fileStream);
+                await paymentFile.CopyToAsync(fileStream);                
                 _logger.LogInformation("File is copied to local folder.");
+            }
+
+
+            //## malicious script check
+            //TODO: Use NugetPackage for Excel operation: 'https://www.nuget.org/packages/CsvHelper.Excel.Core/'
+            var result = CheckMaliciousScripts(filePath);
+            if (result != "")
+            {
+                TempData["MsgM"] = result;
+                return RedirectToAction("Index", "Home", null, "uploadFile");
             }
 
             //CopyFileToFolderAsync(fileNameWithoutExt, _host.WebRootPath, "/UploadedFiles/");
@@ -304,7 +314,7 @@ namespace MCPhase3.Controllers
             HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
             //HttpContext.Session.SetString(Constants.SessionKeyClientId,3.ToString());
 
-            HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameWithoutExt);
+            HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
             HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
 
             // var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -1140,8 +1150,45 @@ namespace MCPhase3.Controllers
             finally
             {
                 dataTable.Dispose();
-            }           
+            }                       
+        }
+
+        /// <summary>
+        /// This will convert the Excel to CSV file, then look for any malicious scripts in the file.
+        /// If found- return with error. Otherwise- returns empty text
+        /// </summary>
+        /// <param name="filePathName">Excel file name to check</param>
+        /// <returns>File processing error</returns>
+        private string CheckMaliciousScripts(string filePathName)
+        {
+            //## Convert the Excel file to CSV first
+            var csvPath = Path.GetDirectoryName(filePathName) + "/csv/";            
+            var csvFileName  = Path.GetFileNameWithoutExtension(filePathName) + ".csv";
+            var csvFilePath = csvPath + csvFileName;
+            var isConverted = ConvertExcelToCsv.Convert(filePathName, csvFilePath);
+
+            if (isConverted == false)
+                return "File format error. Please try another file.";
             
+            try
+            {
+
+                var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');
+                foreach (var item in contents)
+                {
+                    if (item.ToLower().Contains("script")) {
+                        //Console.WriteLine("Item: " + item.ToString());
+                        return "Error: Malicious scripts found in the file. This file is corrupted. Please try another one.";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.ToString());
+                throw;
+            }
+
+            return "";  //## success! All good!
         }
     }
 }

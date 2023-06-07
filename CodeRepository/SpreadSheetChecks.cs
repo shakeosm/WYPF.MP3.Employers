@@ -144,8 +144,7 @@ namespace MCPhase3.CodeRepository
                         CheckSpreadSheetErrorMsg += "<BR /> <BR />";
                     }
 
-                    CheckSpreadSheetErrorMsg += "<BR />You have entered invalid payroll period 'PAYROLL_PD':<B>"
-                        + payrollPeriod + "</B> in spreadsheet at row number:<B>" + inc + " </B> <BR />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.</Br>";
+                    CheckSpreadSheetErrorMsg += "<BR />You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<B>" + inc + " </B> <BR />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.</Br>";
                     result = false;
 
                     //Q-comment break point
@@ -283,8 +282,7 @@ namespace MCPhase3.CodeRepository
                 if (!validPayYearInSpreadsheet)
                 {
 
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid payroll year 'PAYROLL_YR':<B>"
-                        + payrollYear + "</B> in spreadsheet at row number:<B>" + inc + " </B> <BR />'PAYROLL_YR' value should be like '2014/15'. Or You have selected wrong payroll year from above dropdown list.<BR />";
+                    CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid payroll year 'PAYROLL_YR' in spreadsheet at row number:<B>" + inc + " </B> <BR />'PAYROLL_YR' value should be like '2014/15'. Or You have selected wrong payroll year from above dropdown list.<BR />";
                     result = false;
 
                     //Q-comment break point
@@ -688,8 +686,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "DOB", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid date of birth 'DOB':<B>"
-                        + wrongDateInFormat + "</B> 'DOB' value should be like '30/10/2014'.<BR />";
+                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid date of birth 'DOB'. value should be like '30/10/2014'.<BR />";
                 result = false;
             }
 
@@ -1957,7 +1954,7 @@ namespace MCPhase3.CodeRepository
                 DateTime parsed;
                 if (!DateTime.TryParseExact(updatedColumnValue, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out parsed))
                 {
-                    wrongDateFormat = dateColumnValue + " at row Number: " + rowRef;
+                    wrongDateFormat = " at row Number: " + rowRef;
                     result = false;
 
                     //Q-comment break point
@@ -2344,8 +2341,7 @@ namespace MCPhase3.CodeRepository
 
                 if (!validValues.Contains(columnValue.Trim(), StringComparer.CurrentCultureIgnoreCase))
                 {
-                    errorMsg += "<BR /> <BR />You have entered invalid '" + columnName + "':<B>"
-                        + columnValue + "</B> in spreadsheet.<BR />'" + columnName + "' value can be " + allValiedValues + "at row number: " + rowRef + " of spreadsheet.";
+                    errorMsg += "<BR /> <BR />You have entered invalid '" + columnName + "' in spreadsheet.<BR />'" + columnName + "' value can be " + allValiedValues + "at row number: " + rowRef + " of spreadsheet.";
                     result = false;
 
                     //Q-comment break point
@@ -2374,8 +2370,7 @@ namespace MCPhase3.CodeRepository
                 double parsed;
                 if (!double.TryParse(columnValue, out parsed))
                 {
-                    errorMsg += "<BR /> <BR />You have entered invalid '" + columnName + " value':<B>"
-                       + columnValue + "</B> in spreadsheet at row: <B>" + inc + "</B>";
+                    errorMsg += "<BR /> <BR />You have entered invalid '" + columnName + " value' in spreadsheet at row: <B>" + inc + "</B>";
                     result = false;
 
                     //Q-comment break point
@@ -2448,8 +2443,7 @@ namespace MCPhase3.CodeRepository
                     //    CheckSpreadSheetErrorMsg = "<BR /> <BR />";
                     //}
 
-                    CheckSpreadSheetErrorMsg += "<BR />You have entered invalid 'Employer Location Code:<B>"
-                        + payLocID + "</B> in spreadsheet at row number: " + inc + ".<BR />Valid 'Employer Location Code' shown above in 'Payroll Provider' drop down list.";
+                    CheckSpreadSheetErrorMsg += "<BR />You have entered invalid 'Employer Location Code: in spreadsheet at row number: " + inc + ".<BR />Valid 'Employer Location Code' shown above in 'Payroll Provider' drop down list.";
                     result = false;
                     //  break;
                 }
