@@ -3,6 +3,7 @@ using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.InsertDataProcess;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using MCPhase3.ViewModels;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -76,7 +77,7 @@ namespace MCPhase3.Controllers
             if (clientType.Equals("FIRE"))
             {
                 return RedirectToAction("IndexFire","Home");
-            }
+            }           
 
             ViewBag.Months = GetMonths(monthSelected).Select(x => new SelectListItem()
             {
@@ -106,9 +107,18 @@ namespace MCPhase3.Controllers
                 {
                     Text = x.pay_location_name,
                     Value = x.pay_location_ID.ToString()
-                });           
-           
-            return View();
+                });
+
+
+            var viewModel = new HomeFileUploadVM()
+            {
+                MonthList = GetMonths(monthSelected),
+                YearList = GetYears(yearSelected),
+                OptionList = GetOption(postSelected),
+                PayLocationList = subPayList
+            };
+
+            return View(viewModel);
         }
 
         /// <summary>
@@ -1018,7 +1028,7 @@ namespace MCPhase3.Controllers
         {
             List<NameOfMonths> nameOfMonths = new List<NameOfMonths>()
                 {
-                    new NameOfMonths(){text = "Select Month",value = "month"},
+                    //new NameOfMonths(){text = "Select Month",value = "month"},
                     new NameOfMonths(){text = "JANUARY",value = "JANUARY"},
                     new NameOfMonths(){text = "FEBRUARY",value = "FEBRUARY"},
                     new NameOfMonths(){text = "MARCH",value = "MARCH"},
@@ -1176,7 +1186,7 @@ namespace MCPhase3.Controllers
                 var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');
                 foreach (var item in contents)
                 {
-                    if (item.ToLower().Contains("script")) {
+                    if (item.ToLower().Contains("<script")) {
                         //Console.WriteLine("Item: " + item.ToString());
                         return "Error: Malicious scripts found in the file. This file is corrupted. Please try another one.";
                     }

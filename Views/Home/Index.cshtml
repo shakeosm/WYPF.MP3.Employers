@@ -1,8 +1,11 @@
-﻿@model MCPhase3.Models.MyModel
+﻿@model MCPhase3.ViewModels.HomeFileUploadVM
 
 @{
     ViewData["Title"] = "LG";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+
+    var payLocations = Model.PayLocationList;
+    var payLocationSelectList = new SelectList(payLocations, "pay_location_ID", "pay_location_name");
 }
 
 
@@ -32,31 +35,55 @@
                 </div>
             </div>
         </div>
-        @* </div>
-        </div>*@
-        <div class="container">
-            <div class="jumbotron col-md-12">
-                <h4>List of Paylocations:</h4>
-                <select class="form-select col-md-6" asp-for="paylocationList" asp-items="ViewBag.Paylocations"></select>
-            </div>
-        </div>
-        </br>
+                
         <div class="container" id="uploadFile">
             <div class="jumbotron">
+
+                <div class="col-md-12 mb-5">
+                    <h4>List of Paylocations:</h4>
+                    @*<select class="form-control col-md-6" asp-for="PayLocationList" asp-items="ViewBag.Paylocations"></select>*@
+                    <select class="form-select col-md-6" asp-for="PayLocationList" asp-items="payLocationSelectList"></select>
+                </div>
+
                 <h4>Step 1 - select payroll information</h4><hr />
 
-                <div class="col-md-12">
-                    <label class="col-md-6">Select Payroll month:</label>
-                    <select class="form-select col-md-6" asp-for="monthsList" asp-items="ViewBag.Months"></select><br><br>
+                <div class="col-md-12 mb-5">
+                    @*<label class="col-md-6">Select Payroll month:</label>*@
+                    <label class="col-12 mb-3">Select Payroll month:</label>
+                    @*<select class="form-select col-md-6" asp-for="MonthList" asp-items="ViewBag.Months"></select><br><br>*@
+                    @foreach (var item in Model.MonthList)
+                    {
+                        var itemId = item.text;//.ToString().Replace("/", "");
+                        <input type="radio" class="btn-check" name="monthsList" autocomplete="off" id="@itemId" value="@itemId">
+                        <label class="btn btn-outline-info" for="@itemId">@itemId</label>
+                    }
                 </div>
-                <div class="col-md-12">
-                    <label class="col-md-6">Select Payroll year:</label>
-                    <select class="form-select col-md-6" asp-for="yearsList" asp-items="ViewBag.Years"></select><br><br>
+                <div class="col-md-12 mb-5">
+                    <label class="col-12 mb-2">Select Payroll year:</label>
+                    @*<select class="form-select col-md-6" asp-for="YearList" asp-items="ViewBag.Years"></select><br><br>*@
+                    @{
+                        foreach (var item in Model.YearList)
+                        {
+                            var itemId = item.years;//.ToString().Replace("/", "");                            
+                            <input type="radio" class="btn-check" name="yearsList" autocomplete="off" id="@itemId" value="@itemId">
+                            <label class="btn btn-outline-info" for="@itemId">@itemId</label>
+                        }
+                     }
                 </div>
 
-                <div class="col-md-12">
-                    <label class="col-md-6">Posting for:</label>
-                    <select class="form-select col-md-6" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting"></select><br><br>
+                <div class="col-md-12 mb-5">
+                    <label class="col-12">Posting for:</label>
+                    @*<select class="form-select col-md-6" size="3" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting" style="height:80px;"></select><br><br>*@
+
+                    <input type="radio" class="btn-check" name="posting" id="FirstPostingRadioButton" autocomplete="off" value="1">
+                    <label class="btn btn-outline-info" for="FirstPostingRadioButton">1st posting</label>
+                    
+                    <input type="radio" class="btn-check" name="posting" id="SecondPostingRadioButton" autocomplete="off" value="2">
+                    <label class="btn btn-outline-info" for="SecondPostingRadioButton">2nd posting for same month</label>
+
+                    <input type="radio" class="btn-check" name="posting" id="PrevMonthPostingRadioButton" autocomplete="off" value="3">
+                    <label class="btn btn-outline-info" for="PrevMonthPostingRadioButton">File has previous month data</label>
+
                 </div>
 
                 <h4>Step 2: upload monthly contribution spreadsheet</h4>
