@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace MCPhase3.CodeRepository
 {
+    [Obsolete("Do not use this Middleware. A Global ActionFilter is in operation.")]
     public class UserSessionHandlerMiddleWare
     {    
         private readonly RequestDelegate _next;
@@ -21,7 +22,7 @@ namespace MCPhase3.CodeRepository
         
 
         public async Task InvokeAsync(HttpContext context)
-        {
+        {            
             string currentUserId = context.Session.GetString(Constants.UserIdKeyName);
             string x = context.Session.GetString(Constants.SessionKeyUserID);
             

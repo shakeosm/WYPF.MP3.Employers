@@ -1,4 +1,5 @@
 using MCPhase3.CodeRepository;
+using MCPhase3.CodeRepository.ActionFilters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
@@ -58,13 +59,11 @@ namespace MCPhase3
             //services.AddSingleton<CustomDataProtection>();
             services.AddDataProtection().SetDefaultKeyLifetime(TimeSpan.FromDays(10)).SetApplicationName("MP3.Phase3");
 
-            //add following compatibility for tempdata cache memory.
-            //services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddSessionStateTempDataProvider();
-            
-            //services.AddSession();
+            //## Setting the UserSession Check ActionFilter Globally-> for All Controller->Actions
+            services.AddControllersWithViews((options) => {
+                options.Filters.Add<UserSessionCheckActionFilter>();
+            });
 
-
-            services.AddControllersWithViews();           
             services.AddMvc();           
         }
 
@@ -100,8 +99,6 @@ namespace MCPhase3
 
             app.UseSession();
             app.UseRouting();
-
-            app.UseMiddleware<UserSessionHandlerMiddleWare>("test");
 
             app.UseAuthorization();
            

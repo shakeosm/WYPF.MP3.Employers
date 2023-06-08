@@ -1195,5 +1195,18 @@ namespace MCPhase3.Controllers
 
             return "";  //## success! All good!
         }
+
+        public IActionResult ClearRedisUserSession(string id)
+        {
+            if (id != null) { 
+                string decryptedId = DecryptUrlValue(id);
+
+                _cache.DeleteUserSession(decryptedId);
+
+                return Json("success");
+            }
+            return Json("who are you?");
+        }
+
     }
 }

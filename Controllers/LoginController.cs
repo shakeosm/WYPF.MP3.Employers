@@ -310,6 +310,8 @@ namespace MCPhase3.Controllers
             var sessionKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}";
             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
 
+            _cache.DeleteUserSession(currentUserId);
+            
             //## Browser Session Id and Redis SessionId-> are they same..?
             if (sessionInfo != null)
             {
@@ -319,7 +321,6 @@ namespace MCPhase3.Controllers
                     _cache.Delete(currentBrowserSessionId);
                 }
             }
-
 
             ClearTempData();
 
@@ -340,14 +341,6 @@ namespace MCPhase3.Controllers
             foreach (var cookie in Request.Cookies.Keys)
             {
                 Response.Cookies.Delete(cookie);
-            }
-
-            //## Delete all redis keys used in the App for this User related variables
-            var redisKeyList = Constants.RedisKeyList().Split(",");
-            foreach (var redisKey in redisKeyList)
-            {
-                string redisKeyName = $"{currentUserId}_{redisKey}";
-                _cache.Delete(redisKeyName);
             }
 
             // await signInManager.SignOutAsync();

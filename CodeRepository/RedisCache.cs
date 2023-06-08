@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using MCPhase3.Common;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
@@ -67,6 +68,27 @@ namespace MCPhase3.CodeRepository
         {
             _distributedCache.Remove(cacheKeyName);
         }
+        
+
+        public void DeleteUserSession(string userId)
+        {
+
+            string redisKeyName = $"{userId}{Constants.SessionKeyUserID}";   //## ie: 'browna_UserName'
+
+            var sessionKeyName = $"{userId}_{Constants.SessionInfoKeyName}";    //## ie: 'browna_SessionInfo'
+
+            _distributedCache.Remove(sessionKeyName);
+            _distributedCache.Remove(redisKeyName);
+
+            //## Delete all redis keys used in the App for this User related variables
+            var redisKeyList = Constants.RedisKeyList().Split(",");
+            foreach (var redisKey in redisKeyList)
+            {
+                redisKeyName = $"{userId}_{redisKey}";
+                _distributedCache.Remove(redisKeyName);
+            }
+        }
+
     }
 
     public interface IRedisCache
@@ -76,6 +98,8 @@ namespace MCPhase3.CodeRepository
         public void SetString(string cacheKeyName, string cacheValue);
         public void Set<T>(string cacheKeyName, T cacheValue);
         public void Delete(string cacheKeyName);
+
+        public void DeleteUserSession(string userId);
 
     }
 }
