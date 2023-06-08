@@ -41,56 +41,64 @@
 
                 <div class="col-md-12 mb-5">
                     <h4>List of Paylocations:</h4>
-                    @*<select class="form-control col-md-6" asp-for="PayLocationList" asp-items="ViewBag.Paylocations"></select>*@
                     <select class="form-select col-md-6" asp-for="PayLocationList" asp-items="payLocationSelectList"></select>
                 </div>
 
                 <h4>Step 1 - select payroll information</h4><hr />
 
                 <div class="col-md-12 mb-5">
-                    @*<label class="col-md-6">Select Payroll month:</label>*@
-                    <label class="col-12 mb-3">Select Payroll month:</label>
-                    @*<select class="form-select col-md-6" asp-for="MonthList" asp-items="ViewBag.Months"></select><br><br>*@
-                    @foreach (var item in Model.MonthList)
-                    {
-                        var itemId = item.text;//.ToString().Replace("/", "");
-                        <input type="radio" class="btn-check" name="monthsList" autocomplete="off" id="@itemId" value="@itemId">
-                        <label class="btn btn-outline-info" for="@itemId">@itemId</label>
-                    }
-                </div>
-                <div class="col-md-12 mb-5">
-                    <label class="col-12 mb-2">Select Payroll year:</label>
-                    @*<select class="form-select col-md-6" asp-for="YearList" asp-items="ViewBag.Years"></select><br><br>*@
-                    @{
-                        foreach (var item in Model.YearList)
+                    <div>
+                        <label class="col-12 mb-3">Select Payroll month:</label>
+                        @foreach (var item in Model.MonthList)
                         {
-                            var itemId = item.years;//.ToString().Replace("/", "");                            
-                            <input type="radio" class="btn-check" name="yearsList" autocomplete="off" id="@itemId" value="@itemId">
+                            var itemId = item.text;
+                            <input type="radio" class="btn-check" name="SelectedMonth" autocomplete="off" id="@itemId" value="@itemId">
                             <label class="btn btn-outline-info" for="@itemId">@itemId</label>
                         }
-                     }
+
+                    </div>
+                    <span asp-validation-for="SelectedMonth" class="text-danger" id="SelectedMonthValidationLabel">* Payroll month is required.</span>
+                </div>
+                <div class="col-md-12 mb-5">
+                    <div>
+                        <label class="col-12 mb-2">Select Payroll year:</label>
+                        @{
+                            foreach (var item in Model.YearList)
+                            {
+                                var itemId = item.years;
+                                <input type="radio" class="btn-check" name="SelectedYear" autocomplete="off" id="@itemId" value="@itemId">
+                                <label class="btn btn-outline-info" for="@itemId">@itemId</label>
+                            }
+                         }
+                    </div>
+                    <span asp-validation-for="SelectedYear" class="text-danger" id="SelectedYearValidationLabel">* Payroll Year is required.</span>
                 </div>
 
                 <div class="col-md-12 mb-5">
-                    <label class="col-12">Posting for:</label>
-                    @*<select class="form-select col-md-6" size="3" asp-for="posting" asp-items="(IEnumerable<SelectListItem>)ViewBag.Posting" style="height:80px;"></select><br><br>*@
+                    <div>
+                        <label class="col-12">Posting for:</label>
 
-                    <input type="radio" class="btn-check" name="posting" id="FirstPostingRadioButton" autocomplete="off" value="1">
-                    <label class="btn btn-outline-info" for="FirstPostingRadioButton">1st posting</label>
+                        <input type="radio" class="btn-check" name="SelectedPostType" id="FirstPostingRadioButton" autocomplete="off" value="1">
+                        <label class="btn btn-outline-info" for="FirstPostingRadioButton">1st posting</label>
                     
-                    <input type="radio" class="btn-check" name="posting" id="SecondPostingRadioButton" autocomplete="off" value="2">
-                    <label class="btn btn-outline-info" for="SecondPostingRadioButton">2nd posting for same month</label>
+                        <input type="radio" class="btn-check" name="SelectedPostType" id="SecondPostingRadioButton" autocomplete="off" value="2">
+                        <label class="btn btn-outline-info" for="SecondPostingRadioButton">2nd posting for same month</label>
 
-                    <input type="radio" class="btn-check" name="posting" id="PrevMonthPostingRadioButton" autocomplete="off" value="3">
-                    <label class="btn btn-outline-info" for="PrevMonthPostingRadioButton">File has previous month data</label>
-
+                        <input type="radio" class="btn-check" name="SelectedPostType" id="PrevMonthPostingRadioButton" autocomplete="off" value="3">
+                        <label class="btn btn-outline-info" for="PrevMonthPostingRadioButton">File has previous month data</label>
+                    </div>
+                    <span asp-validation-for="SelectedPostType" class="text-danger" id="SelectedPostTypeValidationLabel">* Post type is required.</span>
                 </div>
 
                 <h4>Step 2: upload monthly contribution spreadsheet</h4>
+                
+                
 
-                <p><input type="file" name="paymentFile" id="UploadFileInput" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="form-control"></p>
+                <p><input type="file" name="paymentFile" id="UploadFileInput" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="form-control">
+                    <span asp-validation-for="PaymentFile" class="text-danger" id="CustomerFileValidationLabel">* Data file is required.</span>
+                    </p>
                 <div class="form-group col-md-6">
-                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" disabled />
+                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" />
                     <small id="uploadHelp" class="form-text text-muted">Maxium file size 5MB. File type Excel only. </small>
                 </div>
                 @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
@@ -100,7 +108,7 @@
                 var alterClass = TempData["MsgM"].ToString().Contains("success") ? "alert-success" : "alert-danger";
                 <div class="alert @alterClass border-2">
 
-                    <!--Html.Raw to apply Html tags inside a string-->
+                    @*Html.Raw to apply Html tags inside a string*@
                     @Html.Raw(@TempData["MsgM"].ToString())
                 </div>
 

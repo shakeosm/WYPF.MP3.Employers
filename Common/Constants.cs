@@ -19,6 +19,8 @@
         public const string SessionKeyFileName = "_fileName";
         public const string SessionKeyPosting = "_posting";
         public const string SessionKeySchemeName = "_scheme";
+        public const string SessionSchemeNameValue = "LGPS";
+
         public const string SessionKeyTotalRecords = "_totalRecords";
         public const string SessionKeyRemittanceID = "remittanceID";
         

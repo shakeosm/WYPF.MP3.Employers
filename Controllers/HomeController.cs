@@ -169,38 +169,39 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(IFormFile paymentFile, string monthsList, string yearsList, string posting)
+        public async Task<IActionResult> Create(HomeFileUploadVM vm)
         {
-            var fileUplaodStatus = IsFileValid(paymentFile);
-
-            if (!fileUplaodStatus.IsSuccess)
-            {
-                TempData["MsgM"] = fileUplaodStatus.Message;
-                return RedirectToAction("Index", "Home", null, "uploadFile");
+            if (!ModelState.IsValid) {
+                TempData["MsgM"] = "Error: You must select 'Year', 'Month' and 'PostType' to continue";
+                return RedirectToAction("Index", "Home");
             }
 
-            if (monthsList.Equals("month") || yearsList.Equals("Select Year")) {
-                TempData["MsgM"] = "Error: You must select Year and Month to continue";
+            var fileCheck = IsFileValid(vm.PaymentFile);
+
+            if (!fileCheck.IsSuccess)
+            {
+                TempData["MsgM"] = fileCheck.Message;
                 return RedirectToAction("Index", "Home", null, "uploadFile");
             }
 
             //Add selected name of month into Session, filename and total records in file.
-            HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList);
-            HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList);
-            HttpContext.Session.SetString(Constants.SessionKeyPosting, posting);
-            HttpContext.Session.SetString(Constants.SessionKeySchemeName, "LGPS");
+            HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth);
+            HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear);
+            HttpContext.Session.SetString(Constants.SessionKeyPosting, vm.SelectedPostType.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeySchemeName, SessionSchemeNameValue);
 
             TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
-            var fileCheckBO = new CheckFileUploadedBO
-            {
-                P_Month = monthsList,
-                P_Year = yearsList
-            };
+
             string userName = ContextGetValue(SessionKeyUserID);
             string empName = ContextGetValue(Constants.SessionKeyEmployerName);
             string empID = ContextGetValue(Constants.SessionKeyPayrollProvider);
-            
-            fileCheckBO.P_EMPID = empID;
+
+            var fileCheckBO = new CheckFileUploadedBO
+            {
+                P_Month = vm.SelectedMonth,
+                P_Year = vm.SelectedYear,
+                P_EMPID = empID
+            };
 
             //Member titles coming from config - 
             string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -208,11 +209,10 @@ namespace MCPhase3.Controllers
             string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);
 
             //update Event Details table File is uploaded successfully.
-            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
             string apiBaseUrlForCheckFileAvailable = ConfigGetValue("WebapiBaseUrlForCheckFileAvailable");
             
             //check if records were uploaded previously for the selected month and year.
-            int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
+            int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
 
             string fileExt = string.Empty;
             string filePath = string.Empty;
@@ -223,16 +223,14 @@ namespace MCPhase3.Controllers
             string webRootPath = _host.WebRootPath;
             MyModel model = new MyModel();
             //get list of paylocations
-            //List<NameOfMonths> payLocations = GetPaylocations();
             List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
             //bypass year and month check 
             
-            //if (postingNumber == (int)PostingType.First)
-            if (posting == "1") // ## PostingType.First
+            if (vm.SelectedPostType == (int)PostingType.First)
             {
-                if (result1 == 1)
+                if (fileAvailableCheck == 1)
                 {
-                    TempData["MsgM"] = $"File is already uploaded for the month: {monthsList} and payrol period: {yearsList} <br/> You can goto Dashboard and start process on file from there. ";
+                    TempData["MsgM"] = $"File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.YearList} <br/> You can goto Dashboard and start process on file from there. ";
                     return RedirectToAction("Index", "Home", null, "uploadFile");
                 }
             }
@@ -245,10 +243,10 @@ namespace MCPhase3.Controllers
             }
 
             //clear Datatable when upload file button is clicked.
-            var fileNameForUpload = Path.GetFileNameWithoutExtension(paymentFile.FileName);
-            fileExt = Path.GetExtension(paymentFile.FileName);
+            var fileNameForUpload = Path.GetFileNameWithoutExtension(vm.PaymentFile.FileName);
+            fileExt = Path.GetExtension(vm.PaymentFile.FileName);
 
-            fileNameForUpload  = $"{empName.Replace(" ", "-")}_{yearsList.Replace("/", "-")}_{monthsList}_{posting}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
+            fileNameForUpload  = $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType.ToString()}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
 
             //copy file to local folder
             string _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
@@ -261,7 +259,7 @@ namespace MCPhase3.Controllers
 
             using (FileStream fileStream = new(filePath, FileMode.Create))
             {
-                await paymentFile.CopyToAsync(fileStream);                
+                await vm.PaymentFile.CopyToAsync(fileStream);                
                 _logger.LogInformation("File is copied to local folder.");
             }
 
@@ -275,10 +273,6 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("Index", "Home", null, "uploadFile");
             }
 
-            //CopyFileToFolderAsync(fileNameWithoutExt, _host.WebRootPath, "/UploadedFiles/");
-
-            //saved file
-            //string fullPathWithFileName = Path.Combine(path,fileExt);
             try
             {
                 excelDt = CommonRepo.ExcelToDT(filePath, out errorMessage);
@@ -298,10 +292,7 @@ namespace MCPhase3.Controllers
                 TempData["MsgM"] = errorMessage;
                 //model.myErrorMessageText += errorMessage;
                 return RedirectToAction("Index", "Home", null, "uploadFile");                    
-            }
-            //allow a sign in a column
-            // excelDt = AllowedSigns(excelDt);
-                
+            }               
 
             // change column heading Name
             if (!CommonRepo.ChangeColumnHeadings(excelDt, out errorMessage))
@@ -320,9 +311,8 @@ namespace MCPhase3.Controllers
             int numberOfRows = modelDT.stringDT.Rows.Count;
 
             //Add selected name of month into Session, filename and total records in file.
-            HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
-            HttpContext.Session.SetString(Constants.SessionKeyYears, yearsList.ToString());
-            //HttpContext.Session.SetString(Constants.SessionKeyClientId,3.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear.ToString());
 
             HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
             HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
@@ -331,7 +321,7 @@ namespace MCPhase3.Controllers
 
             //Seperated LG and Fire functions
             //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
-            string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, monthsList, posting, yearsList, subPayList,validTitles, invalidSigns, ref errorMessage);
+            string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, vm.SelectedMonth, vm.SelectedPostType.ToString(), vm.SelectedYear, subPayList,validTitles, invalidSigns, ref errorMessage);
 
             if (!errorMessage.Equals(""))
             {
@@ -1177,24 +1167,29 @@ namespace MCPhase3.Controllers
             var csvFilePath = csvPath + csvFileName;
             var isConverted = ConvertExcelToCsv.Convert(filePathName, csvFilePath);
 
+            var maliciousTags = ConfigGetValue("MaliciousTags").Split(",");
+
             if (isConverted == false)
                 return "File format error. Please try another file.";
             
             try
             {
 
-                var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');
-                foreach (var item in contents)
+                var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');               
+                foreach (var item in contents)  //## read line by line Rows in the CSV/ExcelSheet
                 {
-                    if (item.ToLower().Contains("<script")) {
-                        //Console.WriteLine("Item: " + item.ToString());
-                        return "Error: Malicious scripts found in the file. This file is corrupted. Please try another one.";
-                    }
+                    foreach (var tag in maliciousTags)  //## Read each invalid characters listed in the Config file
+                    {
+                        if (item.ToLower().Contains(tag)){
+                            //Console.WriteLine("Item: " + item.ToString());
+                            return "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>" ;
+                        }
+                    }                    
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.ToString());
+                _logger.LogError(ex.InnerException.ToString());
                 throw;
             }
 
