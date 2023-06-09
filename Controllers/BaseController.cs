@@ -22,7 +22,7 @@ namespace MCPhase3.Controllers
             _cache = Cache;
             provider = Provider;
 
-            _protector = provider.CreateProtector("MCPhase3.BaseController");
+            _protector = provider.CreateProtector("MCPhase3.Protector");
         }
 
         //###################################################################

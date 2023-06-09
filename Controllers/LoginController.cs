@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using static MCPhase3.Common.Constants;
 
 namespace MCPhase3.Controllers
 {
@@ -51,20 +52,28 @@ namespace MCPhase3.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]       
         public async Task<IActionResult> Index(DummyLoginViewModel loginDetails)
-        {  
-            var sessionInfo = GetUserSessionInfo(loginDetails);
+        {            
+            //check username and password
+            var loginResult = await LoginCheckMethod(loginDetails.UserName, loginDetails.Password);
+
+            //## Yes, the user is valid, but we haven't Logged the user in yet. need to see if there is another session running anywhere
+             if (loginResult == (int)LoginStatus.Valid) { 
+
+                var sessionInfo = GetUserSessionInfo(loginDetails);
             
-            //## we need to confirm their is only one login session for this user.. 
-            if (sessionInfo.HasExistingSession)
-            {
-                //## Notify the user ..
-                //## ask whether they wanna kill the existing one and continue here...?
-               sessionInfo.Password = ""; //sessionInfo.UserName = "";
-                return View("MultipleSessionPrompt", sessionInfo);
+                //## we need to confirm their is only one login session for this user.. 
+                if (sessionInfo.HasExistingSession)
+                {
+                    //## Notify the user ..
+                    //## ask whether they wanna kill the existing one and continue here...?
+                    sessionInfo.Password = ""; //sessionInfo.UserName = "";
+                    return View("MultipleSessionPrompt", sessionInfo);
                 
+                }
+            
             }
 
-            return await ProceedToLogIn(loginDetails);
+            return await ProceedToLogIn(loginDetails, loginResult);
         }
 
 
@@ -88,26 +97,14 @@ namespace MCPhase3.Controllers
 
             //## create entries in Session Cookies, too..
             ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session
-            ContextSetValue(Constants.UserIdKeyName, sessionInfo.UserName);
-
-            //turn RedirectToAction("Home", "Admin");
-            vm.Password = sessionInfo.Password; //## we didn't keep the password in the VM.. security!
-            return await ProceedToLogIn(vm);
+            
+            //## The user was authenticated first, then shown a screen - either to continue on this browser or close this browser.            
+            return await ProceedToLogIn(vm, loginResult: (int)LoginStatus.Valid);
         }
 
 
-        private async Task<IActionResult> ProceedToLogIn(DummyLoginViewModel vm)
-        {
-            LoginBO loginBO = new LoginBO();
-            CodeRepository.UPM2LoginSR login = new CodeRepository.UPM2LoginSR();
-            int result = 0;
-
-            loginBO.userName = vm.UserName;
-            loginBO.password = vm.Password;
-
-            //this model class has variables defined that I am using to validate.
-            MyModel isFileFire = new MyModel();
-            //get valid client id's from config file.
+        private async Task<IActionResult> ProceedToLogIn(DummyLoginViewModel vm, int loginResult)
+        {           
             var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId")
                                                .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
@@ -115,19 +112,7 @@ namespace MCPhase3.Controllers
             try
             {
                 //Once usernames copied to new table then uncomment following line of code
-                payrollBO = await CallPayrollProviderService(vm.UserName);
-
-
-                //check username and password
-                result = await LoginCheckMethod(loginBO);
-
-                ///following function will check if session has value then login user 
-                /// it will mainly to empty session if user clicked on logout button.
-                //sessionResult = SessionHasValue();
-                //if (sessionResult)
-                //{
-                //    return RedirectToAction("Home", "Admin");
-                //}
+                payrollBO = await CallPayrollProviderService(vm.UserName);                
             }
             catch (Exception ex)
             {
@@ -140,14 +125,13 @@ namespace MCPhase3.Controllers
 
 
             //check user login details
-            // if(login.Login(loginDetails.userName, loginDetails.password))
-            // if (loginDetails.userName.ToUpper() == "BROWNA" && loginDetails.password == "1234567")
-            if (result == 1)
+            if (loginResult == (int)LoginStatus.Valid)
             {
                 // var result1 = await signInManager.PasswordSignInAsync(loginDetails.userName, loginDetails.password, false, false);
                 //loginDetailsService = loginDetails.userName;//services.GetLoginDetails(loginDetails.userName);
                 HttpContext.Session.SetString(Constants.SessionKeyClientId, vm.ClientId);
                 HttpContext.Session.SetString(Constants.SessionKeyUserID, vm.UserName);
+                HttpContext.Session.SetString(Constants.UserIdKeyName, vm.UserName);
                 HttpContext.Session.SetString(Constants.SessionKeyPayLocName, payrollBO.pay_location_name);
                 HttpContext.Session.SetString(Constants.SessionKeyPayLocId, payrollBO.pay_location_ID.ToString());
                 HttpContext.Session.SetString(Constants.SessionKeyEmployerName, payrollBO.pay_location_name);
@@ -160,28 +144,33 @@ namespace MCPhase3.Controllers
                 {
                     TempData["MainHeading"] = "Fire - Contribution Advice";
                     TempData["isFire"] = true;
-                    isFileFire.isFire = true;
-                    HttpContext.Session.SetString(Constants.SessionKeyClientType, "FIRE");
+                    //isFileFire.isFire = true;
+                    HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
                     return RedirectToAction("Home", "Admin");
                 }
                 else
                 {
                     TempData["isFire"] = false;
-                    isFileFire.isFire = false;
-                    HttpContext.Session.SetString(Constants.SessionKeyClientType, "LG");
+                    //isFileFire.isFire = false;
+                    HttpContext.Session.SetString(SessionKeyClientType, "LG");
                     return RedirectToAction("Home", "Admin");
                 }
             }
-            else if (result == 2)
+            else if (loginResult == (int)LoginStatus.Locked)
             {
-                TempData["Msg1"] = "Your account is temporarily locked to prevent unauthorized use. Try again later in 30 minutes, and if you still have trouble, contact WYPF.";
+                TempData["Msg1"] = AccountLockedMessage;
                 return RedirectToAction("Index", "Login");
             }
-            else
+            else if (loginResult == (int)LoginStatus.Failed)
             {
-                TempData["Msg1"] = "Username or password not correct, please try again";
+                TempData["Msg1"] = AccountFailedLoginMessage;
                 return RedirectToAction("Index", "Login");
             }
+            else {
+                TempData["Msg1"] = AccountGenericErrorMessage;
+                return RedirectToAction("Index", "Login");  //## should never come here.. just to make the C# happy...            
+            }
+
         }
 
 
@@ -191,7 +180,8 @@ namespace MCPhase3.Controllers
         private UserSessionInfoVM GetUserSessionInfo(DummyLoginViewModel vm)
         {
             //## Get the session info from Redis cache            
-             var sessionInfo = _cache.Get<UserSessionInfoVM>(SessionInfoKeyName());   //## this KeyName should be used in Logout- to Delete the Redis entry
+            HttpContext.Session.SetString(Constants.UserIdKeyName, vm.UserName);
+            var sessionInfo = _cache.Get<UserSessionInfoVM>(SessionInfoKeyName());   //## this KeyName should be used in Logout- to Delete the Redis entry
 
             if (sessionInfo is null)
             {
@@ -220,6 +210,7 @@ namespace MCPhase3.Controllers
                 //## The following is when user will try to use 'Incongnito' on Chrome.. very clever!
                 //##means there is an entry for this user in cache.. and the user is just trying to be cleaver.. don't let them Login
                 sessionInfo.HasExistingSession = true;
+                _cache.Set(SessionInfoKeyName(), sessionInfo);
                 return sessionInfo;
             }
         }
@@ -254,7 +245,7 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <param name="loginBO"></param>
         /// <returns></returns>
-
+        [Obsolete("Do not use this one.. Instead use- LoginCheckMethod(string userId, string password)")]
         private async Task<int> LoginCheckMethod(LoginBO loginBO)
         {
             string apiBaseUrlForLoginCheck = _configuration.GetValue<string>("WebapiBaseUrlForLoginCheck");
@@ -276,7 +267,29 @@ namespace MCPhase3.Controllers
             return loginBO.result;
         }
 
-       
+        private async Task<int> LoginCheckMethod(string userId, string password)
+        {
+            var loginBO = new LoginBO() { 
+                userName = userId,
+                password = password
+            };
+
+            string apiBaseUrlForLoginCheck = _configuration.GetValue<string>("WebapiBaseUrlForLoginCheck");
+            using (var httpClient = new HttpClient())
+            {
+                StringContent content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
+
+                using var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content);
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    string result = await response.Content.ReadAsStringAsync();
+                    loginBO.result = JsonConvert.DeserializeObject<int>(result);
+                }
+            }
+            return loginBO.result;
+        }
+
+
         /// <summary>
         /// following function will check everytime someone comes to 
         /// login page if session has values then empty it before new login.
@@ -306,11 +319,11 @@ namespace MCPhase3.Controllers
 
             string currentUserId = CurrentUserId();
 
-            var currentBrowserSessionId = ContextGetValue(Constants.SessionGuidKeyName);
-            var sessionKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}";
+            var currentBrowserSessionId = ContextGetValue(SessionGuidKeyName);
+            var sessionKeyName = $"{currentUserId}_{SessionInfoKeyName}";
             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
 
-            _cache.DeleteUserSession(currentUserId);
+            _cache.DeleteUserSession(currentUserId);    //## Deletes the User session in Redis Cache..
             
             //## Browser Session Id and Redis SessionId-> are they same..?
             if (sessionInfo != null)
@@ -322,21 +335,8 @@ namespace MCPhase3.Controllers
                 }
             }
 
-            ClearTempData();
-
-            HttpContext.Session.Clear();
-
-            HttpContext.Session.Remove(Constants.SessionKeyUserID);
-            HttpContext.Session.Remove(Constants.SessionKeyPayLocName);
-            HttpContext.Session.Remove(Constants.SessionKeyPayLocId);
-            HttpContext.Session.Remove(Constants.SessionKeyClientId);
-            HttpContext.Session.Remove(Constants.SessionKeyClientType);
-            HttpContext.Session.Remove(Constants.SessionKeyEmployerName);
-            HttpContext.Session.Remove(Constants.SessionKeyPayrollProvider);
-
-            HttpContext.Response.Cookies.Delete(Constants.SessionKeyUserID);
-            HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
-            HttpContext.Response.Cookies.Append(".AspNetCore.Session", "test");
+            ClearTempData();            //## Clear all the 'TempData["XXX"]' values
+            ClearSessionValues();       //## Clear all the Http.Session values
 
             foreach (var cookie in Request.Cookies.Keys)
             {
@@ -353,6 +353,61 @@ namespace MCPhase3.Controllers
             TempData["Msg"] = null;
             TempData["Msg1"] = null;
             TempData["MsgM"] = null;
+        }
+
+        /// <summary>This will delete all Context.Session for the current browser</summary>
+        private void ClearSessionValues()
+        {
+            HttpContext.Session.Clear();
+
+            HttpContext.Session.Remove(SessionKeyUserID);
+            HttpContext.Session.Remove(SessionKeyPayLocName);
+            HttpContext.Session.Remove(SessionKeyPayLocId);
+            HttpContext.Session.Remove(SessionKeyClientId);
+            HttpContext.Session.Remove(SessionKeyClientType);
+            HttpContext.Session.Remove(SessionKeyEmployerName);
+            HttpContext.Session.Remove(SessionKeyPayrollProvider);
+
+            HttpContext.Response.Cookies.Delete(SessionKeyUserID);
+            HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
+            HttpContext.Response.Cookies.Append(".AspNetCore.Session", "test");
+        }
+
+        /// <summary>
+        /// This will only be called from the ActionFilter -> when the ServerAdmin changes password-
+        /// and calls the 'ClearRedisUserSession()' method- that clears the current Redis user session,
+        /// And then when the user tries to navigate to other page- we capture the request- 
+        /// then bring the user here- to clean the current browser cookies/session- 
+        /// and force the user to login with new password.
+        /// </summary>
+        /// <returns></returns>
+        public IActionResult ClearSessionAndLogin()
+        {
+            ClearTempData();
+            ClearSessionValues();
+            //## But don't clear the Redis session for current User..
+
+            return RedirectToAction("Index", "Login");
+        }
+
+        /// <summary>This EndPoint will be used only by AdminPortal. Everytime there is a 
+        /// Password changed for a user- we need to log that user out from their current session.
+        /// We will call Redis to Delete all the relevent session for this user.</summary>
+        /// <param name="id">Encrypted User id</param>
+        /// <returns>JSon Text</returns>
+        public IActionResult ClearRedisUserSession(string id)
+        {
+            if (id != null)
+            {
+                string decryptedId = WYPF_Protector.Decrypt(id);
+
+                _cache.DeleteUserSession(decryptedId);
+                ClearTempData();
+                ClearSessionValues();
+
+                return Json("success");
+            }
+            return Json("who are you?");
         }
     }
 }

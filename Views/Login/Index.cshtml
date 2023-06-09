@@ -2,6 +2,8 @@
 
 @{
     Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+    string loginMessage = TempData["Msg1"]?.ToString();
+    string messageSession = TempData["MsgSession"]?.ToString();
 }
 
 <div class="">
@@ -13,36 +15,23 @@
                 <div class="container">
                     <div class="alert-danger">
                         <div class="alert alert-danger">
-                            @TempData["msg"].ToString()
+                            @loginMessage
                         </div>
                     </div>
                 </div>
             }
-            @if (TempData["Msg1"] != null)
+            @if (@loginMessage != null)
             {
                 <div class="container">
                     <div class="alert-danger">
                         <div class="alert alert-danger">
-
-
-                            @TempData["Msg1"].ToString()
+                            @loginMessage
                         </div>
                     </div>
                 </div>
 
             }
-            @if (TempData["MsgSession"] != null)
-            {
-                <div class="container">
-                    <div class="alert-danger">
-                        <div class="alert alert-danger">
 
-                            @TempData["MsgSession"].ToString()
-                        </div>
-                    </div>
-                </div>
-
-            }
             <div class="login100-pic pt-5">
                 @*<img src="https://colorlib.com/etc/lf/Login_v1/images/img-01.png" alt="IMG">*@
                 <img src="~/img/Artboard4.png" alt="login img" />

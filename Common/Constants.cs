@@ -33,6 +33,9 @@
         public const string UploadedFilePathKey = "UploadedFilePathName";    //## for Redis cross check
 
         public const string Error403_Page = @"~/Views/Errors/Errror403.cshtml";
+        public const string AccountLockedMessage = "Your account is temporarily locked to prevent unauthorized use. Try again later in 30 minutes, and if you still have trouble, contact WYPF.";
+        public const string AccountFailedLoginMessage = "Username or password not correct, please try again";
+        public const string AccountGenericErrorMessage = "Account error! Please contact Helpdesk.";
 
         public static string RedisKeyList()
         {
@@ -44,6 +47,13 @@
             First= 1,
             Second= 2,
             PreviousMonth= 3,
+        }
+
+        public enum LoginStatus
+        {
+            Failed = 0,
+            Valid = 1,
+            Locked = 2,
         }
     }
 }

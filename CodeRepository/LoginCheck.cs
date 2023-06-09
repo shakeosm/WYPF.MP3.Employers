@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace MCPhase3.CodeRepository
 {
+    [Obsolete("Do not use this Middleware. A Global ActionFilter is in operation.")]
     public class LoginCheck : ViewComponent
     {
         public const string SessionKeyUserID = "_UserName";       

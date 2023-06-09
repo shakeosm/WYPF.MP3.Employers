@@ -23,19 +23,20 @@ namespace MCPhase3.CodeRepository.ActionFilters
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {            
-            string currentUserId = filterContext.HttpContext.Session.GetString(Constants.UserIdKeyName);
-            string x = filterContext.HttpContext.Session.GetString(Constants.SessionKeyUserID);
+            string currentUserId = filterContext.HttpContext.Session.GetString(Constants.SessionKeyUserID);
             string urlPath = filterContext.HttpContext.Request.Path.ToString().ToLower();
 
 
-            //## VIP pass for this call [ClearRedisUserSession]- only the AdminPortal knows .. 
-            if (urlPath.Contains("clearredisusersession") || urlPath.Contains("logout"))
+            //## VIP pass for the following paths 
+            if (urlPath.Contains("clearredisusersession") || urlPath.Contains("logout") || urlPath.Equals("/") || urlPath.Contains("login"))
             {
                 //## do no check....
             }
             else if (!string.IsNullOrEmpty(currentUserId))
             {
-                //## Get the session info from Redis cache
+                //## Get the session info from Redis cache.
+                //## This current-authenticated Redis session may have been deleted by the Admin- after changing the Password..
+                //## So check- whether we still have a Redis session? If not- we need to Login again
                 string sessionGuid = filterContext.HttpContext.Session.GetString(Constants.SessionGuidKeyName);
                 string sessionInfoKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}"; //## this must match the Keyname in the BaseController.. Don't change it here
                 var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
@@ -43,7 +44,6 @@ namespace MCPhase3.CodeRepository.ActionFilters
                 if (sessionInfo == null)
                 {
                     //## can happen- if the RedisCache is restarted/cleared on the Server- then what to do!
-                    //filterContext.HttpContext.Response.Redirect("/Login/Logout");
                     
                     filterContext.Result = new RedirectToRouteResult(
                                                 new RouteValueDictionary(
@@ -54,11 +54,13 @@ namespace MCPhase3.CodeRepository.ActionFilters
                 {
                     //## all good
                 }
-                else
+                else if(sessionGuid != sessionInfo.SessionId) 
                 {
+                    //## From a different browser - the user has logged out my current session here, therefore 'sessionInfo.SessionId' is not anymore same as my 'Redis.SessionId' in current Browser.SessionId 
+                    //## call a separate ActionController-> to clear up the Http session.. don't use Logout... that will Delete Redis cache..
                     filterContext.Result = new RedirectToRouteResult(
                                                 new RouteValueDictionary(
-                                                    new { controller = "Login", action = "Logout" }));
+                                                    new { controller = "Login", action = "ClearSessionAndLogin" }));
                 }
             }
         }

@@ -138,31 +138,6 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("Index", "Login");
             }
         }
-        /// <summary>
-        /// checks remittance id and login if session expired then returns to login page.
-        /// </summary>
-        /// <param name="remittanceID"></param>
-        /// <returns></returns>
-        private int CheckRem(int remittanceID)
-        {
-            try
-            {
-                if (remittanceID == 0)
-                {
-                    remittanceID = (int)HttpContext.Session.GetInt32(Constants.SessionKeyRemittanceID);
-                }
-                else
-                {
-                    HttpContext.Session.SetInt32(Constants.SessionKeyRemittanceID, remittanceID);
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["MsgSession"] = "Session Expired, please login again";
-                RedirectToAction("Index", "Login");
-            }
-            return remittanceID;
-        }
 
         /// <summary>
         /// Used to show all records with a warning that is suitable for bulk approval.
