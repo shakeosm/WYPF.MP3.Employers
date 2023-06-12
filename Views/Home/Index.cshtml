@@ -48,6 +48,21 @@
 
                 <div class="col-md-12 mb-5">
                     <div>
+                        <label class="col-12 mb-2">Select Payroll year:</label>
+                        @{
+                            foreach (var item in Model.YearList)
+                            {
+                                var itemId = item.years;
+                                <input type="radio" class="btn-check" name="SelectedYear" autocomplete="off" id="@itemId" value="@itemId">
+                                <label class="btn btn-outline-info" for="@itemId">@itemId</label>
+                            }
+                        }
+                    </div>
+                    <span asp-validation-for="SelectedYear" class="text-danger" id="SelectedYearValidationLabel">* Payroll Year is required.</span>
+                </div>
+
+                <div class="col-md-12 mb-5">
+                    <div>
                         <label class="col-12 mb-3">Select Payroll month:</label>
                         @foreach (var item in Model.MonthList)
                         {
@@ -59,21 +74,6 @@
                     </div>
                     <span asp-validation-for="SelectedMonth" class="text-danger" id="SelectedMonthValidationLabel">* Payroll month is required.</span>
                 </div>
-                <div class="col-md-12 mb-5">
-                    <div>
-                        <label class="col-12 mb-2">Select Payroll year:</label>
-                        @{
-                            foreach (var item in Model.YearList)
-                            {
-                                var itemId = item.years;
-                                <input type="radio" class="btn-check" name="SelectedYear" autocomplete="off" id="@itemId" value="@itemId">
-                                <label class="btn btn-outline-info" for="@itemId">@itemId</label>
-                            }
-                         }
-                    </div>
-                    <span asp-validation-for="SelectedYear" class="text-danger" id="SelectedYearValidationLabel">* Payroll Year is required.</span>
-                </div>
-
                 <div class="col-md-12 mb-5">
                     <div>
                         <label class="col-12">Posting for:</label>
@@ -91,22 +91,31 @@
                 </div>
 
                 <h4>Step 2: upload monthly contribution spreadsheet</h4>
-                
-                
 
                 <p><input type="file" name="paymentFile" id="UploadFileInput" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="form-control">
                     <span asp-validation-for="PaymentFile" class="text-danger" id="CustomerFileValidationLabel">* Data file is required.</span>
-                    </p>
+                </p>
+
                 <div class="form-group col-md-6">
-                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" />
-                    <small id="uploadHelp" class="form-text text-muted">Maxium file size 5MB. File type Excel only. </small>
+                    @*<a id="ValidateFileButton" class="btn btn-primary">Validate File</a>*@
+                    <small id="uploadHelp" class="form-text text-muted">Tips: Maxium file size 5MB. File type Excel only. </small>
+
+                    <div id="FileValidationCheckResult" class="mt-3 mb-3 validation-message-div">
+                        @*We will dump here the error result from the FileValidation function- Ajax call result*@
+                    </div>
                 </div>
+
+                <div>
+                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" />
+                </div>
+
                 @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
             </div>
+
             @if (TempData["MsgM"] != null)
             {
                 var alterClass = TempData["MsgM"].ToString().Contains("success") ? "alert-success" : "alert-danger";
-                <div class="alert @alterClass border-2">
+                <div class="alert @alterClass border-2 mt-3 validation-message-div">
 
                     @*Html.Raw to apply Html tags inside a string*@
                     @Html.Raw(@TempData["MsgM"].ToString())
@@ -114,7 +123,7 @@
 
                 @if (@TempData["MsgM"].ToString() == "File is uploaded successfully")
                 {
-                    <div class="col-12">
+                    <div class="col-12 mt-3">
                         <a asp-action="Remad" class="btn btn-primary">Next </a> to check all totals are correct.
                     </div>
                 }
@@ -123,16 +132,6 @@
     </div>
 </form>
 
-
-
-
-@*@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}*@
-
-
-<script>
-    document.getElementById('passToWYPF').style.display = 'none';
-</script>
-
-
+@section Scripts {
+    <script src="~/js/home-file-upload.js"></script>
+}

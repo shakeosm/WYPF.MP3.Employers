@@ -31,7 +31,7 @@ namespace MCPhase3.Controllers
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;        
         private readonly IWebHostEnvironment _Environment;
-       
+        private readonly string _customerUploadsLocalFolder;
         string apiBaseUrlForRemittanceInsert = string.Empty;
         string apiBaseUrlForAutoMatch = string.Empty;
         //following class I am using to consume api's
@@ -50,7 +50,8 @@ namespace MCPhase3.Controllers
             _host = host;
             _Configure = configuration;
             _Environment = environment;
-        
+            _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
+
         }
         
         /// <summary>
@@ -241,22 +242,23 @@ namespace MCPhase3.Controllers
             {
                 excelDt.Clear();
             }
-
-            //clear Datatable when upload file button is clicked.
-            var fileNameForUpload = Path.GetFileNameWithoutExtension(vm.PaymentFile.FileName);
-            fileExt = Path.GetExtension(vm.PaymentFile.FileName);
-
-            fileNameForUpload  = $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType.ToString()}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
-
-            //copy file to local folder
-            string _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
-            filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
-
-            if (!Path.Exists(_customerUploadsLocalFolder)) {
+            
+            if (!Path.Exists(_customerUploadsLocalFolder))
+            {
                 TempData["MsgM"] = "Error: File upload area not defined. Please contact support.";
                 return RedirectToAction("Index", "Home", null, "uploadFile");
             }
 
+            //clear Datatable when upload file button is clicked.
+            //var fileNameForUpload = Path.GetFileNameWithoutExtension(vm.PaymentFile.FileName);
+            //fileExt = Path.GetExtension(vm.PaymentFile.FileName);
+
+            //fileNameForUpload  = $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType.ToString()}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
+
+            
+            //filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
+
+            filePath = GenerateFilePathNameForUpload(vm.PaymentFile, fileNamePrefix: $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType}_");
             using (FileStream fileStream = new(filePath, FileMode.Create))
             {
                 await vm.PaymentFile.CopyToAsync(fileStream);                
@@ -267,9 +269,10 @@ namespace MCPhase3.Controllers
             //## malicious script check
             //TODO: Use NugetPackage for Excel operation: 'https://www.nuget.org/packages/CsvHelper.Excel.Core/'
             var result = CheckMaliciousScripts(filePath);
-            if (result != "")
+            if (result.IsSuccess == false)
             {
-                TempData["MsgM"] = result;
+                System.IO.File.Delete(filePath);
+                TempData["MsgM"] = result.Message;
                 return RedirectToAction("Index", "Home", null, "uploadFile");
             }
 
@@ -314,6 +317,7 @@ namespace MCPhase3.Controllers
             HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth.ToString());
             HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear.ToString());
 
+            var fileNameForUpload = Path.GetFileName(filePath);
             HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
             HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
 
@@ -1159,7 +1163,7 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <param name="filePathName">Excel file name to check</param>
         /// <returns>File processing error</returns>
-        private string CheckMaliciousScripts(string filePathName)
+        private TaskResults CheckMaliciousScripts(string filePathName)
         {
             //## Convert the Excel file to CSV first
             var csvPath = Path.GetDirectoryName(filePathName) + "/csv/";            
@@ -1168,24 +1172,30 @@ namespace MCPhase3.Controllers
             var isConverted = ConvertExcelToCsv.Convert(filePathName, csvFilePath);
 
             var maliciousTags = ConfigGetValue("MaliciousTags").Split(",");
-
-            if (isConverted == false)
-                return "File format error. Please try another file.";
             
+            var result = new TaskResults { IsSuccess = false, Message = string.Empty };
+
+            if (isConverted == false) {
+                result.Message = "File format error. Please try another file.";
+                return result;
+            }
+
             try
             {
-
-                var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');               
+                var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');
                 foreach (var item in contents)  //## read line by line Rows in the CSV/ExcelSheet
                 {
                     foreach (var tag in maliciousTags)  //## Read each invalid characters listed in the Config file
                     {
-                        if (item.ToLower().Contains(tag)){
+                        if (item.ToLower().Contains(tag))
+                        {
                             //Console.WriteLine("Item: " + item.ToString());
-                            return "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>" ;
+                            result.Message = "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>";                            
                         }
-                    }                    
+                    }
                 }
+                System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. delete it once processed
+
             }
             catch (Exception ex)
             {
@@ -1193,7 +1203,66 @@ namespace MCPhase3.Controllers
                 throw;
             }
 
-            return "";  //## success! All good!
+            result.IsSuccess = string.IsNullOrEmpty(result.Message);
+            return result;  //## success! All good!
+        }
+
+
+        /// <summary>
+        /// This will check the File contents, size and Type. The it will look for any malicious/invalid characters in the file. If found- return the error message
+        /// </summary>
+        /// <param name="formFile">CustomerFile</param>
+        /// <returns>Test result</returns>
+        [HttpPost]
+        public async Task<IActionResult> ValidateFile(IFormFile formFile)
+        {
+            if (formFile == null) { 
+                return Json("no no no.. i am not happy with this file... no file was addeddd!! crazy man!");
+            }
+
+            var fileTypeCheck = IsFileValid(formFile);
+
+            //## check whether the file is valid- if NOT- then don't proceed with any other checks.. just exit now...
+            if (fileTypeCheck.IsSuccess == false)
+            {
+                return Json(fileTypeCheck.Message);
+            }
+
+            string filePathName = GenerateFilePathNameForUpload(formFile, "staging-file-");
+
+            using (FileStream fileStream = new(filePathName, FileMode.Create))
+            {
+                await formFile.CopyToAsync(fileStream);
+                _logger.LogInformation("File is copied to local folder.");
+            }
+
+            var scriptsCheck = CheckMaliciousScripts(filePathName);
+
+            //## now delete the both staging files.. not required anymore
+            System.IO.File.Delete(filePathName);
+
+            //## Now check results for malicious script Validations..
+            if (scriptsCheck.IsSuccess)
+            {                
+                return Json("success");
+            }
+
+            string errorMessage = fileTypeCheck.Message + " " + scriptsCheck.Message;
+            return Json(errorMessage);
+
+        }
+
+        private string GenerateFilePathNameForUpload(IFormFile customerFile, string fileNamePrefix)
+        {
+            var fileNameForUpload = Path.GetFileNameWithoutExtension(customerFile.FileName);
+            string fileExt = Path.GetExtension(customerFile.FileName);
+
+            fileNameForUpload = $"{fileNamePrefix}{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
+
+            //copy file to local folder
+            string filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
+
+            return filePath;
         }
     }
 }
