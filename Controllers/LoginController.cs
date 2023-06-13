@@ -64,17 +64,33 @@ namespace MCPhase3.Controllers
                 //## we need to confirm their is only one login session for this user.. 
                 if (sessionInfo.HasExistingSession)
                 {
-                    //## Notify the user ..
-                    //## ask whether they wanna kill the existing one and continue here...?
-                    sessionInfo.Password = ""; //sessionInfo.UserName = "";
+                    //## Notify the user - whether they wanna kill the existing one and continue here...?
+                    sessionInfo.Password = ""; //## don't take the password back to the UI
                     return View("MultipleSessionPrompt", sessionInfo);
                 
                 }
-            
+                //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
+                return await ProceedToLogIn(loginDetails, loginResult);
+
+            }
+            else if (loginResult == (int)LoginStatus.Locked)
+            {
+                TempData["Msg1"] = AccountLockedMessage;
+                loginDetails.LoginErrorMessage = AccountLockedMessage;
+                return View(loginDetails);
+            }
+            else if (loginResult == (int)LoginStatus.Failed)
+            {
+                TempData["Msg1"] = AccountFailedLoginMessage;
+                loginDetails.LoginErrorMessage = AccountFailedLoginMessage;
+                return View(loginDetails);
             }
 
-            return await ProceedToLogIn(loginDetails, loginResult);
+            //## if none of the above were true- which is not possible- then take back to login screen again.. where else!?
+            return View(loginDetails);
+
         }
+       
 
 
         [HttpPost]
@@ -156,19 +172,10 @@ namespace MCPhase3.Controllers
                     return RedirectToAction("Home", "Admin");
                 }
             }
-            else if (loginResult == (int)LoginStatus.Locked)
-            {
-                TempData["Msg1"] = AccountLockedMessage;
-                return RedirectToAction("Index", "Login");
-            }
-            else if (loginResult == (int)LoginStatus.Failed)
-            {
-                TempData["Msg1"] = AccountFailedLoginMessage;
-                return RedirectToAction("Index", "Login");
-            }
             else {
                 TempData["Msg1"] = AccountGenericErrorMessage;
-                return RedirectToAction("Index", "Login");  //## should never come here.. just to make the C# happy...            
+                loginDetails.LoginErrorMessage = AccountGenericErrorMessage;
+                return View("Index", loginDetails);  //## should never come here.. just to make the C# happy...            
             }
 
         }
@@ -345,6 +352,20 @@ namespace MCPhase3.Controllers
 
             // await signInManager.SignOutAsync();
             return RedirectToAction("Index", "Login");
+        }
+
+
+        /// <summary>This will show the Login page again with proper message for an expired session
+        /// also, delete any session in Browser.</summary>
+        /// <returns>Login Page with 'session expired' message</returns>
+        public IActionResult SessionExpired()
+        {
+            ClearTempData();
+            ClearSessionValues();
+            loginDetails.LoginErrorMessage = SessionExpiredMessage;
+
+            return View("Index", loginDetails);
+
         }
 
         private void ClearTempData()

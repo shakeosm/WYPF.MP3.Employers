@@ -216,8 +216,7 @@ namespace MCPhase3.CodeRepository
                         CheckSpreadSheetErrorMsg += "<BR /> <BR />";
                     }
 
-                    CheckSpreadSheetErrorMsg += "You have entered invalid scheme name 'SCHEME_NAME':<B>"
-                        + payrollPeriod + "</B> at row number: <B>" + rowNum + "</B> in spreadsheet.<BR />";
+                    CheckSpreadSheetErrorMsg += "You have entered invalid scheme name 'SCHEME_NAME', at row number: <B>" + rowNum + "</B> in spreadsheet.<BR />";
                     result = false;
 
                     //Q-comment break point

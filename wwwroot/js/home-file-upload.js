@@ -70,15 +70,25 @@
                 } else {
                     $("#UploadFileButton").prop("disabled", false); //## Valid file- OK to submit the page and procees to next step                    
                 }
+
+                hideOverlaySpinner();
             },
             failure: function (response) {
                 console.log(response.responseText);
+                hideOverlaySpinner();
             },
             error: function (response) {
                 console.log(response.responseText);
+                hideOverlaySpinner();
             }
         });
     });
+
+    function hideOverlaySpinner() {
+        setTimeout(function () {
+            $("#overlay").fadeOut(300);
+        }, 500);
+    }
 
 
 });

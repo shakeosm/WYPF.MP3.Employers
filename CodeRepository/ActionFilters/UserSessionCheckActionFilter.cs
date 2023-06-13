@@ -27,10 +27,15 @@ namespace MCPhase3.CodeRepository.ActionFilters
             string urlPath = filterContext.HttpContext.Request.Path.ToString().ToLower();
 
 
-            //## VIP pass for the following paths 
             if (urlPath.Contains("clearredisusersession") || urlPath.Contains("logout") || urlPath.Equals("/") || urlPath.Contains("login"))
             {
-                //## do no check....
+                //## do no check....//## VIP pass for these paths 
+            }            
+            else if (filterContext.HttpContext.Session.GetString(Constants.SessionKeyUserID) is null)
+            {
+                //## session expired
+                filterContext.Result = RedirectResult("Login", "SessionExpired");
+
             }
             else if (!string.IsNullOrEmpty(currentUserId))
             {
@@ -39,33 +44,34 @@ namespace MCPhase3.CodeRepository.ActionFilters
                 //## So check- whether we still have a Redis session? If not- we need to Login again
                 string sessionGuid = filterContext.HttpContext.Session.GetString(Constants.SessionGuidKeyName);
                 string sessionInfoKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}"; //## this must match the Keyname in the BaseController.. Don't change it here
-                var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
+                var redisCache = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
 
-                if (sessionInfo == null)
+                if (redisCache == null)
                 {
                     //## can happen- if the RedisCache is restarted/cleared on the Server- then what to do!
-                    
-                    filterContext.Result = new RedirectToRouteResult(
-                                                new RouteValueDictionary(
-                                                    new { controller = "Login", action = "Logout" }));
+                    //## or the Admin has updated password and deleted the current user Redis session
+                    filterContext.Result = RedirectResult("Login", "Logout" );
 
                 }
-                else if (sessionGuid != null && sessionGuid == sessionInfo.SessionId)
+                else if (sessionGuid != null && sessionGuid == redisCache.SessionId)
                 {
                     //## all good
                 }
-                else if(sessionGuid != sessionInfo.SessionId) 
+                else if (sessionGuid != redisCache.SessionId)
                 {
                     //## From a different browser - the user has logged out my current session here, therefore 'sessionInfo.SessionId' is not anymore same as my 'Redis.SessionId' in current Browser.SessionId 
                     //## call a separate ActionController-> to clear up the Http session.. don't use Logout... that will Delete Redis cache..
-                    filterContext.Result = new RedirectToRouteResult(
-                                                new RouteValueDictionary(
-                                                    new { controller = "Login", action = "ClearSessionAndLogin" }));
+                    filterContext.Result = RedirectResult("Login", "ClearSessionAndLogin");
                 }
             }
         }
 
-
+        private RedirectToRouteResult RedirectResult(string controllerName, string actionName)
+        {
+            return new RedirectToRouteResult(
+                            new RouteValueDictionary(
+                                new { controller = controllerName, action = actionName }));
+        }
 
     }
 }

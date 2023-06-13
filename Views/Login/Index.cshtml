@@ -9,27 +9,12 @@
 <div class="">
     <div class="">
         <div class="wrap-login100">
-            @*Session expired message*@
-            @if (TempData["msg"] != null)
-            {
-                <div class="container">
-                    <div class="alert-danger">
-                        <div class="alert alert-danger">
-                            @loginMessage
-                        </div>
-                    </div>
-                </div>
-            }
-            @if (@loginMessage != null)
-            {
-                <div class="container">
-                    <div class="alert-danger">
-                        <div class="alert alert-danger">
-                            @loginMessage
-                        </div>
-                    </div>
-                </div>
-
+            @{
+                if (string.IsNullOrEmpty(Model.LoginErrorMessage) == false){
+                    <div class="col-12 alert alert-danger">
+                        @Model.LoginErrorMessage
+                    </div>                    
+                }
             }
 
             <div class="login100-pic pt-5">
@@ -64,13 +49,7 @@
                     </span>
 
                 </div>
-                @*<div class="wrap-input100 validate-input" data-validate = "Password is required">
-                <input class="input100" asp-for="clientId" placeholder="Client Id"/>
-                <span class="focus-input100"></span>
-                <span class="symbol-input100">
-                    <i class="fa fa-lock" aria-hidden="true"></i>
-                </span>
-            </div>*@
+
                 <input id="BrowserIdInput" type="hidden" asp-for="BrowserId"/>
                 <input id="WindowsIdInput" type="hidden" asp-for="WindowsId"/>
 
@@ -78,11 +57,6 @@
                     <button value="Submit" type="submit" class="login100-form-btn">Login</button>
                 </div>
             </form>
-
-            @*<p>Encoded remittance id:  @ViewData["enRemid"] </p>
-            <p>Decoded remittance id:  @ViewData["remid"] </p>*@
-
-
         </div>
     </div>
 </div>

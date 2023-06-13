@@ -18,5 +18,6 @@ namespace MCPhase3.Models
 
         public string BrowserId { get; set; } = "SpecialBrowser112";
         public string WindowsId { get; set; } = "Windows95";
+        public string LoginErrorMessage { get; set; }
     }
 }
