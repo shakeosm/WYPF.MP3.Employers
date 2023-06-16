@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.7/css/perfect-scrollbar.min.css" />
     
     <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css" rel="stylesheet">
 
 </head>
 
@@ -120,6 +121,13 @@
     <script src="~/assets/libs/flot/tooltip/js/jquery.flot.tooltip.min.js"></script>
     <script src="~/dist/js/pages/chart/chart-page-init.js"></script>
     -->
+
+    @*The following is for Ajax Loading Spinner*@
+    <div id="overlay">
+        <div class="cv-spinner">
+            <span class="spinner"></span>
+        </div>
+    </div>
     
     <script src="~/js/site.js"></script>
 
@@ -128,16 +136,12 @@
 
     @*<script src="~/assets/extra-libs/datatables/datatables.min.js"></script>*@
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     @*//## keep this at the bottom*@
     @RenderSection("scripts", required: false)
 
-    @*The following is for Ajax Loading Spinner*@
-    <div id="overlay">
-        <div class="cv-spinner">
-            <span class="spinner"></span>
-        </div>
-    </div>
+
 </body>
 </html>

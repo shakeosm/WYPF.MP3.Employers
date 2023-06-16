@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MCPhase3.Models
 {
@@ -9,6 +6,7 @@ namespace MCPhase3.Models
     {
       
             public int remittance_Id { get; set; }
+            public string remittanceId_Encrypted { get; set; }
             public DateTime score_Date { get; set; }
             public int score_Employer { get; set; }
             public int score_Wypf { get; set; }

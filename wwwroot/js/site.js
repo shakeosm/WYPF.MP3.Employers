@@ -16,3 +16,9 @@
 
 });
 
+
+function hideOverlaySpinner() {
+    setTimeout(function () {
+        $("#overlay").fadeOut(300);
+    }, 500);
+}

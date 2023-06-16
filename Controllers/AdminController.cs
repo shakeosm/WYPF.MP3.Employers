@@ -111,11 +111,24 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> ScoreHist(string remittanceId)
         {
-            int remID = Convert.ToInt32(EncryptUrlValue(remittanceId));
-            List<DashboardHistScoreBO> dashboardScoreHistBO = new List<DashboardHistScoreBO>();
-            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);            
-            dashboardScoreHistBO = await getDashboardScoreHist(remID);
+            int remID = Convert.ToInt32(DecryptUrlValue(remittanceId));
+            List<DashboardHistScoreBO> dashboardScoreHistBO = await getDashboardScoreHist(remID);
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
+            
             return View(dashboardScoreHistBO);
+        }
+
+        /// <summary>
+        /// show list of score history to employers- as a Partial view to be used in Ajax call..
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IActionResult> GetScoreHistoryPartialView(string remittanceId)
+        {
+            int remID = Convert.ToInt32(DecryptUrlValue(remittanceId));
+            List<DashboardHistScoreBO> dashboardScoreHistBO = await getDashboardScoreHist(remID);
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
+            
+            return PartialView("_ScoreHistory", dashboardScoreHistBO);
         }
 
 
@@ -430,6 +443,12 @@ namespace MCPhase3.Controllers
                     }
                 }
             }
+
+            foreach (var item in listBO)
+            {
+                item.remittanceId_Encrypted = EncryptUrlValue(item.remittance_Id.ToString());
+            }
+
             return listBO;
         }
 
@@ -482,7 +501,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> DeleteRemittance(string id)
         {
-            int remID =Convert.ToInt32(EncryptUrlValue(id));
+            int remID =Convert.ToInt32(DecryptUrlValue(id));
             string result = string.Empty;
             string apiCallDeleteRemittance = ConfigGetValue("WebapiBaseUrlForDeleteRemittance");
             using (var httpClient = new HttpClient())
@@ -498,6 +517,27 @@ namespace MCPhase3.Controllers
             }
             TempData["msgDelete"] = result;
             return RedirectToAction("MasterDetailEmp");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteRemittanceAjax(string id)
+        {
+            int remID = Convert.ToInt32(DecryptUrlValue(id));
+            string result = string.Empty;
+            string apiCallDeleteRemittance = ConfigGetValue("WebapiBaseUrlForDeleteRemittance");
+            using (var httpClient = new HttpClient())
+            {
+                using (var response = await httpClient.GetAsync(apiCallDeleteRemittance + remID))
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        result = await response.Content.ReadAsStringAsync();
+                        result = JsonConvert.DeserializeObject<string>(result);
+                    }
+                }
+            }
+
+            return Json(result);
         }
 
     }

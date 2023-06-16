@@ -1,0 +1,53 @@
+﻿@model IEnumerable<DashboardHistScoreBO>
+
+@{
+    int i = 0;
+    string remittanceID = "";
+}
+
+<div class="alert alert-info h2 mt-2 mb-2">
+    Score History
+</div>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th><b>No.</b></th>
+            <th><b>Reference</b></th>
+            <th><b>Score Date</b></th>
+            <th><b>Score</b></th>            
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@{
+                    i++;
+                    } @i</td>
+                <td>@item.remittance_Id</td>
+                <td>@Convert.ToDateTime(item.score_Date).ToString("dd/MM/yyyy")</td>
+                <td>
+                    @{
+                        remittanceID = @item.remittanceId_Encrypted;
+                    }
+                    @item.score_Employer                
+                </td>                
+             </tr>
+
+        }
+    </tbody>
+</table>
+<div>
+    <div id="ScoreActionDiv">
+        <a id="ShowDetailsForScore" href="~/SummaryNManualM/Index?remittanceID=@remittanceID" class="btn btn-outline-primary">
+            <i class="mdi mdi-clipboard-text h3"></i>
+            Details
+        </a>
+
+        <span id="ModalStatusText" class="alert alert-success ml-3 d-none">Success: latest score updated just now.</span>
+
+        <a id="UpdateScoreButton" data-remittance-id="@remittanceID" class="btn btn-outline-danger float-end">
+            <i class="mdi mdi-update h3"></i>Refresh Score
+        </a>
+    </div>
+</div>

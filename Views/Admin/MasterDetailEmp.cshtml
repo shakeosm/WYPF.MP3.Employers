@@ -91,8 +91,7 @@
                                                 //alertSumBO.P_PAYLOC_FILE_ID = Convert.ToInt32(Model.BO.pay);
                                                 alertSumBO.P_USERID = Model.BO.userId;
                                                 alertSumBO.P_STATUSCODE = Convert.ToInt32(Model.BO.return_Status_Code);
-                                            }
-                                            @{
+                                         
                                                 var myAction = string.IsNullOrEmpty(@Model.BO.action_Button_Text) ? "" : @Model.BO.action_Button_Text;
 
                                             }
@@ -124,10 +123,9 @@
                                                     <a asp-action="/SummaryNManualM/Index?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-primary @selectButtonDisabled">Select</a>
                                                 </td>
                                                 <td>                                                    
-                                                    <a href="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info disabled">Score History</a>
+                                                    <a href="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info">Score History</a>
                                                 </td>
                                                 <td>
-                                                    @*<a asp-action="SubmitReturn" asp-controller="Admin" asp-route-remittanceID=@Model.BO.remittance_Id class="btn btn-outline-info">@Model.BO.action_Button_Text</a>*@
                                                     @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
                                                 </td>
                                                 <td>                                                    
@@ -249,13 +247,13 @@
                                 {
                                     string selectButtonDisabled = Model.BO.return_Score_Emp > 99 ? "disabled" : "";
 
-                                        <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary @selectButtonDisabled">Select</a></td>
+                                    <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary @selectButtonDisabled">Select</a></td>
                                     <td>
                                         @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
                                         @*<a asp-action="ReturnSubmit" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@
                                     </td>
                                     <td>
-                                        <a asp-action="DeleteRemittance" asp-controller="Admin" asp-route-id="@item.remittance_IdEnc" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
+                                        <a class="btn btn-outline-danger delete-remittance-button" )>Delete</a>
                                     </td>
                                 }
                             </tr>
@@ -278,7 +276,7 @@
                                 <th><b>Received</b></th>
                                 <th><b>Payroll</b></th>
                                 <th><b>Status</b></th>
-                                <th><b>Latest Score</b></th>
+                                <th class="text-center"><b>Latest Score %</b></th>
                                 <th></th>
                                 <th></th>
                                 <th></th>
@@ -305,15 +303,12 @@
                                 //remid = item.remittance_ID.ToString();
 
                                 @*<tr class="@selectRow">*@
-                                <tr>
-                                    @*<td><a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remid=@item.remittance_IdEnc class="ShowSubmissionDetailsButton">+</a></td>*@
+                                <tr data-remittance-id="@item.remittance_IdEnc"
+                                    data-modal-title="Reference: @item.remittance_Id || Score: @item.return_Score_Emp">
                                     <td>
-                                        <span class="btn btn-sm btn-outline-primary ShowSubmissionDetailsButton" 
-                                                data-remittance-id="@item.remittance_IdEnc" 
-                                                data-modal-title="Reference: @item.remittance_Id || Score: @item.return_Score_Emp"
+                                        <span class="btn btn-sm btn-outline-primary ShowSubmissionDetailsButton"                                                 
                                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Show submission details">+</span>
                                         </td>
-                                    @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
 
                                     <td>@item.return_Month_Name</td>
                                     <td>@item.return_Year</td>
@@ -321,8 +316,8 @@
                                     <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
                                     <td>@item.paylocation_Name</td>@*<td>@item.return_Records</td>*@
                                     <td>@item.return_Status_Text</td>
-                                    <td class="latest-score">@item.return_Score_Emp</td>
-                                    @*<td> @Html.ActionLink("Select", "Index", "SummaryNManualM", new { remittanceID = "176448" })<br /></td>*@
+                                    <td class="latest-score text-center">@item.return_Score_Emp</td>
+
                                     @{
                                         ReturnSubmitBO alertSumBO = new ReturnSubmitBO();
                                         alertSumBO.p_REMITTANCE_ID = item.remittance_IdEnc; //Convert.ToInt32(item.remittance_Id);
@@ -338,7 +333,6 @@
                                     @if (@item.return_Status_Code == "70" || @item.return_Status_Code == "65" || @item.return_Status_Code == "60")
                                     {
                                         <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_Id class="btn btn-outline-secondary disabled">Select</a></td>
-                                        @*<td colspan="3">*@
                                         <td>
                                             @*<a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@
                                             @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
@@ -352,18 +346,18 @@
                                         string selectButtonDisabled = item.return_Score_Emp > 99 ? "disabled" : "";
 
                                         <td>
-                                            @* <a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary">Select</a>  *@
                                             <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary @selectButtonDisabled"
                                                data-bs-toggle="tooltip" data-bs-placement="top" title="View error and warning summary"> Select</a>
                                         </td>
                                         <td>                                            
-                                            <a href="/Admin/ScoreHist?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-info disabled">Score History</a>
+                                            <a class="btn btn-outline-info score-history-button"                                               
+                                               data-bs-toggle="tooltip" data-bs-placement="top" title="Show Score History">Score History</a>
                                         </td>
                                         <td>                                            
                                             @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
                                         </td>
                                         <td>
-                                            <a asp-action="DeleteRemittance" asp-controller="Admin" asp-route-id="@item.remittance_IdEnc" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
+                                            <a class="btn btn-outline-danger delete-remittance-button")>Delete</a>
                                         </td>
                                     }
                                 </tr>
@@ -391,7 +385,7 @@
                     @*Here we will dump the submission details to show in this popup modal window...*@
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer">                
                 <button type="button" class="btn btn-secondary submission-detail-modal-close-button" data-dismiss="modal">Close</button>
             </div>
         </div>
