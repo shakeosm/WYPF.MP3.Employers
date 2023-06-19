@@ -1,13 +1,10 @@
-﻿@model PaginatedList<MCPhase3.Models.DashboardBO>
+﻿@model IList<MCPhase3.Models.DashboardBO>
 @{
     ViewData["Title"] = "Files History";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    int i = 0;
-    int j = 0;    
 }
-<br />
-<br />
-<div class="border shadow-lg p-4 mb-4 bg-white">
+
+<div class="border shadow-lg p-4 mt-3 mb-4 bg-white">
     <div class="container-fluid">
         <div class="container-fluid bg-3 text-center">
             <h1 class="">Monthly posting</h1>
@@ -41,7 +38,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.OrderByDescending(m => m.remittance_Id))
+                        @foreach (var item in Model)
                         {
                             //if (Convert.ToInt32(item.return_Status_Code) >= 105)
                             //{
@@ -61,39 +58,6 @@
                         }
                     </tbody>
                 </table>
-
-                <div class="d-none">
-                    @{
-                        var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
-                        var nextDisabled = !Model.HasNextPage ? "disabled" : "";
-                    }
-
-                    <a asp-action="CompletedFiles"
-                       asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
-                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                       class="btn btn-default @prevDisabled">
-                        <<
-                    </a>
-                    <a asp-action="CompletedFiles"
-                       asp-route-pageNumber="@(Model.PageIndex - 1)"
-                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                       class="btn btn-default @prevDisabled">
-                        <
-                    </a>
-                    <a asp-action="CompletedFiles"
-                       asp-route-pageNumber="@(Model.PageIndex + 1)"
-                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                       class="btn btn-default @nextDisabled">
-                        >
-                    </a>
-                    <a asp-action="CompletedFiles"
-                       asp-route-pageNumber="@(Model.TotalPages)"
-                       asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                       class="btn btn-default @nextDisabled">
-                        >>
-                    </a>
-
-                </div>
             </div>
 
         </div>

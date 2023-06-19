@@ -95,14 +95,9 @@ namespace MCPhase3.Controllers
             //detailBO.statusType = "COMPLETED";
             detailBO.statusType = "WYPF";
 
-            //dashboardBO = await getDashboardValuesForEmployers(userid, "completed");
             dashboardBO = await getDashboardValues(detailBO);
-            var newBO = dashboardBO.AsQueryable<DashboardBO>();
-            newBO = newBO.OrderByDescending(x => x.return_Status_Code);
-            int pageSize = 10;
 
-            return View(PaginatedList<DashboardBO>.CreateAsync(newBO, pageNumber ?? 1, pageSize));
-             //return View(dashboardBO);
+            return View(dashboardBO);
         }
 
         /// <summary>
