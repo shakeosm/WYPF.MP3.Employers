@@ -30,248 +30,14 @@
             </div>
         </nav>
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active pt-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                
-                @*## following will be always NULL.. we have removed this feature from Controller*@
-                @if (TempData["remID"] != null)
-                {
-                    @*<div class="container">
-                    <div class="alert alert-dismissible alert-success">*@
-                    //@remid = @TempData["remID"] ;
-
-
-                    <div id="messageDiv">
-
-
-                        @if (Model.details != null)
-                        {
-                            <table id="PendingSubmissionTable" class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th><b>Month</b></th>
-                                        <th><b>Year</b></th>
-                                        <th><b>Reference</b></th>
-                                        <th><b>Received</b></th>
-                                        <th><b>Employer</b></th> @*<th><b>Records</b></th>*@
-                                        <th><b>Status</b></th>
-                                        <th><b>Emp Score</b></th>
-                                        <th><b>WYPF Score</b></th>
-                                        <th><b></b></th>
-                                        <th><b></b></th>
-                                        <th><b></b></th>
-                                    </tr>
-                                    <tr>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @{
-                                        string selectRow = "table-success";
-
-
-                                        //if (Convert.ToInt32(Model.BO.return_Status_Code) < 110)
-                                        //{
-                                        //remid = item.remittance_ID.ToString();
-
-                                        <tr class="@selectRow">
-                                            <td><a asp-action="MasterDetailEmp" asp-controller="Admin">-</a></td>
-                                            @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
-                                            <td>@Model.BO.return_Month_Name</td>
-                                            <td>@Model.BO.return_Year</td>
-                                            <td>@Model.BO.remittance_Id</td>
-                                            <td>@Convert.ToDateTime(Model.BO.return_Received_Date).ToString("dd/MM/yyyy")</td>
-                                            <td>@Model.BO.paylocation_Name</td> @*<td>@Model.BO.return_Records</td>*@
-                                            <td>@Model.BO.return_Status_Text</td>
-                                            <td>@Model.BO.return_Score_Emp</td>
-                                            @*<td> @Html.ActionLink("Select", "Index", "SummaryNManualM", new { remittanceID = "176448" })<br /></td>*@
-
-                                            @{
-                                                ReturnSubmitBO alertSumBO = new ReturnSubmitBO();
-                                                alertSumBO.p_REMITTANCE_ID = Model.BO.remittance_IdEnc;//Convert.ToInt32(Model.BO.remittance_Id);
-                                                //alertSumBO.P_PAYLOC_FILE_ID = Convert.ToInt32(Model.BO.pay);
-                                                alertSumBO.P_USERID = Model.BO.userId;
-                                                alertSumBO.P_STATUSCODE = Convert.ToInt32(Model.BO.return_Status_Code);
-                                         
-                                                var myAction = string.IsNullOrEmpty(@Model.BO.action_Button_Text) ? "" : @Model.BO.action_Button_Text;
-
-                                            }
-
-
-                                            @if (@Model.BO.return_Status_Code == "70" || @Model.BO.return_Status_Code == "65" || @Model.BO.return_Status_Code == "60")
-                                            {
-                                                <td>                                                    
-                                                    <a heref="/SummaryNManualM/index?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-secondary disabled">Select</a>
-                                                </td>
-
-                                                <td>                                                    
-                                                    <a href="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info disabled">Score History</a>
-                                                </td>
-                                                <td>
-                                                    @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
-                                                </td>
-                                                <td>
-                                                    
-                                                    <a href="/Admin/DeleteRemittance?id=@Model.BO.remittance_Id" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
-                                                </td>
-
-                                            }
-                                            else
-                                            {                                                
-                                                string selectButtonDisabled = Model.BO.return_Score_Emp > 99 ? "disabled" : "";
-                                                
-                                                <td>
-                                                    <a asp-action="/SummaryNManualM/Index?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-primary @selectButtonDisabled">Select</a>
-                                                </td>
-                                                <td>                                                    
-                                                    <a href="/Admin/ScoreHist?remittanceID=@Model.BO.remittance_Id" class="btn btn-outline-info">Score History</a>
-                                                </td>
-                                                <td>
-                                                    @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
-                                                </td>
-                                                <td>                                                    
-                                                    <a href="/Admin/DeleteRemittance?id=@Model.BO.remittance_Id" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
-                                                </td>
-                                            }
-
-                                        </tr>
-                                        //}
-                                    }
-                                </tbody>
-                            </table>
-                            <div class="container">
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th><b>id</b></th>
-                                            <th><b>Employer</b></th>
-                                            <th><b>Records</b></th>
-                                            <th><b>Status</b></th>
-                                            <th><b>Score Emp</b></th>
-                                            @*<th><b>Score WYPF</b></th>*@
-                                            @*<th><b></b></th>
-                                            <th><b></b></th>*@
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var item1 in Model.details)
-                                        {
-                                            <tr>
-                                                <td>@item1.paylocationRef</td>
-                                                <td>@item1.paylocation_Name</td>
-                                                <td>@item1.return_Records</td>
-                                                <td>@item1.return_Status_Text.</td>
-                                                <td>@item1.return_Score_Wypf</td>
-
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-
-                        @*</div>*@
-                    </div>
-
-                    <table class="table table-hover">
+            <div class="tab-pane fade show active pt-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">                
+                @*<table id="PendingSubmissionTable" class="">*@
+                <table id="PendingSubmissionTable" class="table table-hover">
                         <thead>
                             <tr>
                                 <th></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                @*<th><b>File Name</b></th>*@
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                                <th><b></b></th>
-                            </tr>
-                            <tr>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model.dashboardBO)
-                            {
-                                string selectRow = "";
-                                if (TempData["remID"] != null)
-                                {
-
-                                    if (remid.Equals(item.remittance_Id))
-                                    {
-
-                                        selectRow = "table-success";
-                                    }
-                                }
-
-                                //if (Convert.ToInt32(item.return_Status_Code) < 110)
-                                //{
-                                //remid = item.remittance_ID.ToString();
-
-                            <tr class="@selectRow">
-                                <td><a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remid=@item.remittance_IdEnc>+</a></td>
-                                @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
-
-                                <td>@item.return_Month_Name</td>
-                                <td>@item.return_Year</td>
-                                <td>@item.remittance_Id</td>
-                                <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
-                                <td>@item.paylocation_Name</td>@*<td>@item.return_Records</td>*@
-                                <td>@item.return_Status_Text</td>
-                                <td>@item.return_Score_Wypf</td>
-
-                                @*<td> @Html.ActionLink("Select", "Index", "SummaryNManualM", new { remittanceID = "176448" })<br /></td>*@
-                                @{
-                                    ReturnSubmitBO alertSumBO = new ReturnSubmitBO();
-                                    alertSumBO.p_REMITTANCE_ID = item.remittance_IdEnc; //Convert.ToInt32(item.remittance_Id);
-                                    //alertSumBO.P_PAYLOC_FILE_ID = Convert.ToInt32(Model.BO.pay);
-                                    alertSumBO.P_USERID = item.userId;
-                                    alertSumBO.P_STATUSCODE = Convert.ToInt32(item.return_Status_Code);
-                                }
-                                @{
-                                    var myAction = string.IsNullOrEmpty(item.action_Button_Text) ? "" : @item.action_Button_Text;
-
-                                }
-
-                                @if (@item.return_Status_Code == "70" || @item.return_Status_Code == "65" || @item.return_Status_Code == "60")
-                                {
-                                    <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-secondary disabled">Select</a></td>
-                                    <td>
-                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })@*<a asp-action="RemittanceInsertDB" asp-controller="Home" asp-route-id=@Convert.ToInt32(item.remittance_Id) class="btn btn-outline-info">@item.action_Button_Text</a>*@
-                                    </td>
-                                }
-                                else
-                                {
-                                    string selectButtonDisabled = Model.BO.return_Score_Emp > 99 ? "disabled" : "";
-
-                                    <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_IdEnc class="btn btn-outline-primary @selectButtonDisabled">Select</a></td>
-                                    <td>
-                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
-                                        @*<a asp-action="ReturnSubmit" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@
-                                    </td>
-                                    <td>
-                                        <a class="btn btn-outline-danger delete-remittance-button" )>Delete</a>
-                                    </td>
-                                }
-                            </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-
-
-                    @*<table id="PendingSubmissionTable" class="">*@
-                    <table id="PendingSubmissionTable" class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th><b>Month</b></th>
-                                <th><b>Year</b></th>
+                                <th><b>Employer</b></th>
+                                <th><b>Period</b></th>
                                 <th><b>Reference</b></th>
                                 <th><b>Received</b></th>
                                 <th><b>Payroll</b></th>
@@ -286,22 +52,6 @@
                         <tbody>
                             @foreach (var item in Model.dashboardBO)
                             {
-                                /*
-                                string selectRow = "";
-                                if (TempData["remID"] != null)
-                                {
-
-                                    if (remid.Equals(item.remittance_Id))
-                                    {
-
-                                        selectRow = "table-success";
-                                    }
-                                }
-                                */
-                                //if (Convert.ToInt32(item.return_Status_Code) < 110)
-                                //{
-                                //remid = item.remittance_ID.ToString();
-
                                 @*<tr class="@selectRow">*@
                                 <tr data-remittance-id="@item.remittance_IdEnc"
                                     data-modal-title="Reference: @item.remittance_Id || Score: @item.return_Score_Emp">
@@ -310,8 +60,8 @@
                                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Show submission details">+</span>
                                         </td>
 
-                                    <td>@item.return_Month_Name</td>
-                                    <td>@item.return_Year</td>
+                                    <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>
+                                    <td>@item.RETURN_PERIOD</td>
                                     <td class="remittance-id">@item.remittance_Id</td>
                                     <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
                                     <td>@item.paylocation_Name</td>@*<td>@item.return_Records</td>*@
@@ -364,8 +114,7 @@
                                 //}
                             }
                         </tbody>
-                    </table>
-                }               
+                    </table>              
             </div>
         </div>
     </div>

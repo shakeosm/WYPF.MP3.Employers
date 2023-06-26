@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Spire.Xls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,7 +75,7 @@ namespace MCPhase3.Controllers
             int pageSize = 10;
 
             return View(PaginatedList<GetRemittanceStatusByUserBO>.CreateAsync(newBO, pageNumber ?? 1, pageSize));
-           // return View(dashboardBO);
+
         }
         public async Task<IActionResult> CompletedFiles(int? pageNumber)
         {
@@ -227,10 +228,8 @@ namespace MCPhase3.Controllers
         private async Task<List<DashboardBO>> getDashboardValues(DashboardBO dashboardBO)
         {
             string apiBaseUrlForDashboard = ConfigGetValue("WebapiBaseUrlForDashboard");
-            List<DashboardBO> listBO = new List<DashboardBO>();
-            DashboardBO bo = new DashboardBO();
-            // bo.userId = userid;
-            string apiResponse = string.Empty;
+            var apiResult = new List<DashboardBO>();
+            
             using (var httpClient = new HttpClient())
             {
                 StringContent content = new StringContent(JsonConvert.SerializeObject(dashboardBO), Encoding.UTF8, "application/json");
@@ -239,7 +238,7 @@ namespace MCPhase3.Controllers
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                         string result = await response.Content.ReadAsStringAsync();
-                        listBO = JsonConvert.DeserializeObject<List<DashboardBO>>(result);
+                        apiResult = JsonConvert.DeserializeObject<List<DashboardBO>>(result);
                     }
                 }
             }
@@ -250,7 +249,13 @@ namespace MCPhase3.Controllers
             //}
 
             //return listBO.Where(x => Convert.ToInt32(x.return_Status_Code) < 110).ToList();           
-            var sortedDashboardItems = listBO.OrderByDescending(d => d.remittance_Id).ToList();
+            
+            foreach (var item in apiResult)
+            {
+                item.remittance_IdEnc = EncryptUrlValue(item.remittance_Id.ToString());
+            }
+
+            var sortedDashboardItems = apiResult.OrderByDescending(d => d.remittance_Id).ToList();
             return sortedDashboardItems;
         }
 
@@ -259,86 +264,24 @@ namespace MCPhase3.Controllers
         {
             try
             {
-                string payrolID = string.Empty;
-                DashboardViewModelNew viewModel = new DashboardViewModelNew();
-                //Model class 
-                DashboardBO detailBO = new DashboardBO();
-                MasterDetailEmpListBO BO = new MasterDetailEmpListBO();
-                string apiResponse = string.Empty;
-                string WebapiBaseUrlForDetailEmpList = string.Empty;
-
                 //check of PaylocID session has value then empty it.
                 if (ContextGetValue(Constants.SessionKeyPaylocFileID) != null)
                 {
                     HttpContext.Session.Clear();
                 }
-                payrolID = ContextGetValue(Constants.SessionKeyPayLocId);
 
-                List<DashboardBO> dashboardBO = new List<DashboardBO>();
-                // DashboardBO dashboardBO1 = new DashboardBO();
-                //ViewBag.EmployerName = GetContextValue(SessionKeyEmployerName);
-                var userid = ContextGetValue(Constants.SessionKeyUserID);
-                detailBO.userId = userid;
-                //detailBO.L_PAYROLL_PROVIDER = payrolID;
-                detailBO.L_PAYROLL_PROVIDER = null;
-                //detailBO.statusType = "PROCESSING";
-                detailBO.statusType = "EMPLOYER";
-
-                // DashboardBO dashboardBO1 = new DashboardBO();
-
-                // var userid = GetContextValue(SessionKeyUserID);
-                viewModel.dashboardBO = await getDashboardValues(detailBO);
-                // viewModel.dashboardBO = await getDashboardValuesForEmployers(userid, "pending");
-
-
-                //var newBO = dashboardBO.AsQueryable<DashboardBO>();
-                //newBO = newBO.OrderByDescending(x => x.event_DateTime);
-                //int pageSize = 10;
-
-                //## Followings moved to a new Action "GetSubmissionDetails" - will be consumed via ajax() call.
-                /*
-                WebapiBaseUrlForDetailEmpList = ConfigGetValue("WebapiBaseUrlForDetailEmpList");
-                BO.L_USERID = CurrentUserId();
-                int j = 0;
-
-                //TODO: remove this MasterDetail processing from here.. and put it in a separate ActionController for separate call via ajax();
-                if (!string.IsNullOrEmpty(remid))
+                var paramList = new DashboardBO
                 {
-                    remid = DecryptUrlValue(remid);
-                    BO.L_REMITTANCE_ID = remid;
-                    ViewData["selectedRow"] = remid;
-                    BO.L_STATUSTYPE = "ALL";
-                    viewModel.BO = viewModel.dashboardBO.Where(x => x.remittance_Id.ToString() == remid).FirstOrDefault();
-                    using (var httpClient = new HttpClient())
-                    {
-                        StringContent content = new StringContent(JsonConvert.SerializeObject(BO), Encoding.UTF8, "application/json");
-                        // string endPoint = apiLink;
+                    userId = ContextGetValue(Constants.SessionKeyUserID),
+                    L_PAYROLL_PROVIDER = null,
+                    statusType = Constants.StatusType_EMPLOYER
+                };
 
-                        using (var response = await httpClient.PostAsync(WebapiBaseUrlForDetailEmpList, content))
-                        {
-                            if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                            {
-                                string result = await response.Content.ReadAsStringAsync();
-                                viewModel.details = JsonConvert.DeserializeObject<List<DashboardBO>>(result);
-                            }
-                        }
-                    }
-
-                    //select the Master table and remove the selected row from that.
-                    viewModel.dashboardBO = viewModel.dashboardBO.Where(x => x.remittance_Id.ToString() != remid).ToList();
-                    TempData["remID"] = remid;
-                }
-
-                */
-
-                int i = 0;
-                //viewModel.BO.remittance_Id = protector.Encode(viewModel.BO.remittance_Id);
-                foreach (var model in viewModel.dashboardBO)
+                var viewModel = new DashboardViewModelNew
                 {
-                    viewModel.dashboardBO[i].remittance_IdEnc = EncryptUrlValue(model.remittance_Id.ToString());
-                    i++;
-                }
-                //viewModel.dashboardB
+                    dashboardBO = await getDashboardValues(paramList)
+                };
+
                 return View(viewModel);
             }
             catch (Exception ex)

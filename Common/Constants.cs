@@ -26,17 +26,19 @@
         
         public const string SessionInfoKeyName = "SessionInfo";    //## for Redis use
         public const string SessionGuidKeyName = "SessionGUID";    //## for Redis cross check
-        public const string UserIdKeyName = "LoggedInAs";    //## for Redis cross check
-        public const string ErrorWarningSummaryKeyName = "ErrorAndWarningSummaryVM";    //## for Redis cross check
+        public const string UserIdKeyName = "LoggedInAs";    
+        public const string ErrorWarningSummaryKeyName = "ErrorAndWarningSummaryVM";    
         
         /// <summary>The complete File path and name of the file uploaded by the Customer</summary>
-        public const string UploadedFilePathKey = "UploadedFilePathName";    //## for Redis cross check
+        public const string UploadedFilePathKey = "UploadedFilePathName";    
 
         public const string Error403_Page = @"~/Views/Errors/Errror403.cshtml";
         public const string AccountLockedMessage = "Your account is temporarily locked to prevent unauthorized use. Please try again later in 30 minutes, and if you still have trouble, contact WYPF.";
         public const string AccountFailedLoginMessage = "Username or password not correct, please try again";
         public const string AccountGenericErrorMessage = "Account error! Please contact Helpdesk.";
         public const string SessionExpiredMessage = "Session is expired. Please log in again.";
+        
+        public const string StatusType_EMPLOYER = "EMPLOYER";
 
         public static string RedisKeyList()
         {

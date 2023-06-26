@@ -31,6 +31,10 @@ namespace MCPhase3.Models
         public string action_Button_Text { get; set; }
         public string L_PAYROLL_PROVIDER { get; set; }
 
+        public string EMPLOYER_REF { get; set; }
+        public string EMPLOYER_NAME { get; set; }
+        public string RETURN_PERIOD { get; set; }
+
     }
     public class DashboardViewModelNew
     {
