@@ -233,14 +233,18 @@ namespace MCPhase3.Controllers
             //}
 
             //return listBO.Where(x => Convert.ToInt32(x.return_Status_Code) < 110).ToList();           
-            
-            foreach (var item in apiResult)
+            if (apiResult != null && apiResult.Count > 0)
             {
-                item.remittance_IdEnc = EncryptUrlValue(item.remittance_Id.ToString());
+                foreach (var item in apiResult)
+                {
+                    item.remittance_IdEnc = EncryptUrlValue(item.remittance_Id.ToString());
+                }
+                
+                return apiResult.OrderByDescending(d => d.remittance_Id).ToList();
             }
-
-            var sortedDashboardItems = apiResult.OrderByDescending(d => d.remittance_Id).ToList();
-            return sortedDashboardItems;
+            else { 
+                return new List<DashboardBO>();
+            }
         }
 
 

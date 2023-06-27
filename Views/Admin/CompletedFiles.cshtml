@@ -26,8 +26,8 @@
                     <thead>
                         <tr>
                             @*<th><b>No.</b></th>*@
-                            <th><b>Month</b></th>
-                            <th><b>Year</b></th>
+                            <th><b>Employer</b></th>
+                            <th><b>Period</b></th>
                             <th><b>Reference</b></th>
                             <th><b>Received</b></th>
                             <th><b>Records</b></th>
@@ -43,8 +43,8 @@
                                 <tr>
                                     @*<td>@{i++;} @i</td>*@
                                     @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
-                                    <td>@item.return_Month_Name</td>
-                                    <td>@item.return_Year</td>
+                                <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>
+                                <td>@item.RETURN_PERIOD</td>
                                     <td>@item.remittance_Id</td>
 
                                     <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
