@@ -1,115 +1,58 @@
-﻿@model PaginatedList<MCPhase3.Models.GetRemittanceStatusByUserBO>
-@{
-    ViewData["Title"] = "Files History";
+﻿@{
+    ViewData["Title"] = "Home";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    int i = 0;
-    int j = 0;
 }
+
 <br />
 <br />
-<div class="border shadow-lg p-4 mb-4 bg-white">
-    <div class="container-fluid">
-        <div class="container-fluid bg-3 text-center">
-            <h1 class="">Monthly posting</h1>
-            <p class="">If you need to contact us phone 01274 434563 or 01274 435310</p>
-        </div>
-        <h4> Employer's uploaded files</h4>
+<div class="border shadow-lg p-4 mb-4" style="background-color: #a8e4a0">
+    <div class="container-fluid pt-5">
+        @if (TempData["MsgError"] != null)
+        {
+            <div class="container">
 
+                <div class="alert-danger">
+                    <div class="alert alert-danger">
 
-        <nav>
-            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <!--<a class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Pending Files</a>
-                     <a class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" href="/Admin/#nav-profile"-->
-                @*onclick="myFunction()"*@  <!--role="tab"  aria-controls="nav-profile" aria-selected="false">Completed Files</a>-->
-                <a href="/Admin/Index" class="nav-link active" id="nav-home-tab">Pending Files</a>
-                <a href="/Admin/CompletedFiles" class="nav-link" id="nav-home-tab">Completed Files</a>
+                        @TempData["MsgError"].ToString()
+                    </div>
+                </div>
+
             </div>
-        </nav>
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            @*<th><b>No.</b></th>*@
-                            <th><b>Month</b></th>
-                            <th><b>Year</b></th>
-                            <th><b>Reference</b></th>
-                            <th><b>Received</b></th>
-                            @*<th><b>File Name</b></th>*@
-                            <th><b>Status</b></th>
-                            <th><b>Latest Score</b></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            if (item.event_Type_ID <= 6)
-                            {
-                        <tr>
-                            @*<td>@{i++;} @i</td>*@
-                            @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
-                            <td>@item.contribution_Month</td>
-                            <td>@item.contribution_Year</td>
-                            <td>@item.remittance_ID</td>
-                            <td>@Convert.ToDateTime(item.event_DateTime).ToString("dd/MM/yyyy")</td>
+        }
+        <div class="row">
+            <div class="col-md-6 col-lg-6 col-xlg-6">
+                <a asp-action="Home" asp-controller="Admin">
+                    <div class="card card-hover" style="background-color: #e3fbe3">
 
-                            <td>@item.event_Notes</td>
-
-                            <td>
-                                        <a href="/SummaryNManualM/index?remittanceID=@item.remittance_ID" class="btn btn-cyan">Select</a>
-                                </td>
-                            <td>
-                                        <a href="/Admin/ScoreHist?id=@item.remittance_ID" class="btn btn-outline-info">Score History</a>
-                            </td>
-                        </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-
-                @{
-                    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
-                    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
-                }
-
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.TotalPages-(Model.TotalPages-1))"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @prevDisabled">
-                    <<
-                </a>
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.PageIndex - 1)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @prevDisabled">
-                    <
-                </a>
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.PageIndex + 1)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @nextDisabled">
-                    >
-                </a>
-                <a asp-action="Index"
-                   asp-route-pageNumber="@(Model.TotalPages)"
-                   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-                   class="btn btn-default @nextDisabled">
-                    >>
+                        @*<div class="box bg-cyan text-center">*@
+                        <div class="text-center pt-3">
+                            <h1 class="font-light text-black">
+                                @*<i class="mdi mdi-view-dashboard"></i>*@
+                                <img src="~/img/Artboard5.png" />
+                            </h1>
+                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Monthly Posting</h6>
+                        </div>
+                    </div>
                 </a>
             </div>
-          
+            <!-- Column -->
+            <div class="col-md-6 col-lg-6 col-xlg-6">
+                <a asp-action="Index" asp-controller="Home">
+                    <div class="card card-hover pt-3" style="background-color: #e3fbe3">
+                        @*<div class="box bg-success text-center">*@
+                        <div class="text-center">
+                            <h1 class="font-light text-black">
+                                @*<i class="mdi mdi-chart-areaspline"></i>*@
+                                <img src="~/img/Artboard7.png" />
+                            </h1>
+                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Contributions</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
 </div>
-
-@*<script>
-    function myFunction() {
-      
-            window.location.href = "/Admin?pageNumber=1/#nav-profile"
-    }
-    
-</script>*@
-<!--Bootstrap Js-->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
 
 

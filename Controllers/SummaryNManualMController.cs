@@ -115,7 +115,7 @@ namespace MCPhase3.Controllers
 
                 if (newModel1.Count < 1)
                 {
-                    return RedirectToAction("MasterDetailEmp", "Admin");
+                    return RedirectToAction("Home", "Admin");
                 }
 
                 foreach (var item in newModel1)

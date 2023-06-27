@@ -41,7 +41,7 @@ namespace MCPhase3.Controllers
             
             if (sessionResult)
             {
-                return RedirectToAction("Home", "Admin");
+                return RedirectToAction("Index", "Admin");
             }
 
             ClearTempData();
@@ -143,8 +143,6 @@ namespace MCPhase3.Controllers
             //check user login details
             if (loginResult == (int)LoginStatus.Valid)
             {
-                // var result1 = await signInManager.PasswordSignInAsync(loginDetails.userName, loginDetails.password, false, false);
-                //loginDetailsService = loginDetails.userName;//services.GetLoginDetails(loginDetails.userName);
                 HttpContext.Session.SetString(Constants.SessionKeyClientId, vm.ClientId);
                 HttpContext.Session.SetString(Constants.SessionKeyUserID, vm.UserName);
                 HttpContext.Session.SetString(Constants.UserIdKeyName, vm.UserName);
@@ -159,18 +157,15 @@ namespace MCPhase3.Controllers
                 if (fireSchemeId.Contains(vm.ClientId.Trim()))
                 {
                     TempData["MainHeading"] = "Fire - Contribution Advice";
-                    TempData["isFire"] = true;
-                    //isFileFire.isFire = true;
-                    HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
-                    return RedirectToAction("Home", "Admin");
+                    TempData["isFire"] = true;                    
                 }
                 else
                 {
                     TempData["isFire"] = false;
-                    //isFileFire.isFire = false;
-                    HttpContext.Session.SetString(SessionKeyClientType, "LG");
-                    return RedirectToAction("Home", "Admin");
                 }
+
+                HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
+                return RedirectToAction("Index", "Admin");
             }
             else {
                 TempData["Msg1"] = AccountGenericErrorMessage;

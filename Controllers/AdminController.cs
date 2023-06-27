@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using Spire.Xls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,14 +27,7 @@ namespace MCPhase3.Controllers
         {
             _configuration = configuration;        
         }
-        /// <summary>
-        /// Home page with all the icons
-        /// </summary>
-        /// <returns></returns>
-        public IActionResult Home()
-        {
-            return View();
-        }
+
 
 
         public IActionResult SubmitForProcessing()
@@ -55,7 +47,7 @@ namespace MCPhase3.Controllers
                 //I have disabled it for staff.
                 callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
          
-            return RedirectToAction("Home");
+            return RedirectToAction("Index");
         }
 
 
@@ -63,20 +55,12 @@ namespace MCPhase3.Controllers
         /// show list of all the remittance to employers
         /// </summary>
         /// <returns></returns>
-        public async Task<IActionResult> Index(int? pageNumber)
+        public IActionResult Index()
         {
-            List<GetRemittanceStatusByUserBO> dashboardBO = new List<GetRemittanceStatusByUserBO>();
-            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
-            //ViewBag.EmployerName = GetContextValue(Constants.SessionKeyEmployerName);
-            var userid = ContextGetValue(Constants.SessionKeyUserID);
-            dashboardBO = await getDashboardValuesForEmployers(userid, "pending");
-            var newBO = dashboardBO.AsQueryable<GetRemittanceStatusByUserBO>();
-            newBO = newBO.OrderByDescending(x=>x.event_DateTime);
-            int pageSize = 10;
-
-            return View(PaginatedList<GetRemittanceStatusByUserBO>.CreateAsync(newBO, pageNumber ?? 1, pageSize));
-
+            return View();
         }
+
+
         public async Task<IActionResult> CompletedFiles(int? pageNumber)
         {
             string payrolID = string.Empty;
@@ -259,8 +243,8 @@ namespace MCPhase3.Controllers
             return sortedDashboardItems;
         }
 
-        //TODO: following should be renamed to 'Dashboard'?
-        public async Task<IActionResult> MasterDetailEmp( )
+
+        public async Task<IActionResult> Home( )
         {
             try
             {
@@ -287,7 +271,7 @@ namespace MCPhase3.Controllers
             catch (Exception ex)
             {
                 TempData["MsgError"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
+                return RedirectToAction("Index", "Admin");
             }
         }
 
@@ -430,7 +414,7 @@ namespace MCPhase3.Controllers
             }
             TempData["submitReturnMsg"] = rBO.RETURN_STATUSTEXT;
 
-            return RedirectToAction("MasterDetailEmp", "Admin");
+            return RedirectToAction("Home", "Admin");
         }
         /// <summary>
         /// Delete a remittance including all processes and data at Employer level.
@@ -454,7 +438,7 @@ namespace MCPhase3.Controllers
                 }
             }
             TempData["msgDelete"] = result;
-            return RedirectToAction("MasterDetailEmp");
+            return RedirectToAction("Home");
         }
 
         [HttpPost]

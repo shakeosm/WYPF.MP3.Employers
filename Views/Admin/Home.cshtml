@@ -1,159 +1,146 @@
-﻿
+﻿@model MCPhase3.Models.DashboardViewModelNew;
 @{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Files History";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    string remid = string.Empty;
 }
+<br />
+<br />
 
-<br />
-<br />
-<div class="border shadow-lg p-4 mb-4" style="background-color: #a8e4a0">
-    <div class="container-fluid pt-5">
-        @if (TempData["MsgError"] != null)
+
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid">
+        @if (TempData["msgDelete"] != null)
         {
-        <div class="container">
-
-            <div class="alert-danger">
-                <div class="alert alert-danger">
-
-                    @TempData["MsgError"].ToString()
-                </div>
-            </div>          
-
-        </div>
+            <div class="alert alert-dismissible alert-success">
+                @TempData["msgDelete"].ToString()
+            </div>
         }
-        <div class="row">
-            <div class="col-md-6 col-lg-6 col-xlg-6">
-                <a asp-action="MasterDetailEmp" asp-controller="Admin">
-                    <div class="card card-hover" style="background-color: #e3fbe3">
+        <div class="container-fluid bg-3 text-center">
+            <h1 class="">Monthly posting</h1>
+            <p class="">If you need to contact us phone 01274 434563 or 01274 435310</p>
+        </div>
 
-                        @*<div class="box bg-cyan text-center">*@
-                        <div class="text-center pt-3">
-                            <h1 class="font-light text-black">
-                                @*<i class="mdi mdi-view-dashboard"></i>*@
-                                <img src="~/img/Artboard5.png" />
-                            </h1>
-                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Dashboard</h6>
-                        </div>
-                    </div>
-                </a>
+        <h4> Employer's uploaded files</h4>
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+
+                <a class="nav-link active" id="nav-home-tab">Pending Files</a>
+                <a href="/Admin/CompletedFiles" class="nav-link" id="nav-home-tab">Completed Files</a>
             </div>
-            <!-- Column -->
-            <div class="col-md-6 col-lg-6 col-xlg-6">
-                <a asp-action="Index" asp-controller="Home">
-                    <div class="card card-hover pt-3" style="background-color: #e3fbe3">
-                        @*<div class="box bg-success text-center">*@
-                        <div class="text-center">
-                            <h1 class="font-light text-black">
-                                @*<i class="mdi mdi-chart-areaspline"></i>*@
-                                <img src="~/img/Artboard7.png" />
-                            </h1>
-                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Contributions</h6>
-                        </div>
-                    </div>
-                </a>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active pt-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                @*<table id="PendingSubmissionTable" class="">*@
+                <table id="PendingSubmissionTable" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th><b>Employer</b></th>
+                            <th><b>Period</b></th>
+                            <th><b>Reference</b></th>
+                            <th><b>Received</b></th>
+                            <th><b>Payroll</b></th>
+                            <th><b>Status</b></th>
+                            <th class="text-center"><b>Latest Score %</b></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.dashboardBO)
+                        {
+                            @*<tr class="@selectRow">*@
+                            <tr data-remittance-id="@item.remittance_IdEnc"
+                                data-modal-title="Reference: @item.remittance_Id || Score: @item.return_Score_Emp">
+                                <td>
+                                    <span class="btn btn-sm btn-outline-primary ShowSubmissionDetailsButton"
+                                          data-bs-toggle="tooltip" data-bs-placement="top" title="Show submission details">+</span>
+                                </td>
+
+                                <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>
+                                <td>@item.RETURN_PERIOD</td>
+                                <td class="remittance-id">@item.remittance_Id</td>
+                                <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
+                                <td>@item.paylocation_Name</td>@*<td>@item.return_Records</td>*@
+                                <td>@item.return_Status_Text</td>
+                                <td class="latest-score text-center">@item.return_Score_Emp</td>
+
+                                @{
+                                    ReturnSubmitBO alertSumBO = new ReturnSubmitBO();
+                                    alertSumBO.p_REMITTANCE_ID = item.remittance_IdEnc; //Convert.ToInt32(item.remittance_Id);
+                                                                                        //alertSumBO.P_PAYLOC_FILE_ID = Convert.ToInt32(Model.BO.pay);
+                                    alertSumBO.P_USERID = item.userId;
+                                    alertSumBO.P_STATUSCODE = Convert.ToInt32(item.return_Status_Code);
+                                }
+                                @{
+                                    var myAction = string.IsNullOrEmpty(item.action_Button_Text) ? "" : @item.action_Button_Text;
+
+                                }
+
+                                @if (@item.return_Status_Code == "70" || @item.return_Status_Code == "65" || @item.return_Status_Code == "60")
+                                {
+                                    <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_Id class="btn btn-outline-secondary disabled">Select</a></td>
+                                    <td>
+                                        @*<a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@
+                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+
+                                }
+                                else
+                                {
+                                    string selectButtonDisabled = item.return_Score_Emp > 99 ? "disabled" : "";
+
+                                    <td>
+                                        <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary @selectButtonDisabled"
+                                           data-bs-toggle="tooltip" data-bs-placement="top" title="View error and warning summary"> Select</a>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-outline-info score-history-button"
+                                           data-bs-toggle="tooltip" data-bs-placement="top" title="Show Score History">Score History</a>
+                                    </td>
+                                    <td>
+                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-outline-danger delete-remittance-button" )>Delete</a>
+                                    </td>
+                                }
+                            </tr>
+                            //}
+                        }
+                    </tbody>
+                </table>
             </div>
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
-                <a asp-action="UpdatePassword" asp-controller="Admin">
-                    <div class="card card-hover" style="background-color: #e3fbe3">-->
-                        @*<div class="box bg-warning text-center">*@
-                        <!--<div class="text-center pt-3">
-                            <h1 class="font-light text-black">-->
-                                @*<i class="mdi mdi-collage"></i>*@
-                                <!--<img src="~/img/Artboard6.png" />
-                            </h1>
-                            <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Reports</h6>
-                        </div>
-                    </div>
-                </a>
-            </div>-->
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
-                <div class="card card-hover" style="background-color: #e3fbe3">-->
-                    @*<div class="box bg-danger text-center">*@
-                    <!--<div class="text-center pt-3">
-                        <h1 class="font-light text-black">-->
-                            @*<i class="mdi mdi-border-outside"></i>*@
-                            <!--<img src="~/img/Artboard8.png" />
-                        </h1>
-                        <h6 class="text-black" style="color: #ff7b00; font-weight: 900">Send Files</h6>
-                    </div>
-                </div>
-            </div>-->
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
-                <div class="card card-hover" style="background-color: #e3fbe3">-->
-                    @*<div class="box bg-info text-center">*@
-                    <!--<div class="text-center pt-3">
-                        <h1 class="font-light text-black">-->
-                            @*<i class="mdi mdi-arrow-all"></i>*@
-                            <!--<img src="~/img/Artboard9.png" />
-                        </h1>
-                        <h6 class="text-black" style="color: #ff7b00; font-weight:bold">Actions</h6>
-                    </div>
-                </div>
-            </div>-->
-            <!-- Column -->
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-4 col-xlg-4">
-                <div class="card card-hover" style="background-color: #e3fbe3">-->
-                    @*<div class="box bg-danger text-center">*@
-                    <!--<div class="text-center pt-3">
-                        <h1 class="font-light text-black">-->
-                            @*<i class="mdi mdi-receipt"></i>*@
-                            <!--<img src="~/img/Artboard11.png" />
-                        </h1>
-                        <h6 class="text-black" style="color: #ff7b00; font-weight:bold">Documentation</h6>
-                    </div>
-                </div>
-            </div>-->
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
-            <div class="card card-hover">
-                <div class="box bg-info text-center">
-                    <h1 class="font-light text-white">
-                        <i class="mdi mdi-relative-scale"></i>
-                    </h1>
-                    <h6 class="text-white">Upcoming actions</h6>
-                </div>
-            </div>
-        </div>-->
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
-            <div class="card card-hover">
-                <div class="box bg-cyan text-center">
-                    <h1 class="font-light text-white">
-                        <i class="mdi mdi-pencil"></i>
-                    </h1>
-                    <h6 class="text-white">Elements</h6>
-                </div>
-            </div>
-        </div>-->
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
-            <div class="card card-hover">
-                <div class="box bg-success text-center">
-                    <h1 class="font-light text-white">
-                        <i class="mdi mdi-calendar-check"></i>
-                    </h1>
-                    <h6 class="text-white">Calnedar</h6>
-                </div>
-            </div>
-        </div>-->
-            <!-- Column -->
-            <!--<div class="col-md-6 col-lg-2 col-xlg-3">
-            <div class="card card-hover">
-                <div class="box bg-warning text-center">
-                    <h1 class="font-light text-white">
-                        <i class="mdi mdi-alert"></i>
-                    </h1>
-                    <h6 class="text-white">Errors</h6>
-                </div>
-            </div>
-        </div>-->
-            <!-- Column -->
         </div>
     </div>
 </div>
 
+<div id="SubmissionDetailPopupModal" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="SubmissionDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="SubmissionDetailModalTitle">Details: </h5>
+                <button type="button" class="btn btn-outline-danger submission-detail-modal-close-button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="SubmissionDetailPlaceholderDiv">
+                    @*Here we will dump the submission details to show in this popup modal window...*@
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary submission-detail-modal-close-button" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+@section scripts {
+    <script type="text/javascript" src="~/js/dashboard.js"></script>
+}
