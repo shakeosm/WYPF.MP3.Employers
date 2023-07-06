@@ -38,21 +38,16 @@
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            //if (Convert.ToInt32(item.return_Status_Code) >= 105)
-                            //{
-                                <tr>
-                                    @*<td>@{i++;} @i</td>*@
-                                    @*<td>@Convert.ToDateTime(item.event_DateTime).ToString("MMMM yyyy")</td>*@
-                                <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>
-                                <td>@item.RETURN_PERIOD</td>
-                                    <td>@item.remittance_Id</td>
+                            <tr>
+                            <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>
+                            <td>@item.RETURN_PERIOD</td>
+                                <td>@item.remittance_Id</td>
 
-                                    <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
+                                <td>@item.return_Received_Date.ToString("dd/MM/yyyy")</td>
 
-                                    <td>@item.return_Records</td>
-                                    <td>@item.return_Status_Text</td>
-                                </tr>
-                           // }
+                                <td>@item.return_Records</td>
+                                <td>@item.return_Status_Text</td>
+                            </tr>
                         }
                     </tbody>
                 </table>

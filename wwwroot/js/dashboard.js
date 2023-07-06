@@ -17,6 +17,13 @@
 
                 $("#SubmissionDetailModalTitle").text(modalTitle);
                 $("#SubmissionDetailPlaceholderDiv").html(response);
+
+                if ($("#SubmissionDetailsTable tr").length > 11) {  //## Length means total (TH+TR). If more than 11 then enable the DataTable
+                    $("#SubmissionDetailsTable").DataTable({
+                        order: [[4, 'desc']],   //## order by 'Score-WYPF' column
+                    });
+                }
+
                 $("#SubmissionDetailPopupModal").modal("show");
                 hideOverlaySpinner();
             },
