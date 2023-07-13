@@ -651,8 +651,8 @@ namespace MCPhase3.Controllers
                     bO.folderId = item.folderId;
                     bO.personId = item.personId;
                     bO.folderRef = item.folderRef;
-                    string s1 = bO.isActive.Substring(0, 12);
-                    string s2 = bO.isActive.Remove(0, 12);
+                    string s1 = bO.isActive?.Substring(0, 12);
+                    string s2 = bO.isActive?.Remove(0, 12);
 
                     //string s2 = bO.;
                     if (s1 == "UpdateFolder" && s2 == bO.folderId)

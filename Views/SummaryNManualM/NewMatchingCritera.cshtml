@@ -275,30 +275,6 @@
                             }
                         </td>
                     </tr>
-                    <!--
-                    <tr>
-                        <td>
-                            <h3>
-                                Request amendment of person data by WYPF to create a full match.
-                            </h3>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <h4> Enter a message for WYPF here:</h4>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <B>
-                                <input class="form-control" asp-for="@Model.note" type="text" id="noteArea" width="50">
-                                <br />
-                                @*@Html.TextArea()*@
-                                <p>
-                            </B>By clicking Confirm you are authorising WYPF to amend the person record, and confirm that the details on the contributions return and message for WYPF are correct.</p>
-                        </td>
-                    </tr>
-                    -->
 
                 </tbody>
             </table>
@@ -318,81 +294,6 @@
     </form>
 </div>
 
-
-        @*<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>*@
-
-
-        <script>
-            var textArea = document.getElementById("noteArea").value;
-            //pass that text area value to all the notes values
-            document.getElementById("note").innerHTML = textArea;
-
-            //enable disable submit button on radio button click.
-            function validate() {
-                alert("1");
-                if ($("#activeProcess:checked").val() != "") {
-                    $("#NonBillableReason").attr("disabled", false);
-                    alert("2");
-                }
-
-                if ($("#activeProcess:checked").val() == "") {
-                    $("#NonBillableReason").attr("disabled", false);
-                    alert("3");
-                }
-            }
-            $(document).ready(function () {
-                validate();
-                $('input').change(validate);
-            });
-
-
-            function getValues() {
-
-                //var listOfValues = [];
-                //var item = {};
-                //item.surName = document.getElementById("surName").value;
-                //item.foreName = document.getElementById("foreName").value;
-                //item.nino = document.getElementById("nino").value;
-                //item.dob = document.getElementById("dob").value;
-                //item.postcode = document.getElementById("postcode").value;
-                //item.stdHours = document.getElementById("stdHours").value;
-                //item.jobTitle = document.getElementById("jobTitle").value;
-                //item.dataRowId = document.getElementById("dataRowId").value;
-                //item.personId = document.getElementById("personId").value;
-                //item.personMatch = document.getElementById("personMatch").value;
-                //item.personMatchType = document.getElementById("personMatchType").value;
-                //item.folderId = document.getElementById("folderId").value;
-                //item.folderMatch = document.getElementById("folderMatch").value;
-                //item.note = document.getElementById("noteArea").value;
-                //item.userId = document.getElementById("userId").value;
-                //item.isActive = "true";
-
-                //listOfValues.push(item);
-                //alert("array has " + listOfValues.length);
-            }
-
-          
-
-            function myFunction() {
-                var x = document.getElementById("popUp");
-                if (x.style.display === "none") {
-                    x.style.display = "block";
-                } else {
-                    x.style.display = "none";
-                }
-            }
-
-            $(document).ready(function () {
-                $(document).on('change', 'input:radio[id^="LooseMatch"]', function (event) {
-                    alert("click fired");
-                });
-            });
-            function clickFunction() {
-                var x = document.getElementById("btnSubmit");
-                if (x.style.display === "none") {
-                    x.style.display = "block";
-                }
-            }
-        </script>
-
-
+@section scripts {
+    <script src="~/js/new-matching-criteria.js"></script>
+}
