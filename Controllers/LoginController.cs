@@ -157,15 +157,18 @@ namespace MCPhase3.Controllers
                 if (fireSchemeId.Contains(vm.ClientId.Trim()))
                 {
                     TempData["MainHeading"] = "Fire - Contribution Advice";
-                    TempData["isFire"] = true;                    
+                    TempData["isFire"] = true;
+                    //isFileFire.isFire = true;
+                    HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
+                    return RedirectToAction("Home", "Admin");
                 }
                 else
                 {
                     TempData["isFire"] = false;
+                    //isFileFire.isFire = false;
+                    HttpContext.Session.SetString(SessionKeyClientType, "LG");
+                    return RedirectToAction("Home", "Admin");
                 }
-
-                HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
-                return RedirectToAction("Index", "Admin");
             }
             else {
                 TempData["Msg1"] = AccountGenericErrorMessage;

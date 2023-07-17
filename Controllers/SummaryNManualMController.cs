@@ -355,12 +355,6 @@ namespace MCPhase3.Controllers
         //[HttpGet]      
         public async Task<IActionResult> UpdateSingleRecord(string id)
         {
-            //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-            {
-                RedirectToAction("Index", "Login");
-            }
-
             try
             {
                 List<ErrorAndWarningViewModelWithRecords> recordsList = new List<ErrorAndWarningViewModelWithRecords>();
@@ -750,10 +744,15 @@ namespace MCPhase3.Controllers
         {
             return View();
         }
+
+
+        /// <summary>This will be used by an Ajax call from the View page</summary>
+        /// <param name="Id">Record Id</param>
+        /// <returns></returns>
+        [HttpPost]
         public async Task<IActionResult> ResetRecord(string Id)
         {
-            string result = string.Empty;
-            string apiBaseUrlForRecordReset = _Configure.GetValue<string>("WebapiBaseUrlForRecordReset");
+            
             RecordResetBO bo = new RecordResetBO();
             try
             {
@@ -766,37 +765,28 @@ namespace MCPhase3.Controllers
 
                 using (HttpClient client = new HttpClient())
                 {
-                    StringContent content = new StringContent(JsonConvert.SerializeObject(bo), Encoding.UTF8, "application/json");
-                    string endpoint = apiBaseUrlForRecordReset;
+                    var content = new StringContent(JsonConvert.SerializeObject(bo), Encoding.UTF8, "application/json");
+                    
+                    string apiBaseUrlForRecordReset = _Configure.GetValue<string>("WebapiBaseUrlForRecordReset");
 
-                    using (var Response = await client.PostAsync(endpoint, content))
+                    using (var Response = await client.PostAsync(apiBaseUrlForRecordReset, content))
                     {
                         if (Response.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                            _logger.LogInformation("BulkApproval API Call successfull");
+                            _logger.LogInformation("RecordReset API Call successfull");
                             //call following api to get this uploaded remittance id of file.
-                            result = await Response.Content.ReadAsStringAsync();
+                            string result = await Response.Content.ReadAsStringAsync();
                             result = JsonConvert.DeserializeObject<string>(result);
                             //errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningToShowListViewModel>(result);
                         }
                     }
                 }
-                TempData["msg"] = result;
-
-                //remove the browser response issue of pen testing
-                if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-                {
-                    remID = -1;
-                    RedirectToAction("Index", "Login");
-                }
-                //return RedirectToAction("Index", remID);
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remID);
+                return Json("success");
             }
             catch (Exception ex)
             {
-                TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
+                return Json("Details: " + ex.ToString());
             }
         }
 

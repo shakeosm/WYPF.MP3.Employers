@@ -496,7 +496,7 @@ namespace MCPhase3.Controllers
                 }
                 catch (Exception ex)
                 {
-                    TempData["MsgM"] = "File is not uploaded, please check error in qoutes : '" + " < b > " + ex.Message + " </ b > '";
+                    TempData["MsgM"] = $"File is not uploaded, please check error in qoutes : <b>{ex.Message}</b>";
                     return RedirectToAction("IndexFire", "Home", null, "uploadFile");
                 }
 

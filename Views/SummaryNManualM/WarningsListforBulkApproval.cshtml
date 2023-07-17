@@ -2,12 +2,10 @@
 @{
     ViewData["Title"] = "Bulk data approval";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    int I = 0;
+
     var nextParms = new Dictionary<string, string>();
-    int x = 0;
 
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
-
 
 }
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -70,109 +68,61 @@
                                 <th>Date Start</th>
                                 <th>Job Title</th>
                                 <th>Alert Desc</th>
-                                <th class="text-center">Error Count</th>
-                                <th class="text-center">View Full Details</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in Model)
-                            {
+                            {                                
                                 int i = 0;
-                                <tr>
-                                    <td>
-                                        @Html.DisplayFor(modelItem => item.FORENAMES)
-                                    </td>
-                                    <td>
-                                        @Html.DisplayFor(modelItem => item.SURNAME)
-                                    </td>
-                                    <td>
-                                        @Html.DisplayFor(modelItem => item.DOB)
-                                    </td>
-                                    <td>
-                                        @Html.DisplayFor(modelItem => item.NINUMBER)
-                                    </td>
+                                bool isCleared = (item.ALERT_COUNT.Equals("0.0") || item.CLEARED_FG.Equals("Y"));
+                                var rowStyle = isCleared ? "table-success" : "";
 
-                                    <td>
-                                        @Html.DisplayFor(modelItem => item.DATEJOINEDSCHEME)
-                                    </td>
-                                    <td>
-                                        @Html.DisplayFor(modelItem => item.JOBTITLE)
-                                    </td>
-                                    <td>
-                                        @Html.DisplayFor(modelItem => item.ALERT_DESC)
-                                    </td>
-
-                                    @{
-                                        var newCount = item.ALERT_COUNT.Replace(".0", "");
-
-                                        if (item.ALERT_COUNT.Equals("0.0") || item.CLEARED_FG.Equals("Y"))
+                                <tr class="@rowStyle">                             
+                                    <td>@item.FORENAMES</td>
+                                    <td>@item.SURNAME</td>
+                                    <td>@item.DOB</td>
+                                    <td>@item.NINUMBER</td>
+                                    <td>@item.DATEJOINEDSCHEME</td>
+                                    <td>@item.JOBTITLE</td>
+                                    <td>@item.ALERT_DESC</td>
+                                    <td class="error-status-td">
+                                        @{
+                                            var actionName = item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE") ? "NewMatchingCritera" : "UpdateSingleRecord";
+                                        }
+                                        @if (isCleared)
                                         {
-                                            i++;
+                                            @*<span class="text-success">Cleared</span>*@
 
-
-                                            <td class="text-center">
-                                                <label style="color:red;">Cleared</label>
-                                            </td>
-                                            if (!string.IsNullOrEmpty(item.ALERT_CLEARING_METHOD))
+                                            @if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
                                             {
-                                                if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
-                                                {
-                                                    <td class="text-center">
-                                                        <a href="/SummaryNManualM/ResetRecord?Id=@item.EncryptedRowRecordID" style="color:blue;font:bold;"><i class="fa fa-marker fa-lg"></i> Reset</a>
-                                                    </td>
-                                                }
+                                                <a class="reset-record-button btn btn-sm btn-outline-danger" data-id="@item.EncryptedRowRecordID"
+                                                   data-bs-toggle="tooltip" data-bs-title="Click to reset the fixes done recently" data-bs-placement="top">
+                                                    <i class="fas fa-redo-alt"></i> Reset
+                                                </a>
+                                                @* a copy of the 'view' button- if the user resets the fixes- allow to see the 'Errors' page *@
+                                                <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="d-none view-button btn btn-outline-primary">View</a>
                                             }
-
+                                        }
+                                        else if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
+                                        {
+                                                    <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="btn btn-outline-primary">View</a>
                                         }
                                         else
                                         {
-                                            @*<td>@newCount</td>*@
-                                            <td class="text-center">1</td>
-
+                                            <a href="" class="btn btn-outline-secondary disabled" disabled><i class="fas fa-marker fa-lg"></i> View</a>
                                         }
-                                    }
+
+                                    </td>
+                                    
 
 
 
                                     @{
                                         <input type="hidden" asp-for="@item.MC_ALERT_ID" id="alertID" />
                                         <input type="hidden" asp-for="@item.DATAROWID_RECD" />
-                                        //<input asp-for="@item.selected" type="hidden" value="false"/>
-
-
-
                                     }
 
-
-                                    <td class="text-center">
-                                        <!--if Alert clearing method is null then it will take to existing update form otherwise control will go to new loose match/folder or person match.-->
-                                        @{
-                                            if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
-                                            {
-                                                if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
-                                                {
-                                                    <a href="/SummaryNManualM/NewMatchingCritera?id=@item.EncryptedRowRecordID" class="btn btn-outline-primary"><i class="fa fa-marker fa-lg"></i> view</a>
-                                                }
-                                                if (item.ALERT_CLEARING_METHOD.Equals("EDIT_CONTS_PAGE"))
-                                                {
-                                                    <a href="/SummaryNManualM/UpdateSingleRecord?id=@item.EncryptedRowRecordID" class="btn btn-outline-primary"><i class="fa fa-marker fa-lg"></i> view</a>
-                                                }
-
-                                            }                                            
-                                        }
-
-                                        @{
-                                            if (!string.IsNullOrEmpty(item.BULK_APPROVAL_FG))
-                                            {                                               
-
-                                                if (item.CLEARED_FG.Equals("Y") == false)
-                                                {
-                                                    nextParms.Add("id" + x, item.EncryptedAlertid);
-                                                    x++;
-                                                }
-                                            }
-                                        }
-                                    </td>                                    
                                 </tr>
 
                             }
@@ -182,7 +132,7 @@
 
                     <div class="row">
                         <div class="col-6">
-                            @if (showAcknowledgeAllButton)  //I == 1)
+                            @if (showAcknowledgeAllButton)
                             {
                                 <a asp-action="WarningApproval" id="acknowledgeButton" asp-all-route-data="nextParms" class="btn btn-primary btn-lg"> Acknowledge All</a>
                             }
@@ -201,9 +151,9 @@
 </div>
 
 
+@section scripts{
 
-<script src="~/js/warning-list-bulk-approval.js"></script>
+    <script src="~/js/warning-list-bulk-approval.js"></script>
 
-
-
+}
 
