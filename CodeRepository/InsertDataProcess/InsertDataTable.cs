@@ -30,7 +30,7 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             }
             else
             {
-
+                //## These are extra columns will be added to the Excel sheet preparing for Database- which already has many other columns.
                 int total = dtInsert.Rows.Count;
                 dtInsert.Columns.Add("REMITTANCE_ID");
                 dtInsert.Columns.Add("DATAROWID_RECD", typeof(int));

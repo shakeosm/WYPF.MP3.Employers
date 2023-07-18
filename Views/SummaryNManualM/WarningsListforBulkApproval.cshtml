@@ -81,9 +81,9 @@
                                 <tr class="@rowStyle">                             
                                     <td>@item.FORENAMES</td>
                                     <td>@item.SURNAME</td>
-                                    <td>@item.DOB</td>
+                                    <td>@item.DOB?.ToShortDateString()</td>
                                     <td>@item.NINUMBER</td>
-                                    <td>@item.DATEJOINEDSCHEME</td>
+                                    <td>@item.DATEJOINEDSCHEME?.ToShortDateString()</td>
                                     <td>@item.JOBTITLE</td>
                                     <td>@item.ALERT_DESC</td>
                                     <td class="error-status-td">

@@ -150,8 +150,7 @@ namespace MCPhase3.Models
         /// <returns></returns>
         public async Task<List<ErrorAndWarningViewModelWithRecords>> CallAPISummary(AlertSumBO alertSumBO, string url)
         {
-            List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
-            ErrorAndWarningViewModelWithRecords records = new ErrorAndWarningViewModelWithRecords();
+            var model = new List<ErrorAndWarningViewModelWithRecords>();
 
             using (var client = new HttpClient())
             {
@@ -306,31 +305,7 @@ namespace MCPhase3.Models
             return result;
         }
 
-        /// <summary>
-        /// this api will get max Datarow that we need for bulkinsert 
-        /// bulk data insert 
-        /// </summary>
-        /// <param name="remId"></param>
-        /// <returns></returns>
-        //public async Task<int> counterAPI(string url)
-        //{
-        //    using (var client = new HttpClient())
-        //    {
-        //        int messageResult = 0;               
-        //        using (var httpClient = new HttpClient())
-        //        {
-        //            using (var response = await httpClient.GetAsync(url))
-        //            {
-        //                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-        //                {
-        //                    string result = await response.Content.ReadAsStringAsync();
-        //                    messageResult = JsonConvert.DeserializeObject<int>(result);
-        //                }
-        //            }
-        //        }                
-        //        return messageResult;
-        //    }
-        //}
+
         public async Task<int> counterAPI(string url, RangeOfRowsModel rangeOfRowsModel)
         {
             int messageResult = 0;

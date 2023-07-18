@@ -70,7 +70,7 @@ namespace MCPhase3.Controllers
                 
                 }
                 //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
-                return await ProceedToLogIn(loginDetails, loginResult);
+                return await ProceedToLogIn(loginDetails);
 
             }
             else if (loginResult == (int)LoginStatus.Locked)
@@ -101,8 +101,7 @@ namespace MCPhase3.Controllers
             //## Now the user has decided to stay/continue this current login.. and kills the other session...
             var currentBrowserSessionId = Guid.NewGuid().ToString();
             var sessionInfo = GetUserSessionInfo(vm);
-            
-            
+                        
             _cache.Delete(SessionInfoKeyName());
 
             //## Create a new one
@@ -115,11 +114,11 @@ namespace MCPhase3.Controllers
             ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session
             
             //## The user was authenticated first, then shown a screen - either to continue on this browser or close this browser.            
-            return await ProceedToLogIn(vm, loginResult: (int)LoginStatus.Valid);
+            return await ProceedToLogIn(vm);
         }
 
 
-        private async Task<IActionResult> ProceedToLogIn(DummyLoginViewModel vm, int loginResult)
+        private async Task<IActionResult> ProceedToLogIn(DummyLoginViewModel vm)
         {           
             var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId")
                                                .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -140,42 +139,34 @@ namespace MCPhase3.Controllers
             vm.ClientId = payrollBO.client_Id;
 
 
-            //check user login details
-            if (loginResult == (int)LoginStatus.Valid)
+            //check user login details            
+            HttpContext.Session.SetString(Constants.SessionKeyClientId, vm.ClientId);
+            HttpContext.Session.SetString(Constants.SessionKeyUserID, vm.UserName);
+            HttpContext.Session.SetString(Constants.UserIdKeyName, vm.UserName);
+            HttpContext.Session.SetString(Constants.SessionKeyPayLocName, payrollBO.pay_location_name);
+            HttpContext.Session.SetString(Constants.SessionKeyPayLocId, payrollBO.pay_location_ID.ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyEmployerName, payrollBO.pay_location_name);
+            //following is a payrollprovider
+            HttpContext.Session.SetString(Constants.SessionKeyPayrollProvider, payrollBO.paylocation_ref);
+
+            TempData["ps"] = vm.UserName;
+
+            if (fireSchemeId.Contains(vm.ClientId.Trim()))
             {
-                HttpContext.Session.SetString(Constants.SessionKeyClientId, vm.ClientId);
-                HttpContext.Session.SetString(Constants.SessionKeyUserID, vm.UserName);
-                HttpContext.Session.SetString(Constants.UserIdKeyName, vm.UserName);
-                HttpContext.Session.SetString(Constants.SessionKeyPayLocName, payrollBO.pay_location_name);
-                HttpContext.Session.SetString(Constants.SessionKeyPayLocId, payrollBO.pay_location_ID.ToString());
-                HttpContext.Session.SetString(Constants.SessionKeyEmployerName, payrollBO.pay_location_name);
-                //following is a payrollprovider
-                HttpContext.Session.SetString(Constants.SessionKeyPayrollProvider, payrollBO.paylocation_ref);
-
-                TempData["ps"] = vm.UserName;
-
-                if (fireSchemeId.Contains(vm.ClientId.Trim()))
-                {
-                    TempData["MainHeading"] = "Fire - Contribution Advice";
-                    TempData["isFire"] = true;
-                    //isFileFire.isFire = true;
-                    HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
-                    return RedirectToAction("Home", "Admin");
-                }
-                else
-                {
-                    TempData["isFire"] = false;
-                    //isFileFire.isFire = false;
-                    HttpContext.Session.SetString(SessionKeyClientType, "LG");
-                    return RedirectToAction("Home", "Admin");
-                }
+                TempData["MainHeading"] = "Fire - Contribution Advice";
+                TempData["isFire"] = true;
+                //isFileFire.isFire = true;
+                HttpContext.Session.SetString(SessionKeyClientType, "FIRE");                    
             }
-            else {
-                TempData["Msg1"] = AccountGenericErrorMessage;
-                loginDetails.LoginErrorMessage = AccountGenericErrorMessage;
-                return View("Index", loginDetails);  //## should never come here.. just to make the C# happy...            
+            else
+            {
+                TempData["isFire"] = false;
+                //isFileFire.isFire = false;
+                HttpContext.Session.SetString(SessionKeyClientType, "LG");
             }
-
+                
+            return RedirectToAction("Home", "Admin");
+            
         }
 
 

@@ -797,13 +797,14 @@ namespace MCPhase3.Controllers
                 rangeOfRowsModel.P_NUMBER_OF_VALUES_REQUIRED = totalRecordsInF;
 
                 
-                //Get the max Datarow id from MC_CONTRIBUTIONS_RECD to insert bulk data.
-                int row = 0;
                 string insertDataCounter = ConfigGetValue("WebapiBaseUrlForInsertDataCounter");
-                row = await callApi.counterAPI(insertDataCounter, rangeOfRowsModel);//row = await callApi.counterAPI(insertDataCounter);
+
+                //Get the max Datarow id from MC_CONTRIBUTIONS_RECD to insert bulk data.
+                //## we need to get the first DataRow_RecordId from the Database.. and then create new Primary Key as we insert new records.
+                int dataRowRecordId = await callApi.counterAPI(insertDataCounter, rangeOfRowsModel);
                 
                 //following datatable will change column names of datatable to DB column names and insert data from excelDT.
-                DataTable newDT = dataTableToDB.KeepDataTable(row + 1, userName, schemeName, clientID, id.ToString()) ;
+                DataTable newDT = dataTableToDB.KeepDataTable(dataRowRecordId + 1, userName, schemeName, clientID, id.ToString()) ;
                 
                 //Insert all the records to the database using api
                 string insertDataConn = ConfigGetValue("WebapiBaseUrlForInsertData");

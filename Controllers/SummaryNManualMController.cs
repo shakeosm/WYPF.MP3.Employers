@@ -2,6 +2,7 @@
 using MCPhase3.CodeRepository.RefectorUpdateRecord;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using MCPhase3.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -27,7 +28,7 @@ namespace MCPhase3.Controllers
         private readonly ILogger<SummaryNManualMController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-        
+        private readonly IApiService _apiCallService;
         ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
         List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
 
@@ -37,9 +38,10 @@ namespace MCPhase3.Controllers
         EventsTableUpdates eventUpdate;
 
 
-        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider) : base(configuration, cache, Provider)
+        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService) : base(configuration, cache, Provider)
         {
             _Configure = configuration;
+            _apiCallService = ApiService;
             //this._cache = cache;
             _host = host;
             _logger = logger;
@@ -76,6 +78,7 @@ namespace MCPhase3.Controllers
                 if (alertSumBO.L_PAYLOC_FILE_ID != null)
                 {
                     HttpContext.Session.SetString(Constants.SessionKeyPaylocFileID, alertSumBO.L_PAYLOC_FILE_ID.ToString());
+                    ViewData["paylocID"] = alertSumBO.L_PAYLOC_FILE_ID;
                 }
 
                 if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
@@ -85,10 +88,8 @@ namespace MCPhase3.Controllers
 
                 alertSumBO.L_USERID = CurrentUserId();
 
-                ViewData["paylocID"] = alertSumBO.L_PAYLOC_FILE_ID;
-
                 //List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
-                List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
+                var model = new List<ErrorAndWarningViewModelWithRecords>();
 
                 string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
 
@@ -105,7 +106,7 @@ namespace MCPhase3.Controllers
                 //add remittance id into session for future use.
 
 
-                Dictionary<string, string> keyValuePairs = new Dictionary<string, string>();
+                var keyValuePairs = new Dictionary<string, string>();
                 //work on remittance level if null else Paylocation level
                 apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarnings");
 
@@ -494,11 +495,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> NewMatchingCritera(string id)
         {
-            List<ErrorAndWarningViewModelWithRecords> recordsList = new List<ErrorAndWarningViewModelWithRecords>();
-            ErrorAndWarningViewModelWithRecords records = new ErrorAndWarningViewModelWithRecords();
-
             GetMatchesBO getMatchesBO = new GetMatchesBO();
-            //List<GetMatchesBO> listOfMatches = new List<GetMatchesBO>();
             GetMatchesViewModel listOfMatches = new GetMatchesViewModel();
             HelpTextBO helpTextBO = new HelpTextBO();
 
@@ -561,24 +558,12 @@ namespace MCPhase3.Controllers
                     item.dataRowId = dataRowID;
                 }
 
-                //ViewBag.listOfFolders = listOfMatches.Matches.FirstOrDefault(a => a.folderId == Model.Matches[j].folderId);
-
-                //remove the browser response issue of pen testing
-                //if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-                //{
-                //    listOfMatches.Matches.Clear();// = null;
-                //    listOfMatches.activeProcess = null;
-                //    listOfMatches.note = null;
-                //    RedirectToAction("Index", "Login");
-                //}
-
                 return View(listOfMatches);
-                //return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
                 TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
+                return View(Constants.Error403_Page);
             }
         }
         /// <summary>
@@ -704,8 +689,18 @@ namespace MCPhase3.Controllers
                     }
                 }
 
+                //## So far all good- now we can update the Score and avoid clicking 'CheckReturn' button
+                //https://localhost:57132/Admin/SubmitReturn?P_PAYLOC_FILE_ID=0&P_STATUSCODE=80&p_REMITTANCE_ID=123
+                var remitInfo = new ReturnSubmitBO()
+                {
+                    p_REMITTANCE_ID = remittanceID,
+                    P_USERID = ContextGetValue(Constants.SessionKeyUserID)
+                    //rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
+                };
+                //TODO: we need to add the current Status value (ie: 80, 90) to update and get new status code
+                //var apiResult = await _apiCallService.UpdateScore(remitInfo);
+
                 return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remID);
-                // return RedirectToAction("Index", remID);
             }
             catch (Exception ex)
             {
@@ -811,10 +806,6 @@ namespace MCPhase3.Controllers
         private string RemoveQuotesAndDots(string val)
         {
             var newVal = Regex.Replace(val, @"[^0-9a-zA-Z\.\'\s_]", "");
-            //remove all decimals
-            //int input = newVal.IndexOf(".");
-            //if(input > 0)
-            //    newVal = newVal.Substring(0, input);
             return newVal;
         }
     }

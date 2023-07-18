@@ -1,6 +1,7 @@
 ﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using MCPhase3.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,11 +22,13 @@ namespace MCPhase3.Controllers
     public class AdminController : BaseController
     {
         private readonly IConfiguration _configuration;
+        private readonly IApiService _apiService;
         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         
-        public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider) : base(configuration, cache, Provider)
+        public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService) : base(configuration, cache, Provider)
         {
-            _configuration = configuration;        
+            _configuration = configuration;
+            _apiService = ApiService;
         }
 
 
@@ -385,10 +388,6 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> SubmitReturn(ReturnSubmitBO rBO)
         {
-            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
-            EventDetailsBO eBO = new EventDetailsBO();
-            int remID = 0;
-
             if (rBO.p_REMITTANCE_ID == null)
             {
                 // remID = Convert.ToInt32(GetContextValue(SessionKeyRemittanceID));
@@ -398,25 +397,17 @@ namespace MCPhase3.Controllers
             //rBO.P_PAYLOC_FILE_ID = paylocID;
             rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
             //rBO.p_REMITTANCE_ID = remID;
-            TempData["msg1"] = "File uploaded to WYPF database successfully.";
 
-            string WebapiBaseUrlForSubmitReturn = ConfigGetValue("WebapiBaseUrlForSubmitReturn");
-
-            using (var httpClient = new HttpClient())
+            //## call the 'WebapiBaseUrlForSubmitReturn' API
+            var apiResult = await _apiService.UpdateScore(rBO);
+            if (apiResult.IsSuccess)
             {
-                StringContent content = new StringContent(JsonConvert.SerializeObject(rBO), Encoding.UTF8, "application/json");
-                // string endPoint = apiLink;
-
-                using (var response = await httpClient.PostAsync(WebapiBaseUrlForSubmitReturn, content))
-                {
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        string result = await response.Content.ReadAsStringAsync();
-                        rBO = JsonConvert.DeserializeObject<ReturnSubmitBO>(result);
-                    }
-                }
+                TempData["msg1"] = "File uploaded to WYPF database successfully.";
+                TempData["submitReturnMsg"] = apiResult.Message;
             }
-            TempData["submitReturnMsg"] = rBO.RETURN_STATUSTEXT;
+            else {
+                TempData["msg1"] = "Failed to update WYPF database.";
+            }
 
             return RedirectToAction("Home", "Admin");
         }
