@@ -1,5 +1,4 @@
-﻿//using HtmlAgilityPack;
-using MCPhase3.CodeRepository;
+﻿using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.InsertDataProcess;
 using MCPhase3.Common;
 using MCPhase3.Models;
@@ -346,12 +345,12 @@ namespace MCPhase3.Controllers
                     //save datatable for future use
                     dataTableToDB.PassDt(0, "", "", "", "", excelDt, designDocPath);
                     TempData["MsgM"] = "File is uploaded successfully";
-                      
-                    return RedirectToAction("Index", "Home", null, "uploadFile");
+
+                    return RedirectToAction("Remad", "Home");
                 }
                 catch (Exception ex)
                 {
-                    TempData["MsgM"] = "File is not uploaded, please check error in qoutes : '" + " < b > "+ ex.Message + " </ b > '";
+                    TempData["MsgM"] = $"File upload failed! Please check error in qoutes : <b> {ex.Message}</b >'";
                     return RedirectToAction("Index", "Home", null, "uploadFile");
                 }
                 finally
@@ -372,7 +371,7 @@ namespace MCPhase3.Controllers
                 result.Message += "No file selected.";
                 return result;
             }
-            int fileSizeLimit = 5100000;
+            _ = int.TryParse(_Configure["FileSizeLimit"], out int fileSizeLimit);
 
             if (file.Length > fileSizeLimit)
             {
@@ -618,6 +617,8 @@ namespace MCPhase3.Controllers
             }
             return View(contributionBO);
         }
+
+
         /// <summary>
         /// following action will replace Remad.aspx page from old web portal.
         /// Remad is for LG
@@ -640,6 +641,8 @@ namespace MCPhase3.Controllers
             }
             return View(contributionBO);
         }
+
+
        // [HttpPost]
         //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Remad(MonthlyContributionBO contributionBO)
@@ -707,8 +710,6 @@ namespace MCPhase3.Controllers
 
                                     remittanceID = EncryptUrlValue(remittanceID);
 
-                            //return RedirectToAction("RemittanceInsertDB", "Home", new { id = remittanceID });
-                            //return RedirectToAction("MoveFileForFTP", "Home", new { id = remittanceID });
                             return Redirect($"/Home/MoveFileForFTP?id={remittanceID}");
 
                         }
@@ -1057,14 +1058,9 @@ namespace MCPhase3.Controllers
                new NameOfMonths{ text = "File has previous month data", value = "3" }
 
             }.ToList();
-            //if (!string.IsNullOrEmpty(valueItem))
-            //{
-            //    return postings.OrderByDescending(x => x.value == valueItem).ThenBy(x => x.value).ToList();
-            //}
-            //else
-            //{
+            
             return postings;
-            //}
+            
 
         }
         /// <summary>
@@ -1075,27 +1071,13 @@ namespace MCPhase3.Controllers
         {
             
            
-            var validYears = ConfigGetValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            // string validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).ToString();
-
-            var yearList = new List<YearsBO>();
-
-            //YearsBO[] bO = new YearsBO[validYears.Length];
-            foreach (var item in validYears)
+            var validYears = ConfigGetValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);            
+            var yearList = validYears.Select(a => new YearsBO()
             {
-                yearList.Add(new YearsBO
-                {
-                    years = item
-                });
-            }
-            //if (!string.IsNullOrEmpty(valueItem))
-            //{
-            //    return yearList.OrderByDescending(x => x.years == valueItem).ThenBy(x => x.years).ToList();
-            //}
-            //else
-            //{
-            return yearList;
-            //}
+                years = a
+            }).ToList();
+                                    
+            return yearList;            
 
         }
         
@@ -1190,7 +1172,6 @@ namespace MCPhase3.Controllers
                     {
                         if (item.ToLower().Contains(tag))
                         {
-                            //Console.WriteLine("Item: " + item.ToString());
                             result.Message = "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>";                            
                         }
                     }
