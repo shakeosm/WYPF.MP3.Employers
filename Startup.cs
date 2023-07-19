@@ -1,5 +1,6 @@
 using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.ActionFilters;
+using MCPhase3.Common;
 using MCPhase3.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -52,7 +53,9 @@ namespace MCPhase3
                 options.MultipartHeadersCountLimit = int.MaxValue;
                 options.MultipartHeadersLengthLimit = int.MaxValue;
             });
-            
+
+            services.Configure<ApiEndpoints>(Configuration.GetSection("ApiEndpoints"));
+
             services.AddScoped<IApiService, ApiService>();
 
             // Add Redis services to the container.

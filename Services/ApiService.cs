@@ -21,7 +21,7 @@ namespace MCPhase3.Services
         /// <returns>ApiCallResult View Model</returns>
         public async Task<ApiCallResultVM> UpdateScore(ReturnSubmitBO rBO)
         {
-            string WebapiBaseUrlForSubmitReturn = _configuration["WebapiBaseUrlForSubmitReturn"];
+            string WebapiBaseUrlForSubmitReturn = _configuration["ApiEndpoints:WebApiBaseUrl"] + _configuration["ApiEndpoints:SubmitReturn"];
             var apiResult = new ApiCallResultVM() { IsSuccess = false };
 
             using (var httpClient = new HttpClient())

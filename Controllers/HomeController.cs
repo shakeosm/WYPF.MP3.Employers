@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,6 @@ namespace MCPhase3.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;        
-        private readonly IWebHostEnvironment _Environment;
         private readonly string _customerUploadsLocalFolder;
         string apiBaseUrlForRemittanceInsert = string.Empty;
         string apiBaseUrlForAutoMatch = string.Empty;
@@ -43,12 +43,11 @@ namespace MCPhase3.Controllers
         MyModel modelDT = new MyModel();        
         CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();               
 
-        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IWebHostEnvironment environment, IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider) : base(configuration, Cache, Provider)
+        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, Cache, Provider, ApiEndpoints)
         {
             _logger = logger;
             _host = host;
             _Configure = configuration;
-            _Environment = environment;
             _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
 
         }
@@ -209,8 +208,8 @@ namespace MCPhase3.Controllers
             string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);
 
             //update Event Details table File is uploaded successfully.
-            string apiBaseUrlForCheckFileAvailable = ConfigGetValue("WebapiBaseUrlForCheckFileAvailable");
-            
+            string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileAvailable);
+
             //check if records were uploaded previously for the selected month and year.
             int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
 
@@ -339,7 +338,7 @@ namespace MCPhase3.Controllers
                     
                 //string designDocPath = GetConfigValue("DesginXMLFilePath");
                 //read design XML from wwwroot folder
-                string designDocPath = string.Concat(this._Environment.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
+                string designDocPath = string.Concat(this._host.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
                 try
                 {
                     //save datatable for future use
@@ -424,7 +423,7 @@ namespace MCPhase3.Controllers
             string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             //Check all invalid signs from file and show error to employer
             string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            string apiBaseUrlForCheckFileAvailable = ConfigGetValue("WebapiBaseUrlForCheckFileAvailable");
+            string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileAvailable);
             //check if file is uploaded for the selected month and year.
             int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
             string fileExt = string.Empty;
@@ -552,7 +551,7 @@ namespace MCPhase3.Controllers
                     //DataTable dtable = dataTableToDB.KeepDataTable(excelDt);
                     //dtable.Clear();
                     //read design XML from wwwroot folder
-                    string designDocPath = string.Concat(_Environment.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
+                    string designDocPath = string.Concat(_host.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
                     //save datatable for future use
                     try
                     {
@@ -663,13 +662,13 @@ namespace MCPhase3.Controllers
             contributionBO.payRollYear = ContextGetValue(Constants.SessionKeyYears);
           
             //Get api url from appsetting.json
-            apiBaseUrlForRemittanceInsert = ConfigGetValue("WebAPIBaseUrlForRemittanceInsert");
+            apiBaseUrlForRemittanceInsert = GetApiUrl(_apiEndpoints.RemittanceInsert);
             //Get api url from appsetting.json
-            string apiBaseUrlForRemittanceGet = ConfigGetValue("WebAPIBaseUrlForRemittanceGet");
+            string apiBaseUrlForRemittanceGet = GetApiUrl(_apiEndpoints.RemittanceGet);
             ///API URI is getting from Apsetting.json file.
-            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
-          
-                    using (HttpClient client = new HttpClient())
+            string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+
+            using (HttpClient client = new HttpClient())
                     {
                         try
                         {
@@ -775,10 +774,10 @@ namespace MCPhase3.Controllers
 
             //string uploadedFileName = ContextGetValue(Constants.SessionKeyFileName);
             //Get api url from appsetting.json           
-            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
-            
-            
-            
+            string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+
+
+
             //copy file to local folder
 
             try
@@ -798,7 +797,7 @@ namespace MCPhase3.Controllers
                 rangeOfRowsModel.P_NUMBER_OF_VALUES_REQUIRED = totalRecordsInF;
 
                 
-                string insertDataCounter = ConfigGetValue("WebapiBaseUrlForInsertDataCounter");
+                string insertDataCounter = GetApiUrl(_apiEndpoints.InsertDataCounter);
 
                 //Get the max Datarow id from MC_CONTRIBUTIONS_RECD to insert bulk data.
                 //## we need to get the first DataRow_RecordId from the Database.. and then create new Primary Key as we insert new records.
@@ -808,7 +807,7 @@ namespace MCPhase3.Controllers
                 DataTable newDT = dataTableToDB.KeepDataTable(dataRowRecordId + 1, userName, schemeName, clientID, id.ToString()) ;
                 
                 //Insert all the records to the database using api
-                string insertDataConn = ConfigGetValue("WebapiBaseUrlForInsertData");
+                string insertDataConn = GetApiUrl(_apiEndpoints.InsertData);
                 newDT.AcceptChanges();
                 bool InsertToDbSuccess = await callApi.InsertDataApi(newDT, insertDataConn);
                 newDT.Dispose();
@@ -843,7 +842,7 @@ namespace MCPhase3.Controllers
 
         public void WriteToDBEventLog(int remitID,  string eventNotes, int remittanceStatus = 1, int eventTypeID = 1)
         {
-            string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
+            string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
             var eBO = new EventDetailsBO();
             //Update Event Details table and add File Uploaded and ready to FTP
             eBO.remittanceID = remitID;
@@ -873,8 +872,8 @@ namespace MCPhase3.Controllers
             ErrorAndWarningViewModelWithRecords errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords();
             InitialiseProcBO initialiseProcBO = new InitialiseProcBO();
             string userID = ContextGetValue(Constants.SessionKeyUserID);
-            string empURL = ConfigGetValue("WebapiBaseUrlForEmployerName");            
-            //string insertDataConn = GetConfigValue("WebapiBaseUrlForInsertData");
+            string empURL = GetApiUrl(_apiEndpoints.EmployerName);
+            
 
             //callApi.InsertDataApi(excelDt, insertDataConn);
 
@@ -888,10 +887,10 @@ namespace MCPhase3.Controllers
 
             List<AutoMatchBO> BO = new List<AutoMatchBO>();
             //call Automatch api url from appsettings.json
-            apiBaseUrlForAutoMatch = ConfigGetValue("WebapiBaseUrlForAutoMatch");
+            apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch);
             //url to get total number of records in database
-            string apiBaseUrlForTotalRecords = ConfigGetValue("WebAPIBaseUrlForRemittanceInsert");
-            string apiBaseUrlForInitialiseProc = ConfigGetValue("WebAPIBaseUrlForInitialiseProc");
+            string apiBaseUrlForTotalRecords = GetApiUrl(_apiEndpoints.RemittanceInsert);
+            string apiBaseUrlForInitialiseProc = GetApiUrl(_apiEndpoints.InitialiseProc);
 
             initialiseProcBO.P_REMITTANCE_ID = newID;
             initialiseProcBO.P_USERID = userID;
@@ -923,11 +922,11 @@ namespace MCPhase3.Controllers
                 result.P_USERID = userID;
                 result.P_PAYLOC_FILE_ID = 0;
 
-                
 
-                string apiBaseUrlForCheckReturn = ConfigGetValue("WebAPIBaseUrlForReturnCheckProc");
-                string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
-                
+
+                string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc); 
+                string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+
                 eBO.remittanceID = id1;
                 eBO.remittanceStatus = 1;
                 eBO.eventTypeID = 50;
@@ -1090,7 +1089,7 @@ namespace MCPhase3.Controllers
         private async Task<List<PayrollProvidersBO>> CallPayrollProviderService(string userName)
         {
             List<PayrollProvidersBO> subPayrollList = new List<PayrollProvidersBO>();
-            string apiBaseUrlForSubPayrollProvider = ConfigGetValue("WebapiBaseUrlForSubPayrollProvider");
+            string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.SubPayrollProvider);
             string apiResponse = String.Empty;
 
             using (var httpClient = new HttpClient())

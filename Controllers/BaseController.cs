@@ -1,10 +1,10 @@
-﻿using Grpc.Core;
-using MCPhase3.CodeRepository;
+﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System;
 
 namespace MCPhase3.Controllers
@@ -14,14 +14,15 @@ namespace MCPhase3.Controllers
         private readonly IConfiguration _configuration;
         public readonly IRedisCache _cache;
         public readonly IDataProtectionProvider provider;
+        public readonly ApiEndpoints _apiEndpoints;
         private readonly IDataProtector _protector;
 
-        public BaseController(IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider)
+        public BaseController(IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints)
         {
             _configuration = configuration;
             _cache = Cache;
             provider = Provider;
-
+            _apiEndpoints = ApiEndpoints.Value;
             _protector = provider.CreateProtector("MCPhase3.Protector");
         }
 
@@ -81,6 +82,14 @@ namespace MCPhase3.Controllers
                 throw new ArgumentException("Parameter cannot be null", "Url parameter");
             }
             return _protector.Protect(value);
+        }
+
+        /// <summary>This will get the complete API Endpoint, base Url + Endpoint name</summary>
+        /// <param name="apiName">Endpoint name</param>
+        /// <returns>Complete Url</returns>
+        public string GetApiUrl(string apiName)         
+        {
+            return _apiEndpoints.WebApiBaseUrl + apiName;
         }
 
     }

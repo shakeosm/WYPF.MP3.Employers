@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ namespace MCPhase3.Controllers
         EventsTableUpdates eventUpdate;
 
 
-        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService) : base(configuration, cache, Provider)
+        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
             _Configure = configuration;
             _apiCallService = ApiService;
@@ -91,7 +92,7 @@ namespace MCPhase3.Controllers
                 //List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
                 var model = new List<ErrorAndWarningViewModelWithRecords>();
 
-                string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
+                string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
 
                 //pass remittance id to next action
@@ -108,7 +109,7 @@ namespace MCPhase3.Controllers
 
                 var keyValuePairs = new Dictionary<string, string>();
                 //work on remittance level if null else Paylocation level
-                apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarnings");
+                apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.ErrorAndWarnings);
 
                 alertSumBO.remittanceId = remitIDStr;
                 model = await callApi.CallAPISummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
@@ -185,7 +186,7 @@ namespace MCPhase3.Controllers
                 //show Employer name 
                 ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 //show error and worning on Remittance or paylocation level.
-                apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForAlertDetailsPLNextSteps");
+                apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
                 if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
                 {
                     alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
@@ -194,7 +195,7 @@ namespace MCPhase3.Controllers
                 else
                 {
                     summaryVM.L_PAYLOC_FILE_ID = 0;
-                    // apiBaseUrlForErrorAndWarnings = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarningsSelection");
+                    
                     errorAndWarningTo.remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.remittanceID));
                     errorAndWarningTo.L_USERID = userName;
 
@@ -285,8 +286,8 @@ namespace MCPhase3.Controllers
                 }
 
                 string result = string.Empty;
-                string apiBaseUrlForErrorAndWarningsApproval = _Configure.GetValue<string>("WebapiBaseUrlForErrorAndWarningsApproval");
-                string apiBaseUrlForInsertEventDetails = _Configure.GetValue<string>("WebapiBaseUrlForInsertEventDetails");
+                string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.ErrorAndWarningsApproval); 
+                string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
                 ErrorAndWarningApprovalOB errorAndWarningTo = new ErrorAndWarningApprovalOB();
                 errorAndWarningTo.userID = CurrentUserId();
@@ -369,9 +370,9 @@ namespace MCPhase3.Controllers
                 string userName = CurrentUserId();
                 MemberUpdateRecordBO memberUpdateRecordBO = new MemberUpdateRecordBO();
 
-                string apiBaseUrlForErrorAndWarningsApproval = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecordGetValues");
+                string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.UpdateRecordGetValues);
 
-                string apiBaseUrlForErrorAndWarningsList = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecordGetErrorWarningList");
+                string apiBaseUrlForErrorAndWarningsList = GetApiUrl(_apiEndpoints.UpdateRecordGetErrorWarningList);
                 string apiResponse = String.Empty;
 
                 HelpTextBO helpTextBO = new HelpTextBO();
@@ -456,7 +457,7 @@ namespace MCPhase3.Controllers
 
                 int remID = Convert.ToInt32(remittanceID);
 
-                string apiLink = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecord");
+                string apiLink = GetApiUrl(_apiEndpoints.UpdateRecord);
                 using (HttpClient client = new HttpClient())
                 {
                     StringContent content = new StringContent(JsonConvert.SerializeObject(updateRecordBO), Encoding.UTF8, "application/json");
@@ -508,11 +509,11 @@ namespace MCPhase3.Controllers
                 ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 MemberUpdateRecordBO memberUpdateRecordBO = new MemberUpdateRecordBO();
                 //shows error and warnings data
-                string apiBaseUrlForUpdateRecordGetValues = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecordGetValues");
+                string apiBaseUrlForUpdateRecordGetValues = GetApiUrl(_apiEndpoints.UpdateRecordGetValues);
                 //shows recent data that is inserted by using posting file 
-                string apiBaseUrlForMatchingRecordsManual = _Configure.GetValue<string>("WebapiBaseUrlForMatchingRecordsManual");
+                string apiBaseUrlForMatchingRecordsManual = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
                 //shows members matched data that was already inside UPM for matching
-                string apiBaseUrlForErrorAndWarningsList = _Configure.GetValue<string>("WebapiBaseUrlForUpdateRecordGetErrorWarningList");
+                string apiBaseUrlForErrorAndWarningsList = GetApiUrl(_apiEndpoints.UpdateRecordGetErrorWarningList);
 
                 helpTextBO.L_DATAROWID_RECD = dataRowID;
                 helpTextBO.L_USERID = HttpContext.Session.GetString(Constants.SessionKeyUserID);
@@ -574,7 +575,8 @@ namespace MCPhase3.Controllers
         private async Task<List<GetMatchesBO>> GetRecords(GetMatchesBO getMatchesBO)
         {
             List<GetMatchesBO> bO = new List<GetMatchesBO>();
-            string apiLink = _Configure.GetValue<string>("WebapiBaseUrlForMatchingRecordsUPM");
+            string apiLink = GetApiUrl(_apiEndpoints.MatchingRecordsUPM);
+
             using (HttpClient client = new HttpClient())
             {
                 StringContent content = new StringContent(JsonConvert.SerializeObject(getMatchesBO), Encoding.UTF8, "application/json");
@@ -613,7 +615,7 @@ namespace MCPhase3.Controllers
 
             int remID = Convert.ToInt32(remittanceID);
 
-            string apiLink = _Configure.GetValue<string>("WebapiBaseUrlForMatchingRecordsManual");
+            string apiLink = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
             UpdateFolder obj1 = new UpdateFolder();
             AddNewFolder obj2 = new AddNewFolder();
             AddNewPersonAndFolder obj3 = new AddNewPersonAndFolder();
@@ -762,7 +764,7 @@ namespace MCPhase3.Controllers
                 {
                     var content = new StringContent(JsonConvert.SerializeObject(bo), Encoding.UTF8, "application/json");
                     
-                    string apiBaseUrlForRecordReset = _Configure.GetValue<string>("WebapiBaseUrlForRecordReset");
+                    string apiBaseUrlForRecordReset = GetApiUrl(_apiEndpoints.RecordReset);
 
                     using (var Response = await client.PostAsync(apiBaseUrlForRecordReset, content))
                     {

@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -19,19 +19,15 @@ namespace MCPhase3.Controllers
 {
     public class LoginController : BaseController
     {
-        //My list item to add all  the errors from the spreadsheet
-        List<string> AllSpreadsheetErrors = new List<string>();       
         PayrollProvidersBO payrollBO = new PayrollProvidersBO();       
         DummyLoginViewModel loginDetails = new DummyLoginViewModel();
 
         string uploadedFileName = string.Empty;     
         private readonly IConfiguration _configuration;
-        //private readonly IRedisCache _cache;
 
-        public LoginController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider) : base(configuration, cache, Provider)
+        public LoginController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
             _configuration = configuration;
-            //_cache = cache;
         }
        
         public IActionResult Index()
@@ -123,7 +119,6 @@ namespace MCPhase3.Controllers
             var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId")
                                                .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
-            //call new payroll provider REST API
             try
             {
                 //Once usernames copied to new table then uncomment following line of code
@@ -165,7 +160,7 @@ namespace MCPhase3.Controllers
                 HttpContext.Session.SetString(SessionKeyClientType, "LG");
             }
                 
-            return RedirectToAction("Home", "Admin");
+            return RedirectToAction("Index", "Admin");
             
         }
 
@@ -219,7 +214,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<PayrollProvidersBO> CallPayrollProviderService(string userName)
         {
-            string apiBaseUrlForPayrollProvider = _configuration.GetValue<string>("WebapiBaseUrlForPayrollProvider");
+            string apiBaseUrlForPayrollProvider = GetApiUrl(_apiEndpoints.PayrollProvider);
             string apiResponse = String.Empty;
            
             using (var httpClient = new HttpClient())
@@ -244,12 +239,11 @@ namespace MCPhase3.Controllers
         [Obsolete("Do not use this one.. Instead use- LoginCheckMethod(string userId, string password)")]
         private async Task<int> LoginCheckMethod(LoginBO loginBO)
         {
-            string apiBaseUrlForLoginCheck = _configuration.GetValue<string>("WebapiBaseUrlForLoginCheck");
-            string apiResponse = string.Empty;
+            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);
+            
             using (var httpClient = new HttpClient())
             {
                 StringContent content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
-               // string endPoint = apiLink;
 
                 using (var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content))
                 {
@@ -270,10 +264,10 @@ namespace MCPhase3.Controllers
                 password = password
             };
 
-            string apiBaseUrlForLoginCheck = _configuration.GetValue<string>("WebapiBaseUrlForLoginCheck");
+            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);
             using (var httpClient = new HttpClient())
             {
-                StringContent content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
+                var content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
 
                 using var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content);
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)

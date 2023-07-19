@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,7 @@ namespace MCPhase3.Controllers
         private readonly IApiService _apiService;
         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         
-        public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService) : base(configuration, cache, Provider)
+        public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
             _configuration = configuration;
             _apiService = ApiService;
@@ -35,7 +36,7 @@ namespace MCPhase3.Controllers
 
         public IActionResult SubmitForProcessing()
         {
-                string apiBaseUrlForInsertEventDetails = ConfigGetValue("WebapiBaseUrlForInsertEventDetails");
+            string apiBaseUrlForInsertEventDetails = _apiEndpoints.InsertEventDetails;
             EventDetailsBO eBO = new EventDetailsBO
                 {
                     
@@ -188,7 +189,7 @@ namespace MCPhase3.Controllers
 
         private async Task<int> UpdatePasswordMethod(LoginBO loginBO)
         {
-            string apiBaseUrlForLoginCheck = ConfigGetValue("WebapiBaseUrlForPasswordChange");
+            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.PasswordChange); 
             string apiResponse = string.Empty;
             using (var httpClient = new HttpClient())
             {
@@ -214,7 +215,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<DashboardBO>> getDashboardValues(DashboardBO dashboardBO)
         {
-            string apiBaseUrlForDashboard = ConfigGetValue("WebapiBaseUrlForDashboard");
+            string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.Dashboard);
             var apiResult = new List<DashboardBO>();
             
             using (var httpClient = new HttpClient())
@@ -293,7 +294,7 @@ namespace MCPhase3.Controllers
 
             if (!string.IsNullOrEmpty(remittanceId) )
             {
-                string WebapiBaseUrlForDetailEmpList = ConfigGetValue("WebapiBaseUrlForDetailEmpList");
+                string WebapiBaseUrlForDetailEmpList = GetApiUrl(_apiEndpoints.DetailEmpList);
                 string remid = DecryptUrlValue(remittanceId);
 
                 var paramList = new MasterDetailEmpListBO()
@@ -329,7 +330,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<GetRemittanceStatusByUserBO>> getDashboardValuesForEmployers(string userid, string status)
         {
-            string apiBaseUrlForDashboard = ConfigGetValue("WebapiBaseUrlForDashboardEmployers");
+            string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.DashboardEmployers);
             List<GetRemittanceStatusByUserBO> listBO = new List<GetRemittanceStatusByUserBO>();
             string apiResponse = string.Empty;
             using (var httpClient = new HttpClient())
@@ -358,7 +359,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<DashboardHistScoreBO>> getDashboardScoreHist(int remittanceId)
         {
-            string apiBaseUrlForDashboardScoreHist = ConfigGetValue("WebapiBaseUrlForDashboardScoreHist");
+            string apiBaseUrlForDashboardScoreHist = GetApiUrl(_apiEndpoints.DashboardScoreHist);
             List<DashboardHistScoreBO> listBO = new List<DashboardHistScoreBO>();
             string apiResponse = string.Empty;
             using (var httpClient = new HttpClient())
@@ -420,7 +421,7 @@ namespace MCPhase3.Controllers
         {
             int remID =Convert.ToInt32(DecryptUrlValue(id));
             string result = string.Empty;
-            string apiCallDeleteRemittance = ConfigGetValue("WebapiBaseUrlForDeleteRemittance");
+            string apiCallDeleteRemittance = GetApiUrl(_apiEndpoints.DeleteRemittance);
             using (var httpClient = new HttpClient())
             {
                 using (var response = await httpClient.GetAsync(apiCallDeleteRemittance + remID))
@@ -441,7 +442,7 @@ namespace MCPhase3.Controllers
         {
             int remID = Convert.ToInt32(DecryptUrlValue(id));
             string result = string.Empty;
-            string apiCallDeleteRemittance = ConfigGetValue("WebapiBaseUrlForDeleteRemittance");
+            string apiCallDeleteRemittance = GetApiUrl(_apiEndpoints.DeleteRemittance);
             using (var httpClient = new HttpClient())
             {
                 using (var response = await httpClient.GetAsync(apiCallDeleteRemittance + remID))
