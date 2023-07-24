@@ -642,8 +642,11 @@ namespace MCPhase3.Controllers
         }
 
 
-       // [HttpPost]
-        //[ValidateAntiForgeryToken]
+        // [HttpPost]
+        //[ValidateAntiForgeryToken] 
+        /// <summary> New remitance submitted and remitance ID created for the uploaded file/// </summary>
+        /// <param name="contributionBO"></param>
+        /// <returns></returns>
         public async Task<IActionResult> Remad(MonthlyContributionBO contributionBO)
         {
             RemadShowTotalsValues formTotals = new RemadShowTotalsValues();
@@ -669,54 +672,53 @@ namespace MCPhase3.Controllers
             string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
             using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    StringContent content = new StringContent(JsonConvert.SerializeObject(contributionBO), Encoding.UTF8, "application/json");
+                    string endpoint = apiBaseUrlForRemittanceInsert;
+
+                    using (var Response = await client.PostAsync(endpoint, content))
                     {
-                        try
+                        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
                         {
-                            StringContent content = new StringContent(JsonConvert.SerializeObject(contributionBO), Encoding.UTF8, "application/json");
-                            string endpoint = apiBaseUrlForRemittanceInsert;
-
-                            using (var Response = await client.PostAsync(endpoint, content))
+                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+                            _logger.LogInformation("Remittance API Call successfull");
+                            TempData["Msg"] = "Remittance successfully inserted into database.";
+                            try
                             {
-                                if (Response.StatusCode == System.Net.HttpStatusCode.OK)
-                                {
-                                    // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                                    _logger.LogInformation("Remittance API Call successfull");
-                                    TempData["Msg"] = "Remittance successfully inserted into database.";
-                                    try
-                                    {
-                                        TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
-                                        var createdRemittanceID = callApi.CallAPI(contributionBO.UploadedFileName.ToUpper(), apiBaseUrlForRemittanceGet);
-                                        string num = createdRemittanceID.Substring(createdRemittanceID.IndexOf(":") + 1);
-                                        remittanceID = num.Trim(new char[] { '"', '}', ']' });
-                                        _logger.LogInformation("API to get Remittance id is successfull");
+                                TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
+                                remittanceID = callApi.GetRemittanceIdBy_FileName(contributionBO.UploadedFileName.ToUpper(), apiBaseUrlForRemittanceGet).Replace(".0", "");
 
-                                        //Update Event Details table and remittance inserted.
-                                        eBO.remittanceID = Convert.ToInt32(remittanceID);
-                                        eBO.remittanceStatus = 1;
-                                        eBO.eventTypeID = 2;
-                                        eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
-                                        eBO.notes = "New remitance submitted and remitance ID created for the uploaded file.";
+                                _logger.LogInformation("API to get Remittance id is successfull");
 
-                                        callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError("API to insert Remittance shows error.");
-                                        TempData["Msg"] = "System is showing some error to send Remittance totals, Please try again";
-                                        //monthAndPayroll.Clear();
-                                        return View(contributionBO);
-                                    }
+                                //Update Event Details table and remittance inserted.
+                                eBO.remittanceID = Convert.ToInt32(remittanceID);
+                                eBO.remittanceStatus = 1;
+                                eBO.eventTypeID = 2;
+                                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
+                                eBO.notes = "New remitance submitted and remitance ID created for the uploaded file.";
 
-                                    remittanceID = EncryptUrlValue(remittanceID);
+                                callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError("API to insert Remittance shows error.");
+                                TempData["Msg"] = "System is showing some error to send Remittance totals, Please try again";
+                                //monthAndPayroll.Clear();
+                                return View(contributionBO);
+                            }
+
+                            remittanceID = EncryptUrlValue(remittanceID);
 
                             return Redirect($"/Home/MoveFileForFTP?id={remittanceID}");
 
                         }
-                                else
-                                    {
-                                        ModelState.Clear();
-                                        _logger.LogError(string.Empty, "Error occured while calling Remittance Insert API");
-                                        TempData["Msg"] = "System is showing some error to send Remittance totals, Please try again";
+                        else
+                        {
+                            ModelState.Clear();
+                            _logger.LogError(string.Empty, "Error occured while calling Remittance Insert API");
+                            TempData["Msg"] = "System is showing some error to send Remittance totals, Please try again";
                             //monthAndPayroll.Clear();
 
                             //remove the browser response issue of pen testing
@@ -727,14 +729,14 @@ namespace MCPhase3.Controllers
                                 RedirectToAction("Index", "Login");
                             }
                             return View(contributionBO);
-                                    }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError("Error while calling insert data into Remittance table");
                         }
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Error while calling insert data into Remittance table");
+                }
+            }
             TempData["Msg"] = "System is showing some error to send Remittance totals, Please try again";
             return View(contributionBO);
         }
@@ -900,24 +902,21 @@ namespace MCPhase3.Controllers
             try
             {
                 string totalRecords = await callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
-                string num = totalRecords.Substring(totalRecords.IndexOf(":") + 2);
-                int total = Convert.ToInt32(num.Remove(num.IndexOf('"')));
+                int total = Convert.ToInt32(totalRecords.Replace(".0", ""));
                 string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
                 //following loop will keep on until it finds a record in database.//Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
                 while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
                     {
                         totalRecords = await callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
-                        num = totalRecords.Substring(totalRecords.IndexOf(":") + 2);
-                        total = Convert.ToInt32(num.Remove(num.IndexOf('"')));
-                    }
-                //if (GetContextValue(Constants.SessionKeyReturnInit) == null)
-                //{
-                    initialiseProcBO = await callApi.InitialiseProce(initialiseProcBO, apiBaseUrlForInitialiseProc);
-                   // HttpContext.Session.SetString(Constants.SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
-               // }
+                        total = Convert.ToInt32(totalRecords.Replace(".0", ""));
+                }
+                
+                //## Following is a big piece of Task- initialising the entire journey, setting values, fixing issues and many things... 
+                initialiseProcBO = await callApi.InitialiseProce(initialiseProcBO, apiBaseUrlForInitialiseProc);
+                
                 
                 //HttpContext.Session.SetString(Constants.SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
-                //Return Check API to call to check if the previous month file is completed 
+                //Return Check API to call to check if the previous month file is completed ppse
                 result.p_REMITTANCE_ID = id1;
                 result.P_USERID = userID;
                 result.P_PAYLOC_FILE_ID = 0;
@@ -939,7 +938,7 @@ namespace MCPhase3.Controllers
 
                 AutoMatchBO autoMatchBO = new AutoMatchBO();
                 //following is call to Automatch api
-                autoMatchBO = await callApi.CallAPI(id1, apiBaseUrlForAutoMatch);
+                autoMatchBO = await callApi.GetAutoMatchResult(id1, apiBaseUrlForAutoMatch);
                                 
                 if (Convert.ToInt32(totalRecordsInF) < total || Convert.ToInt32(totalRecordsInF) > 10000)
                     {
@@ -986,13 +985,6 @@ namespace MCPhase3.Controllers
                 //RedirectToAction("RemittanceInsertDB","Home", id);
             }
 
-            //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(ContextGetValue("_UserName")))
-            {
-                errorAndWarningViewModelWithRecords = null;
-
-                RedirectToAction("Index", "Login");
-            }
             return View(errorAndWarningViewModelWithRecords);
         }
         /// <summary>
@@ -1021,31 +1013,23 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public List<NameOfMonths> GetMonths(string valueItem)
         {
-            List<NameOfMonths> nameOfMonths = new List<NameOfMonths>()
-                {
-                    //new NameOfMonths(){text = "Select Month",value = "month"},
-                    new NameOfMonths(){text = "JANUARY",value = "JANUARY"},
-                    new NameOfMonths(){text = "FEBRUARY",value = "FEBRUARY"},
-                    new NameOfMonths(){text = "MARCH",value = "MARCH"},
-                    new NameOfMonths(){text = "APRIL",value = "APRIL"},
-                    new NameOfMonths(){text = "MAY",value = "MAY"},
-                    new NameOfMonths(){text = "JUNE",value = "JUNE"},
-                    new NameOfMonths(){text = "JULY",value = "JULY"},
-                    new NameOfMonths(){text = "AUGUST",value = "AUGUST"},
-                    new NameOfMonths(){text = "SEPTEMBER",value = "SEPTEMBER"},
-                    new NameOfMonths(){text = "OCTOBER",value = "OCTOBER"},
-                    new NameOfMonths(){text = "NOVEMBER",value = "NOVEMBER"},
-                    new NameOfMonths(){text = "DECEMBER",value = "DECEMBER"}
-                }.ToList();
+            List<NameOfMonths> nameOfMonths = new List<NameOfMonths>(){
+                //new NameOfMonths(){text = "Select Month",value = "month"},
+                new NameOfMonths(){text = "JANUARY",value = "JANUARY"},
+                new NameOfMonths(){text = "FEBRUARY",value = "FEBRUARY"},
+                new NameOfMonths(){text = "MARCH",value = "MARCH"},
+                new NameOfMonths(){text = "APRIL",value = "APRIL"},
+                new NameOfMonths(){text = "MAY",value = "MAY"},
+                new NameOfMonths(){text = "JUNE",value = "JUNE"},
+                new NameOfMonths(){text = "JULY",value = "JULY"},
+                new NameOfMonths(){text = "AUGUST",value = "AUGUST"},
+                new NameOfMonths(){text = "SEPTEMBER",value = "SEPTEMBER"},
+                new NameOfMonths(){text = "OCTOBER",value = "OCTOBER"},
+                new NameOfMonths(){text = "NOVEMBER",value = "NOVEMBER"},
+                new NameOfMonths(){text = "DECEMBER",value = "DECEMBER"}
+            }.ToList();
 
-            //if (!string.IsNullOrEmpty(valueItem))
-            //{
-            //    return nameOfMonths.OrderByDescending(x => x.value == valueItem).ThenBy(x=>x.value).ToList();
-            //}
-            //else
-            //{
             return nameOfMonths;
-            //}
         }
 
         public List<NameOfMonths> GetOption(string valueItem)
@@ -1088,9 +1072,8 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<PayrollProvidersBO>> CallPayrollProviderService(string userName)
         {
-            List<PayrollProvidersBO> subPayrollList = new List<PayrollProvidersBO>();
+            var subPayrollList = new List<PayrollProvidersBO>();
             string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.SubPayrollProvider);
-            string apiResponse = String.Empty;
 
             using (var httpClient = new HttpClient())
             {

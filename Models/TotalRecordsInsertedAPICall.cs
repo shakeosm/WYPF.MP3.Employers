@@ -51,7 +51,7 @@ namespace MCPhase3.Models
         /// <param name="remID">Remittance id</param>
         /// <param name="url">url of api</param>
         /// <returns></returns>
-        public async Task<AutoMatchBO> CallAPI(int remID, string url)
+        public async Task<AutoMatchBO> GetAutoMatchResult(int remID, string url)
         {
             AutoMatchBO autoMatchBO = new AutoMatchBO();
                 //using (var client = new HttpClient())
@@ -73,7 +73,11 @@ namespace MCPhase3.Models
                             string result = await response.Content.ReadAsStringAsync();
                             autoMatchBO = JsonConvert.DeserializeObject<AutoMatchBO>(result);
                         }
-                    }
+                        else
+                        {
+                            throw new Exception($"Failed to call the GetAutoMatchResult(). Check the API is active, api: {url}/{remID}");
+                        }
+                }
                 }
                 return autoMatchBO;
         }
@@ -98,6 +102,10 @@ namespace MCPhase3.Models
                         result = JsonConvert.DeserializeObject<int>(result1);
 
                     }
+                    else
+                    {
+                        throw new Exception($"Failed to call the CheckFileAvailable(). Check the API is active, api: {apiLink}");
+                    }
                 }
             }
             return result;
@@ -108,7 +116,7 @@ namespace MCPhase3.Models
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public string CallAPI(string fileName, string url)
+        public string GetRemittanceIdBy_FileName(string fileName, string url)
         {
             using (var client = new HttpClient())
             {
@@ -148,7 +156,7 @@ namespace MCPhase3.Models
         /// <param name="remID"></param>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task<List<ErrorAndWarningViewModelWithRecords>> CallAPISummary(AlertSumBO alertSumBO, string url)
+        public async Task<List<ErrorAndWarningViewModelWithRecords>> GetErrorAndWarningSummary(AlertSumBO alertSumBO, string url)
         {
             var model = new List<ErrorAndWarningViewModelWithRecords>();
 
@@ -167,6 +175,10 @@ namespace MCPhase3.Models
                         // var result = responseTask.Result;
                         var readTask = await Response.Content.ReadAsStringAsync();
                         model = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(readTask);
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to call the GetErrorAndWarningSummary(). Check the API is active, api: {url}");
                     }
                 }
             }
@@ -211,6 +223,10 @@ namespace MCPhase3.Models
                         string result = await response.Content.ReadAsStringAsync();
                         eBO = JsonConvert.DeserializeObject<EventDetailsBO>(result);
                     }
+                    else
+                    {
+                        throw new Exception($"Failed to call the GetEventDetails(). Check the API is active, api: {url}/{remID}");
+                    }
                 }
             }
             return eBO;
@@ -234,6 +250,10 @@ namespace MCPhase3.Models
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                     }
+                    else
+                    {
+                        throw new Exception($"Failed to InsertEventDetails(). Check the API is active, api: {apiLink}");
+                    }
                 }
             }
             //return eBO;
@@ -251,6 +271,10 @@ namespace MCPhase3.Models
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                         result = true;
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to call the InsertDataApi(). Check the API is active, api: {apiLink}");
                     }
                 }
             }
@@ -280,6 +304,9 @@ namespace MCPhase3.Models
                         eBO = JsonConvert.DeserializeObject<InitialiseProcBO>(result1);
 
                     }
+                    else {
+                        throw new Exception($"Failed to initialise the Remittance journey-> InitialiseProce(). Check the API is active, api: {apiLink}");
+                    }
                 }
             }
             return eBO;
@@ -299,6 +326,10 @@ namespace MCPhase3.Models
                     {
                         var result1 = await response.Content.ReadAsStringAsync();
                         result = JsonConvert.DeserializeObject<ReturnCheckBO>(result1);
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to call the ReturnCheckAPICall(). Check the API is active, api: {apiLink}");
                     }
                 }
             }
@@ -320,6 +351,10 @@ namespace MCPhase3.Models
                     {
                         string result = await response.Content.ReadAsStringAsync();
                         messageResult = JsonConvert.DeserializeObject<int>(result);
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to call counterAPI(). Check the API is active, api: {url}");
                     }
                 }
             }           

@@ -34,8 +34,8 @@ namespace MCPhase3.Controllers
         List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
 
         //following class I am using to consume api's
-        TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
-        EventDetailsBO eBO = new EventDetailsBO();
+        TotalRecordsInsertedAPICall apiClient = new TotalRecordsInsertedAPICall();
+        var eventDetails = new EventDetailsBO();
         EventsTableUpdates eventUpdate;
 
 
@@ -43,10 +43,8 @@ namespace MCPhase3.Controllers
         {
             _Configure = configuration;
             _apiCallService = ApiService;
-            //this._cache = cache;
             _host = host;
             _logger = logger;
-            //CustomDataProtection = customIDataProtection;
         }
 
 
@@ -68,8 +66,6 @@ namespace MCPhase3.Controllers
 
             //inc will keep check manual matching stage and it will not be successfully untill 
             //Process successfully completed. 
-
-            string apiBaseUrlForErrorAndWarnings = string.Empty;
 
             try
             {
@@ -97,8 +93,8 @@ namespace MCPhase3.Controllers
 
                 //pass remittance id to next action
                 string encryptedRemID = alertSumBO.remittanceId;    //## this is coming in Decrypted format.. good boy!
-                var remitIDStr = DecryptUrlValue(encryptedRemID, forceDecode: false);
-                int remID = Convert.ToInt32(remitIDStr);
+                var remitIDStr = DecryptUrlValue(encryptedRemID);
+                int remID = Convert.ToInt32(DecryptUrlValue(encryptedRemID));
 
                 ViewBag.remID = EncryptUrlValue(remID.ToString());
 
@@ -107,12 +103,12 @@ namespace MCPhase3.Controllers
                 //add remittance id into session for future use.
 
 
-                var keyValuePairs = new Dictionary<string, string>();
+                //var keyValuePairs = new Dictionary<string, string>();
                 //work on remittance level if null else Paylocation level
-                apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.ErrorAndWarnings);
+                string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.ErrorAndWarnings);   //## api: /AlertSummaryRecordsPayLoc
 
                 alertSumBO.remittanceId = remitIDStr;
-                model = await callApi.CallAPISummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                model = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
                 var newModel1 = model.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
 
                 if (newModel1.Count < 1)
@@ -136,6 +132,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["MsgError"] = "System is showing error, please try again later";
                 return RedirectToAction("Index", "Login");
             }
@@ -174,49 +171,50 @@ namespace MCPhase3.Controllers
 
                 var recordsList = new List<ErrorAndWarningViewModelWithRecords>();
                 var records = new ErrorAndWarningViewModelWithRecords();
-                AlertSumBO alertSumBO = new AlertSumBO();
-                string apiBaseUrlForErrorAndWarnings = string.Empty;
-
+                
                 string userName = CurrentUserId();
-
-                ErrorAndWarningToShowListViewModel errorAndWarningTo = new ErrorAndWarningToShowListViewModel();
-                alertSumBO.remittanceId = summaryVM.remittanceID;
-                alertSumBO.L_USERID = userName;
+               
+                AlertSumBO alertSumBO = new AlertSumBO()
+                {
+                    remittanceId = summaryVM.remittanceID,
+                    L_USERID = userName
+                };
 
                 //show Employer name 
                 ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 //show error and worning on Remittance or paylocation level.
-                apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
+                string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
                 if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
                 {
                     alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
-                    recordsList = await callApi.CallAPISummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                    recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
                 }
                 else
                 {
                     summaryVM.L_PAYLOC_FILE_ID = 0;
-                    
-                    errorAndWarningTo.remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.remittanceID));
-                    errorAndWarningTo.L_USERID = userName;
 
-                    errorAndWarningTo.alertType = summaryVM.ALERT_TYPE_REF;                    
-                    using (HttpClient client = new HttpClient())
+                    var errorAndWarningTo = new ErrorAndWarningToShowListViewModel() { 
+                        remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.remittanceID)),
+                        L_USERID = userName,
+                        alertType = summaryVM.ALERT_TYPE_REF,                    
+                    };
+
+                    using HttpClient client = new HttpClient();
+                    StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
+                    string endpoint = apiBaseUrlForErrorAndWarnings;
+
+                    using (var Response = await client.PostAsync(endpoint, content))
                     {
-                        StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
-                        string endpoint = apiBaseUrlForErrorAndWarnings;
-
-                        using (var Response = await client.PostAsync(endpoint, content))
+                        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
                         {
-                            if (Response.StatusCode == System.Net.HttpStatusCode.OK)
-                            {
-                                _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
-                                //call following api to get this uploaded remittance id of file.
-                                string result = await Response.Content.ReadAsStringAsync();
-                                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
+                            _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
+                            //call following api to get this uploaded remittance id of file.
+                            string result = await Response.Content.ReadAsStringAsync();
+                            recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
 
-                                if (recordsList.Count < 1) {
-                                    return View(Constants.Error403_Page);
-                                }
+                            if (recordsList.Count < 1)
+                            {
+                                return View(Constants.Error403_Page);
                             }
                         }
                     }
@@ -246,6 +244,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["Msg1"] = "System is showing error, please try again later";
                 return RedirectToAction("Index", "Login");
             }
@@ -345,6 +344,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["Msg1"] = "System is showing error, please try again later";
                 return RedirectToAction("Index", "Login");
             }
@@ -439,6 +439,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["Msg1"] = "System is showing error, please try again later";
                 return RedirectToAction("Index", "Login");
             }
@@ -483,6 +484,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["Msg1"] = "System is showing error, please try again later";
                 return RedirectToAction("Index", "Login");
             }
@@ -563,6 +565,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["Msg1"] = "System is showing error, please try again later";
                 return View(Constants.Error403_Page);
             }
@@ -661,6 +664,7 @@ namespace MCPhase3.Controllers
             }
             catch (System.NullReferenceException ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["error"] = "Select a matching record by clicking on radio button and submit record.";
                 return RedirectToAction("NewMatchingCritera", "SummaryNManualM", new { id = bO.dataRowId });
             }
@@ -706,6 +710,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["Msg1"] = "System is showing error, please try again later";
                 return RedirectToAction("Index", "Login");
             }
@@ -783,6 +788,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString(), ex.StackTrace);
                 return Json("Details: " + ex.ToString());
             }
         }
