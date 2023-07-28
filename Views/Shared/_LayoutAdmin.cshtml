@@ -52,6 +52,7 @@
                 </div>
                 <div class="navbar-nav ms-auto">                    
                     <a id="passToWYPF" class="btn btn-outline-danger pt-2" href="/Admin/SubmitForProcessing" style="display:none;">Submit to WYPF</a>
+                    @(await Component.InvokeAsync("LoginCheck"))
                 </div>
             </div>
         </div>
@@ -70,6 +71,7 @@
         <footer class="footer text-center">
             All Rights Reserved by
             <a style="color: green;font:bold" href="https://www.wypf.org.uk/">WYPF</a>.
+            <partial name="_applicationversioninfo.cshtml" />
         </footer>
     </div>
 

@@ -26,7 +26,7 @@ namespace MCPhase3.Models
         /// </summary>
         /// <param name="remId"></param>
         /// <returns></returns>
-        public async Task<string> CallAPIRem(int remId, string url)
+        public async Task<string> GetTotalRecordsCount(int remId, string url)
         {
 
             using (var client = new HttpClient())

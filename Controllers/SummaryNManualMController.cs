@@ -35,7 +35,7 @@ namespace MCPhase3.Controllers
 
         //following class I am using to consume api's
         TotalRecordsInsertedAPICall apiClient = new TotalRecordsInsertedAPICall();
-        var eventDetails = new EventDetailsBO();
+        EventDetailsBO eventDetails = new EventDetailsBO();
         EventsTableUpdates eventUpdate;
 
 
@@ -238,7 +238,7 @@ namespace MCPhase3.Controllers
 
                 ViewBag.status = summaryVM.ALERT_DESC + "";
                 //ViewBag.total = errorModel.COUNT == 0 ? model.Count : errorModel.COUNT;
-                ViewBag.total = summaryVM.ALERT_COUNT.Replace(".0", "");
+                //ViewBag.total = summaryVM.ALERT_COUNT.Replace(".0", "");
 
                 return View(recordsList);
             }

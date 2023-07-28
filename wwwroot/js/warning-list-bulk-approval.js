@@ -45,6 +45,8 @@
 
                     $('#liveToast .toast-body').text("The changes are reset to original state.");
                     $('#liveToast').toast('show');  //## show the user a Bootstrap Toast message about the success
+                    var totalAlerts = $("#TotalErrorCountSpan").text();
+                    $("#TotalErrorCountSpan").text(parseInt(totalAlerts) + 1);
 
                 } else {
                     Swal.fire(

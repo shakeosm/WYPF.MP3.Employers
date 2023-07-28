@@ -2,12 +2,13 @@
 {
     public class ApiEndpoints
     {
+        public string Environment { get; set; }
         public string WebApiBaseUrl { get; set; }
         public string PasswordChange { get; set; }
         public string ErrorAndWarningsSelection { get; set; }
         public string AlertDetailsPLNextSteps { get; set; }
         public string ErrorAndWarnings { get; set; }
-        public string RemittanceInsert { get; set; }
+        public string TotalRecordsInserted { get; set; }
         public string AutoMatch { get; set; }
 
         public string ErrorAndWarningsApproval { get; set; }

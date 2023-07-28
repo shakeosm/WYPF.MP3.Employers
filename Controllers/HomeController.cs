@@ -665,7 +665,7 @@ namespace MCPhase3.Controllers
             contributionBO.payRollYear = ContextGetValue(Constants.SessionKeyYears);
           
             //Get api url from appsetting.json
-            apiBaseUrlForRemittanceInsert = GetApiUrl(_apiEndpoints.RemittanceInsert);
+            apiBaseUrlForRemittanceInsert = GetApiUrl(_apiEndpoints.TotalRecordsInserted);
             //Get api url from appsetting.json
             string apiBaseUrlForRemittanceGet = GetApiUrl(_apiEndpoints.RemittanceGet);
             ///API URI is getting from Apsetting.json file.
@@ -865,7 +865,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> RemittanceInsertDB(string id)
         {
-            int id1 = Convert.ToInt32(DecryptUrlValue(id));
+            int remttanceId = Convert.ToInt32(DecryptUrlValue(id));
 
             HelpTextBO helpTextBO = new HelpTextBO();
            
@@ -880,7 +880,7 @@ namespace MCPhase3.Controllers
             //callApi.InsertDataApi(excelDt, insertDataConn);
 
             //following newID needs to replace with id(remittance id)
-            int newID = id1;
+            int newID = remttanceId;
             errorAndWarningViewModelWithRecords.ALERT_TYPE_REF = "ALL";
             errorAndWarningViewModelWithRecords.ALERT_CLASS = "Error and Warnings";
             //pass decoded id to view model class
@@ -891,7 +891,7 @@ namespace MCPhase3.Controllers
             //call Automatch api url from appsettings.json
             apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch);
             //url to get total number of records in database
-            string apiBaseUrlForTotalRecords = GetApiUrl(_apiEndpoints.RemittanceInsert);
+            string apiBaseUrlForTotalRecords = GetApiUrl(_apiEndpoints.TotalRecordsInserted);
             string apiBaseUrlForInitialiseProc = GetApiUrl(_apiEndpoints.InitialiseProc);
 
             initialiseProcBO.P_REMITTANCE_ID = newID;
@@ -901,13 +901,13 @@ namespace MCPhase3.Controllers
 
             try
             {
-                string totalRecords = await callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
+                string totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
                 int total = Convert.ToInt32(totalRecords.Replace(".0", ""));
                 string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
                 //following loop will keep on until it finds a record in database.//Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
                 while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
                     {
-                        totalRecords = await callApi.CallAPIRem(id1, apiBaseUrlForTotalRecords);
+                        totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
                         total = Convert.ToInt32(totalRecords.Replace(".0", ""));
                 }
                 
@@ -917,7 +917,7 @@ namespace MCPhase3.Controllers
                 
                 //HttpContext.Session.SetString(Constants.SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
                 //Return Check API to call to check if the previous month file is completed ppse
-                result.p_REMITTANCE_ID = id1;
+                result.p_REMITTANCE_ID = remttanceId;
                 result.P_USERID = userID;
                 result.P_PAYLOC_FILE_ID = 0;
 
@@ -926,7 +926,7 @@ namespace MCPhase3.Controllers
                 string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc); 
                 string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
-                eBO.remittanceID = id1;
+                eBO.remittanceID = remttanceId;
                 eBO.remittanceStatus = 1;
                 eBO.eventTypeID = 50;
                 eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));   //TODO: why not sending 'DateTime.Now' directly? why formatting?
@@ -938,7 +938,7 @@ namespace MCPhase3.Controllers
 
                 AutoMatchBO autoMatchBO = new AutoMatchBO();
                 //following is call to Automatch api
-                autoMatchBO = await callApi.GetAutoMatchResult(id1, apiBaseUrlForAutoMatch);
+                autoMatchBO = await callApi.GetAutoMatchResult(remttanceId, apiBaseUrlForAutoMatch);
                                 
                 if (Convert.ToInt32(totalRecordsInF) < total || Convert.ToInt32(totalRecordsInF) > 10000)
                     {
@@ -966,7 +966,7 @@ namespace MCPhase3.Controllers
                 _logger.LogInformation("Bulk data insert is successfull and Auto Matching successfull");
 
                 //Update Event Details table and add Auto Match successfull.
-                eBO.remittanceID = id1; //Convert.ToInt32(remittanceID);
+                eBO.remittanceID = remttanceId; //Convert.ToInt32(remittanceID);
                 eBO.remittanceStatus = 1;
                 eBO.eventTypeID = 80;
                 eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));

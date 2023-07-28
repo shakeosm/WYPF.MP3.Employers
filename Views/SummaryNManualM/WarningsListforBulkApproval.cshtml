@@ -4,7 +4,7 @@
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 
     var nextParms = new Dictionary<string, string>();
-
+    var totalAlerts = Model.Where(a => a.CLEARED_FG == "N").Count();
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
 
 }
@@ -40,7 +40,7 @@
                     <tr>
                         <td>@ViewBag.alertClass</td>
                         <td><b>@ViewBag.status</b></td>
-                        <td class="text-center h3"><span class="badge bg-danger rounded-pill">@ViewBag.total</span></td>
+                        <td class="text-center h3"><span id="TotalErrorCountSpan" class="badge bg-danger rounded-pill">@totalAlerts</span></td>
                         @*<td class="text-center h3 text-danger">@ViewBag.total</td>*@
                     </tr>
                 </thead>
