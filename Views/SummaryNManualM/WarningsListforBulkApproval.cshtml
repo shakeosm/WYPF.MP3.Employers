@@ -1,9 +1,11 @@
-﻿@model IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>
+﻿@using System.Text;
+@model IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>
 @{
     ViewData["Title"] = "Bulk data approval";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 
-    var nextParms = new Dictionary<string, string>();
+    StringBuilder alertIdList = new StringBuilder(); // this will hold list of all the AlertIds to be sent to the controller for 'AcknowledgeAll' action..
+
     var totalAlerts = Model.Where(a => a.CLEARED_FG == "N").Count();
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
 
@@ -103,9 +105,11 @@
                                                 @* a copy of the 'view' button- if the user resets the fixes- allow to see the 'Errors' page *@
                                                 <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="d-none view-button btn btn-outline-primary">View</a>
                                             }
+                                            
                                         }
                                         else if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
                                         {
+                                            alertIdList.Append(item.EncryptedAlertid + ",");
                                                     <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="btn btn-outline-primary">View</a>
                                         }
                                         else
@@ -115,9 +119,6 @@
 
                                     </td>
                                     
-
-
-
                                     @{
                                         <input type="hidden" asp-for="@item.MC_ALERT_ID" id="alertID" />
                                         <input type="hidden" asp-for="@item.DATAROWID_RECD" />
@@ -134,7 +135,8 @@
                         <div class="col-6">
                             @if (showAcknowledgeAllButton)
                             {
-                                <a asp-action="WarningApproval" id="acknowledgeButton" asp-all-route-data="nextParms" class="btn btn-primary btn-lg"> Acknowledge All</a>
+                                string idList = alertIdList.ToString();
+                                <a id="acknowledgeButton" href="~/SummaryNManualM/WarningApproval?idList=@idList" class="btn btn-primary btn-lg"> Acknowledge All</a>
                             }
                         </div>
 

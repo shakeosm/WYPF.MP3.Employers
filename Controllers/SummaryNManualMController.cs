@@ -267,45 +267,32 @@ namespace MCPhase3.Controllers
         /// warnings on update record page.
         /// </summary>
         /// <returns></returns>
-        //[HttpPost]      
-        public async Task<IActionResult> WarningApproval(Dictionary<string, string> alertId, string id)
+        public async Task<IActionResult> WarningApproval(string idList, string id)
          {
-            //## do we really need this following line????
-            //if (string.IsNullOrEmpty(HttpContext.Session.GetString("_UserName")))
-            //{
-            //    RedirectToAction("Index", "Login");
-            //}
-
+            if (string.IsNullOrEmpty(idList))
+            {
+                TempData["Msg1"] = "No Alert data found to acknowledge. Please try again.";
+                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
+            }
 
             try
-            {
-                int decryptedID = 0;
-                if (string.IsNullOrEmpty(id) == false) {
-                    _ = int.TryParse(DecryptUrlValue(id, forceDecode: false), out decryptedID);
-                }
-
+            {                
                 string result = string.Empty;
                 string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.ErrorAndWarningsApproval); 
                 string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
-                ErrorAndWarningApprovalOB errorAndWarningTo = new ErrorAndWarningApprovalOB();
+                var errorAndWarningTo = new ErrorAndWarningApprovalOB();
                 errorAndWarningTo.userID = CurrentUserId();
-                int remittanceID = Convert.ToInt16(GetRemittanceId(returnEncryptedIdOnly: false));
 
-                //int remittanceID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
-                //if we call this action from update record page then alertId will be null so I assign id that comes from update record.
-                if (alertId.Count == 0)
-                {
-                    alertId.Add("id", decryptedID.ToString());
-                }
 
+                var alertIdList = idList.Split(",", StringSplitOptions.RemoveEmptyEntries);
 
                 using (HttpClient client = new HttpClient())
                 {
 
                     string endpoint = apiBaseUrlForErrorAndWarningsApproval;
 
-                    foreach (var ids in alertId.Values)
+                    foreach (var ids in alertIdList)
                     {                                                
                         string decryptedAlertId = DecryptUrlValue(ids, forceDecode: false);
                         errorAndWarningTo.alertID = Convert.ToInt32( decryptedAlertId);
@@ -315,9 +302,7 @@ namespace MCPhase3.Controllers
                         using var Response = await client.PostAsync(endpoint, content);
                         if (Response.StatusCode == System.Net.HttpStatusCode.OK)
                         {
-                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
                             _logger.LogInformation($"BulkApproval API Call successfull-> {endpoint}");
-                            //call following api to get this uploaded remittance id of file.
                             result = await Response.Content.ReadAsStringAsync();
                             errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(result);
 
@@ -326,27 +311,19 @@ namespace MCPhase3.Controllers
                             if (errorAndWarningTo.returnStatusTxt.Contains("not found"))
                             {
                                 Console.WriteLine(errorAndWarningTo.returnStatusTxt);
-                                //TODO-> need to inform the user about the failure
-                            }
-                            else {
-                                //## Update the 'ErrorAndWarningSummaryVM'- in the cache.. now the Count will be one less... for the current Record Id.. 1 fault is 'Cleared'
-                                //var cachedModel = _cache.Get<ErrorAndWarningViewModelWithRecords>(CurrentUserId() + Constants.ErrorWarningSummaryKeyName);
-                                //if (cachedModel != null) { 
-                                    
-                                //}
+                                //TODO-> need to inform the user about the failure                           
                             }
                         }
                     }
                 }
                 
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", new { remittanceID = id });
-                //return RedirectToAction("Index", remittanceID);
+                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString(), ex.StackTrace);
                 TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
+                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
             }
         }
 
