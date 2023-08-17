@@ -45,6 +45,15 @@
         </div>
     </div>
    
+    @{
+        if (TempData["MsgError"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["MsgError"]
+            </div>
+            
+        }
+    }
 </div>
 
 

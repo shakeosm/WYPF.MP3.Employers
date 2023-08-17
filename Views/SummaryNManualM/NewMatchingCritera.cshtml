@@ -7,6 +7,21 @@
 <div class="border shadow-lg p-4 mb-4 bg-white">
     <div class="container-fluid bg-3 text-center">
         <div class="container">
+
+        <div class="row alert alert-primary">
+            <div class="col-8">
+                <h3>Error and Warnings</h3>
+                <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
+            </div>
+            <div class="col-4">
+                    <a href="~/SummaryNManualM/UpdateSingleRecord?id=@Model.DataRowEncryptedId" class="btn btn-info float-end"
+                   data-bs-toggle="tooltip" data-bs-placement="top" title="Switch between- Matching/Editing views">
+                    <i class="mdi mdi-loop me-1 ms-1"></i>
+                    Switch view
+                </a>
+            </div>
+        </div>
+
             <div class="row justify-content-center">
                 <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
                     <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
@@ -148,7 +163,7 @@
 @{
                         if (Model.Matches.Count() == 0)
                         {
-                            @Html.RadioButtonFor(m => Model.activeProcess, "AddNewFolder" + 1002, new { id = "LooseMatch", @class = "radio", @checked = "checked" })
+                            @Html.RadioButtonFor(m => Model.ActiveProcess, "AddNewFolder" + 1002, new { id = "LooseMatch", @class = "radio", @checked = "checked" })
                         }
                         else{
 
@@ -162,7 +177,7 @@
 
                         <tr id="checkboxDiv">
                             <!--<td>-->
-                                @*<p style="color:red;">Create new folder for this person</p>*@ <!--@Html.RadioButtonFor(m => Model.activeProcess, "AddNewFolder" + Model.Matches[j].personId, new { id = "LooseMatch", @class = "radio", @checked = "checked" })
+                                @*<p style="color:red;">Create new folder for this person</p>*@ <!--@Html.RadioButtonFor(m => Model.ActiveProcess, "AddNewFolder" + Model.Matches[j].personId, new { id = "LooseMatch", @class = "radio", @checked = "checked" })
                             </td>-->
                             <td> @Html.TextBoxFor(modelItem => Model.Matches[j].upperForeNames, new { @readonly = "readonly", @class = "TextBoxAsLabel" })@*<input asp-for="@m.upperForeNames" id="foreName" class="form-control">*@</td>
                             <td> @Html.TextBoxFor(modelItem => Model.Matches[j].upperSurName, new { @readonly = "readonly", @class = "TextBoxAsLabel" })</td>
@@ -203,7 +218,7 @@
                                                 }
                                 <tr id="checkboxDiv">
                                     <td>
-                                        @*<p style="color:red;">Select this folder</p>*@ @Html.RadioButtonFor(m => Model.activeProcess, "UpdateFolder" + Model.Matches[k].folderId, new { id = "LooseMatch", @class = "radio" })
+                                        @*<p style="color:red;">Select this folder</p>*@ @Html.RadioButtonFor(m => Model.ActiveProcess, "UpdateFolder" + Model.Matches[k].folderId, new { id = "LooseMatch", @class = "radio" })
                                         @*<input asp-for="" type="radio" name="active" id=@k value="true">*@
                                         @Html.HiddenFor(modelItem => Model.Matches[k].dataRowId)
                                         @Html.HiddenFor(modelItem => Model.Matches[k].personId)
@@ -269,7 +284,7 @@
                             @{
                                 if (!niAvailable)
                                 {
-                                    @Html.RadioButtonFor(m => Model.activeProcess, "AddNewPersonAndFolder", new { id = "LooseMatch", @class = "radio" })
+                                    @Html.RadioButtonFor(m => Model.ActiveProcess, "AddNewPersonAndFolder", new { id = "LooseMatch", @class = "radio" })
                                     @*<input type="radio" onclick="myFunction()">*@
                                 }
                             }

@@ -168,20 +168,15 @@ namespace MCPhase3.Controllers
                     _cache.Set(errorWarningSummaryKeyName, summaryVM);
                 }
 
-
-                var recordsList = new List<ErrorAndWarningViewModelWithRecords>();
-                var records = new ErrorAndWarningViewModelWithRecords();
-                
+                var recordsList = new List<ErrorAndWarningViewModelWithRecords>();                
                 string userName = CurrentUserId();
                
-                AlertSumBO alertSumBO = new AlertSumBO()
+                var alertSumBO = new AlertSumBO()
                 {
                     remittanceId = summaryVM.remittanceID,
                     L_USERID = userName
                 };
-
-                //show Employer name 
-                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
+                
                 //show error and worning on Remittance or paylocation level.
                 string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
                 if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
@@ -226,19 +221,10 @@ namespace MCPhase3.Controllers
                     record.EncryptedAlertid = EncryptUrlValue(record.MC_ALERT_ID);
 
                 }
-                // model = ChangeAPIDataToReadAble(result);
-                if (summaryVM.ALERT_CLASS.Equals("W"))
-                {
-                    ViewBag.alertClass = "Warning";
-                }
-                else if (summaryVM.ALERT_CLASS.Equals("E"))
-                {
-                    ViewBag.alertClass = "Error";
-                }
-
+                
+                ViewBag.alertClass = (summaryVM.ALERT_CLASS.Equals("W")) ? "Warning" : "Error";
+                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 ViewBag.status = summaryVM.ALERT_DESC + "";
-                //ViewBag.total = errorModel.COUNT == 0 ? model.Count : errorModel.COUNT;
-                //ViewBag.total = summaryVM.ALERT_COUNT.Replace(".0", "");
 
                 return View(recordsList);
             }
@@ -411,6 +397,7 @@ namespace MCPhase3.Controllers
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 //ViewBag.remittanceID = remID;
 
+                memberUpdateRecordBO.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
                 return View(memberUpdateRecordBO);
                 //return RedirectToAction("Index");
             }
@@ -538,6 +525,7 @@ namespace MCPhase3.Controllers
                     item.dataRowId = dataRowID;
                 }
 
+                listOfMatches.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
                 return View(listOfMatches);
             }
             catch (Exception ex)
@@ -608,7 +596,7 @@ namespace MCPhase3.Controllers
                 foreach (var item in getMatchesBO.Matches)
                 {
                     bO.dataRowId = item.dataRowId;
-                    bO.isActive = getMatchesBO.activeProcess;
+                    bO.isActive = getMatchesBO.ActiveProcess;
                     bO.folderId = item.folderId;
                     bO.personId = item.personId;
                     bO.folderRef = item.folderRef;
@@ -649,7 +637,7 @@ namespace MCPhase3.Controllers
             bO.personMatch = updateRecordModel.personMatch;
             bO.folderMatch = updateRecordModel.folderMatch;
             bO.userId = CurrentUserId();
-            bO.note = getMatchesBO.note;
+            bO.note = getMatchesBO.Note;
             try
             {
 
@@ -737,7 +725,7 @@ namespace MCPhase3.Controllers
             {
 
                 _ = int.TryParse(DecryptUrlValue(Id, forceDecode: false), out int dataRowID);
-                int remID = Convert.ToInt16(GetRemittanceId(returnEncryptedIdOnly: false));
+                int remID = Convert.ToInt32(GetRemittanceId(returnEncryptedIdOnly: false));
 
                 bo.P_DATAROWID_RECD = dataRowID;
                 bo.P_USERID = CurrentUserId(); ;

@@ -42,7 +42,7 @@ function clickFunction() {
 }
 
 $("#btnSubmit").click(function (e) {
-    var selectedFolderOption = $('input[name="activeProcess"]:checked').val();
+    var selectedFolderOption = $('input[name="ActiveProcess"]:checked').val();
     if (selectedFolderOption == null) {
         Swal.fire({
             icon: 'error',

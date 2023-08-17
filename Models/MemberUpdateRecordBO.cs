@@ -13,6 +13,7 @@ namespace MCPhase3.Models
     }
     public class MemberUpdateRecordBO
     {
+        public string DataRowEncryptedId { get; set; }
         public double dataRowID { get; set; }
         public string checkedAfterMatch { get; set; }
         public string modUser { get; set; }

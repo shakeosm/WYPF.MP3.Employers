@@ -104,6 +104,8 @@
                                                 </a>
                                                 @* a copy of the 'view' button- if the user resets the fixes- allow to see the 'Errors' page *@
                                                 <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="d-none view-button btn btn-outline-primary">View</a>
+                                            }else{
+                                                <i class="fas fa-check h2 text-success ml-2"></i>
                                             }
                                             
                                         }
