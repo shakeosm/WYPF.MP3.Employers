@@ -1,13 +1,10 @@
-﻿using System;
-using System.Data;
-using System.Configuration;
-using System.Linq;
-using System.Web;
-using System.Collections;
-using System.Text.RegularExpressions;
+﻿using MCPhase3.Models;
+using System;
 using System.Collections.Generic;
-using MCPhase3.Models;
+using System.Data;
 using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace MCPhase3.CodeRepository
 {
@@ -94,7 +91,7 @@ namespace MCPhase3.CodeRepository
                         if (dr[i].ToString().ToUpper().Contains(checkSign1) && dt.Columns[i].ToString().ToUpper() != "NOTES")
                         {
                             //var idx = dt.Rows.IndexOf(dr);
-                            CheckSpreadSheetErrorMsg += "<BR /> You have added invalid sign in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<BR />Please remove this sign to upload file<BR />";
+                            CheckSpreadSheetErrorMsg += "<BR /> You have added invalid sign in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<BR />";
                             result = false;
                         }
                     }
@@ -114,6 +111,7 @@ namespace MCPhase3.CodeRepository
             int[] emptyRowNumber;
             int inc = 0;
             int checkRows = 0;
+
             if (!IsColumnEmptyNewMethod1(dt, "PAYROLL_PD", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
@@ -129,6 +127,7 @@ namespace MCPhase3.CodeRepository
                 }
                 result = false;
             }
+
             inc = 1;
             foreach (DataRow rw in dt.Rows)
             {
@@ -136,9 +135,14 @@ namespace MCPhase3.CodeRepository
                 inc++;
                 int monthNumber = 0;
 
-                //var fullMonth = DateTime.ParseExact(payrollPeriod, "MMMM", CultureInfo.CurrentCulture);
-                if (!validMonths.Contains(payrollPeriod, StringComparer.CurrentCultureIgnoreCase) && inc != checkRows)
+                bool isAllString = payrollPeriod.All(Char.IsLetter);
+                if (isAllString == false) {
+                    CheckSpreadSheetErrorMsg += $"<br/>You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<b>{inc}</b> <br />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.<br />";
+                    result = false;
+                }
+                else if (!validMonths.Contains(payrollPeriod, StringComparer.CurrentCultureIgnoreCase) && inc != checkRows)
                 {
+                //var fullMonth = DateTime.ParseExact(payrollPeriod, "MMMM", CultureInfo.CurrentCulture);
                     if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
                     {
                         CheckSpreadSheetErrorMsg += "<BR /> <BR />";
@@ -152,18 +156,18 @@ namespace MCPhase3.CodeRepository
                 }
                 else
                 {
-                    if (payrollPeriod.Length > 3)
-                    {
-                        monthNumber = DateTime.ParseExact(payrollPeriod, "MMMM", CultureInfo.CurrentCulture).Month;
-                    }
-                    else if (payrollPeriod.Length > 1)
-                    {
-                        monthNumber = DateTime.ParseExact(payrollPeriod, "MMM", CultureInfo.CurrentCulture).Month;
-                    }
+                    string parseFormat = payrollPeriod.Length > 3 ? "MMMM" : "MMM";
+                    monthNumber = DateTime.ParseExact(payrollPeriod, parseFormat, CultureInfo.CurrentCulture).Month;
+                    //}
+                    //else if (payrollPeriod.Length > 1)
+                    //{
+                    //    monthNumber = DateTime.ParseExact(payrollPeriod, "MMM", CultureInfo.CurrentCulture).Month;
+                    //}
                 }
+
                 //Qasid disable following functionality to allow files with multiple months return in same file.
                 //check the dropdown selected month is same as file's month 
-                if (posting.Equals("1"))
+                if (posting.Equals("1"))    //TODO: Use Enum value for Posting
                 {
                     if (monthNumber != monthFromDropDown && !string.IsNullOrEmpty(payrollPeriod))
                     {
@@ -171,8 +175,7 @@ namespace MCPhase3.CodeRepository
                         {
                             CheckSpreadSheetErrorMsg += "<BR /> <BR />";
                         }
-                        CheckSpreadSheetErrorMsg += "You might have added wrong 'PAYROLL_PD':<B>"
-                           + payrollPeriod + "</B> at row number:<B>" + inc + " </B> of spreadsheet.</Br>";
+                        CheckSpreadSheetErrorMsg += $"You might have added wrong 'PAYROLL_PD' at row number:<b>{inc} </b> of spreadsheet.<br/>";
                         result = false;
                     }
                 }                
@@ -230,10 +233,6 @@ namespace MCPhase3.CodeRepository
         public static bool CheckPayrollYear(DataTable dt, string posting, string validYears, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
-            //string[] validYears = { "2013/14", "2014/15", "2015/16", "2016/17", "2016/17", "2017/18", "2018/19", "2019/20", "2020/21", "2021/22", "2022/23"};
-            //valid years are provided in configuration file - Qasid made change 16-10-2020
-            // string[] validYears = System.Configuration.ConfigurationManager.AppSettings.Get("ValidYears")
-            //  .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
             int[] emptyRowNumber;
             int inc = 0;
@@ -253,40 +252,31 @@ namespace MCPhase3.CodeRepository
             }
 
             int row = 1;
-            bool validPayYearInSpreadsheet = true;
+            
             foreach (DataRow rw in dt.Rows)
             {
                 row++;
                 string payrollYear = rw["PAYROLL_YR"].ToString();
-                if (posting.Equals("1"))
+
+                //## First check whether the content is valid? matching with '2023/24' pattern?
+                string financialYearPattern = "20[1-9][0-9][/][1-9][0-9]";  //## this will force to Match a year starting with '20' and and then 2 more digits, 1 '/' and then 2 more digits...                
+                Match m = Regex.Match(payrollYear, financialYearPattern, RegexOptions.IgnoreCase);
+                result = m.Success;
+
+                if (result == false)
                 {
+                    CheckSpreadSheetErrorMsg += "<br /> <br />You have entered an invalid payroll year 'PAYROLL_YR' in spreadsheet at row number:<b>" + (row-1) + " </b> <br />'PAYROLL_YR' value should be like '2023/24'. Or you may have selected the wrong payroll year from the options above.<br />";
+                }
+                else if (posting.Equals("1"))   
+                {
+                    //## For the 1st Posting- Excelsheet Year value must exist in the predefined YearList in the App.Settings file
                     if (!validYears.Contains(payrollYear))
                     {
-                        validPayYearInSpreadsheet = false;
+                        result = false; //## it does match the pattern, however- it doesn't match the Year selected Vs Year in the ExcelSheet
+                        CheckSpreadSheetErrorMsg += "<br /> <br />You have entered an invalid payroll year 'PAYROLL_YR' in spreadsheet at row number:<b>" + (row-1) + " </b> <br />You may have selected the wrong payroll year from the options above.<br />";
                     }
                 }
-                else
-                {
-                    if (validYears.Length != payrollYear.Length)
-                    {
-                        validPayYearInSpreadsheet = false;
-                    }
-                }
-               
-                //if (!validYears.Contains(payrollYear, StringComparer.CurrentCultureIgnoreCase))
-                //{
-                //    validPayYearInSpreadsheet = false;
-                //}
-
-                if (!validPayYearInSpreadsheet)
-                {
-
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid payroll year 'PAYROLL_YR' in spreadsheet at row number:<B>" + inc + " </B> <BR />'PAYROLL_YR' value should be like '2014/15'. Or You have selected wrong payroll year from above dropdown list.<BR />";
-                    result = false;
-
-                    //Q-comment break point
-                    //break;
-                }
+                
             }
 
             return result;

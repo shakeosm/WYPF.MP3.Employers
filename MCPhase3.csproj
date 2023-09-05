@@ -781,7 +781,6 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.6" ExcludeAssets="All" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NPOI" Version="2.5.3" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.70" />
     <PackageReference Include="Spire.XLS" Version="13.5.6" />
     <PackageReference Include="System.Data.OleDb" Version="5.0.0" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />

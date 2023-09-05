@@ -33,7 +33,8 @@ namespace MCPhase3.Controllers
         }
 
 
-
+        /// <summary>This will only be used to pass to WYPF by Emp for processing</summary>
+        /// <returns></returns>
         public IActionResult SubmitForProcessing()
         {
             string apiBaseUrlForInsertEventDetails = _apiEndpoints.InsertEventDetails;

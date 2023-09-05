@@ -18,7 +18,7 @@ namespace MCPhase3.CodeRepository
        // CommonRepo repo = new CommonRepo();
         public MonthlyContributionBO GetSpreadsheetValues(DataTable stringDT)
         {
-            bool answer = true;
+            //bool answer = true;
 
             if (stringDT != null)
             {

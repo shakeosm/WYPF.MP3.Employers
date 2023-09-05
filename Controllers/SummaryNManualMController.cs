@@ -36,7 +36,7 @@ namespace MCPhase3.Controllers
         //following class I am using to consume api's
         TotalRecordsInsertedAPICall apiClient = new TotalRecordsInsertedAPICall();
         EventDetailsBO eventDetails = new EventDetailsBO();
-        EventsTableUpdates eventUpdate;
+        //EventsTableUpdates eventUpdate;
 
 
         public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)

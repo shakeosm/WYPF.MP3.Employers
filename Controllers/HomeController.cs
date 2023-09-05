@@ -36,7 +36,7 @@ namespace MCPhase3.Controllers
         //following class I am using to consume api's
         TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         EventDetailsBO eBO = new EventDetailsBO();
-        EventsTableUpdates eventUpdate;
+        //EventsTableUpdates eventUpdate;
         InsertDataTable dataTableToDB = new InsertDataTable();
         DataTable excelDt;
         DataTable excelDt1;
@@ -1123,15 +1123,15 @@ namespace MCPhase3.Controllers
             var csvFileName  = Path.GetFileNameWithoutExtension(filePathName) + ".csv";
             var csvFilePath = csvPath + csvFileName;
             var isConverted = ConvertExcelToCsv.Convert(filePathName, csvFilePath);
-
-            var maliciousTags = ConfigGetValue("MaliciousTags").Split(",");
-            
+                        
             var result = new TaskResults { IsSuccess = false, Message = string.Empty };
 
             if (isConverted == false) {
                 result.Message = "File format error. Please try another file.";
                 return result;
             }
+
+            var maliciousTags = ConfigGetValue("MaliciousTags").Split(",");
 
             try
             {

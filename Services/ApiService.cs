@@ -34,8 +34,15 @@ namespace MCPhase3.Services
                     string contents = await response.Content.ReadAsStringAsync();
                     rBO = JsonConvert.DeserializeObject<ReturnSubmitBO>(contents);
 
-                    apiResult.IsSuccess = true;
                     apiResult.Message = rBO.RETURN_STATUSTEXT;
+                    var statusCode = (int)response.StatusCode;
+                    if (statusCode == 4)
+                    {
+                        apiResult.IsSuccess = false;    //## 'You may not update returns at this stage'
+                    }
+                    else {
+                        apiResult.IsSuccess = true;
+                    }
                 }
                 else
                 {

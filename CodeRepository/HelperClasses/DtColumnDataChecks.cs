@@ -1,9 +1,6 @@
-﻿using Oracle.ManagedDataAccess.Client;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MCPhase3.CodeRepository.HelperClasses
 {
@@ -123,51 +120,6 @@ namespace MCPhase3.CodeRepository.HelperClasses
             }
 
             return dataColumn;
-        }
-        /// <summary>
-        /// This function checks datatable col column name against the xml and if column exists in datatable col
-        /// then it assigns Oracle datatype to dbType.
-        /// </summary>
-        /// <param name="col"></param>
-        /// <param name="columnDefinations"></param>
-        /// <returns></returns>
-        public OracleDbType ColumnDataTypeCheck(DataColumn col, List<ColumnDefinations> columnDefinations)
-        {
-            OracleDbType dbType = new OracleDbType();
-            bool result = false;
-
-            for (int i = 0; i < columnDefinations.Count; i++)
-            {
-                if (result == true) break;
-
-                foreach (var name in columnDefinations)
-                {
-                    if (result == true) break;
-
-                    if (col.ToString() == name.dBColumnName)
-                    {
-
-                        switch (name.columnDataType)
-                        {
-                            case "System.Double":
-                                dbType = OracleDbType.Double;
-                                result = true;
-                                break;
-
-                            case "System.DateTime":
-                                dbType = OracleDbType.Date;
-                                result = true;
-                                break;
-
-                            case "System.String":
-                                dbType = OracleDbType.Varchar2;
-                                result = true;
-                                break;
-                        }
-                    }
-                }
-            }
-            return dbType;
         }
     }
 }
