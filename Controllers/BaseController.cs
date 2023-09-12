@@ -1,11 +1,16 @@
 ﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
+using MCPhase3.Models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MCPhase3.Controllers
 {
@@ -90,6 +95,76 @@ namespace MCPhase3.Controllers
         public string GetApiUrl(string apiName)         
         {
             return _apiEndpoints.WebApiBaseUrl + apiName;
+        }
+
+
+        /// <summary>
+        /// to insert Event Details of a remittance id.
+        /// </summary>
+        /// <param name="remID"></param>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public async void InsertEventDetails(EventDetailsBO eBO, string apiLink)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                StringContent content = new StringContent(JsonConvert.SerializeObject(eBO), Encoding.UTF8, "application/json");
+                string endPoint = apiLink;
+
+                using (var response = await client.PostAsync(apiLink, content))
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to InsertEventDetails(). Check the API is active, api: {apiLink}");
+                    }
+                }
+            }
+            //return eBO;
+        }
+
+
+        public async Task<string> ApiGet(string apiUrl)
+        {
+            using var httpClient = new HttpClient();
+            using var response = await httpClient.GetAsync(apiUrl);
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string responseContent = await response.Content.ReadAsStringAsync();
+                return responseContent;
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return "";  //## will return empty ... don't fight plz...!
+            }
+            else
+            {
+                throw new Exception($"Failed to connect to: {apiUrl}, Status: {response.StatusCode}");
+            }
+        }
+
+
+        public async Task<string> ApiPost(string apiUrl, object paramList)
+        {
+            using var httpClient = new HttpClient();
+            var content = new StringContent(JsonConvert.SerializeObject(paramList), Encoding.UTF8, "application/json");
+
+            using var response = await httpClient.PostAsync(apiUrl, content);
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string result = await response.Content.ReadAsStringAsync();
+                return result;
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+            else
+            {
+                throw new Exception($"Failed to connect to: {apiUrl}, Status: {response.StatusCode}");
+            }
         }
 
     }

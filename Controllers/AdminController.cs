@@ -24,7 +24,7 @@ namespace MCPhase3.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IApiService _apiService;
-        TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
+        //TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         
         public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
@@ -50,7 +50,7 @@ namespace MCPhase3.Controllers
                 //eventUpdate.UpdateEventDetailsTable(eBO);
                 //update Event Details table File is uploaded successfully.
                 //I have disabled it for staff.
-                callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
          
             return RedirectToAction("Index");
         }

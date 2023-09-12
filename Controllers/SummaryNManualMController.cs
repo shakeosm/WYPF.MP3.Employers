@@ -34,7 +34,7 @@ namespace MCPhase3.Controllers
         List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
 
         //following class I am using to consume api's
-        TotalRecordsInsertedAPICall apiClient = new TotalRecordsInsertedAPICall();
+        //TotalRecordsInsertedAPICall apiClient = new TotalRecordsInsertedAPICall();
         EventDetailsBO eventDetails = new EventDetailsBO();
         //EventsTableUpdates eventUpdate;
 
@@ -108,7 +108,9 @@ namespace MCPhase3.Controllers
                 string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.ErrorAndWarnings);   //## api: /AlertSummaryRecordsPayLoc
 
                 alertSumBO.remittanceId = remitIDStr;
-                model = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                //model = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
+                model = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
                 var newModel1 = model.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
 
                 if (newModel1.Count < 1)
@@ -182,7 +184,9 @@ namespace MCPhase3.Controllers
                 if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
                 {
                     alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
-                    recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                    //recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                    var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
+                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
                 }
                 else
                 {
@@ -194,25 +198,32 @@ namespace MCPhase3.Controllers
                         alertType = summaryVM.ALERT_TYPE_REF,                    
                     };
 
-                    using HttpClient client = new HttpClient();
-                    StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
-                    string endpoint = apiBaseUrlForErrorAndWarnings;
+                    var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
+                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+                    //if (recordsList.Count < 1)
+                    //{
+                    //    return View(Constants.Error403_Page);
+                    //}
 
-                    using (var Response = await client.PostAsync(endpoint, content))
-                    {
-                        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
-                            //call following api to get this uploaded remittance id of file.
-                            string result = await Response.Content.ReadAsStringAsync();
-                            recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
+                    //using HttpClient client = new HttpClient();
+                    //StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
+                    //string endpoint = apiBaseUrlForErrorAndWarnings;
 
-                            if (recordsList.Count < 1)
-                            {
-                                return View(Constants.Error403_Page);
-                            }
-                        }
-                    }
+                    //using (var Response = await client.PostAsync(endpoint, content))
+                    //{
+                    //    if (Response.StatusCode == System.Net.HttpStatusCode.OK)
+                    //    {
+                    //        _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
+                    //        //call following api to get this uploaded remittance id of file.
+                    //        string result = await Response.Content.ReadAsStringAsync();
+                    //        recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
+
+                    //        if (recordsList.Count < 1)
+                    //        {
+                    //            return View(Constants.Error403_Page);
+                    //        }
+                    //    }
+                    //}
                 }
 
                 foreach (var record in recordsList)

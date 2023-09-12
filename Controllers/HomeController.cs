@@ -3,7 +3,9 @@ using MCPhase3.CodeRepository.InsertDataProcess;
 using MCPhase3.Common;
 using MCPhase3.Models;
 using MCPhase3.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +36,7 @@ namespace MCPhase3.Controllers
         string remittanceInsertApi = string.Empty;
         string apiBaseUrlForAutoMatch = string.Empty;
         //following class I am using to consume api's
-        TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
+        //TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         EventDetailsBO eBO = new EventDetailsBO();
         //EventsTableUpdates eventUpdate;
         InsertDataTable dataTableToDB = new InsertDataTable();
@@ -180,7 +182,7 @@ namespace MCPhase3.Controllers
             if (!fileCheck.IsSuccess)
             {
                 TempData["MsgM"] = fileCheck.Message;
-                return RedirectToAction("Index", "Home", null, "uploadFile");
+                return RedirectToAction("Index", "Home");   //, null, "uploadFile");
             }
 
             //Add selected name of month into Session, filename and total records in file.
@@ -189,7 +191,7 @@ namespace MCPhase3.Controllers
             HttpContext.Session.SetString(Constants.SessionKeyPosting, vm.SelectedPostType.ToString());
             HttpContext.Session.SetString(Constants.SessionKeySchemeName, SessionSchemeNameValue);
 
-            TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
+            //TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
 
             string userName = ContextGetValue(SessionKeyUserID);
             string empName = ContextGetValue(Constants.SessionKeyEmployerName);
@@ -211,7 +213,9 @@ namespace MCPhase3.Controllers
             string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileAvailable);
 
             //check if records were uploaded previously for the selected month and year.
-            int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
+            //int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
+            var apiResult = await ApiPost(apiBaseUrlForCheckFileAvailable, fileCheckBO);
+            int fileAvailableCheck = JsonConvert.DeserializeObject<int>(apiResult);            
 
             string fileExt = string.Empty;
             string filePath = string.Empty;
@@ -410,7 +414,7 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("IndexFire", "Home", null, "uploadFile");
 
             }
-            TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
+            //TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
             CheckFileUploadedBO fileCheckBO = new CheckFileUploadedBO();
             fileCheckBO.P_Month = monthsList;
             fileCheckBO.P_Year = yearsList;
@@ -425,7 +429,10 @@ namespace MCPhase3.Controllers
             string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileAvailable);
             //check if file is uploaded for the selected month and year.
-            int result1 = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
+            //int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
+            var apiResult = await ApiPost(apiBaseUrlForCheckFileAvailable, fileCheckBO);
+            int fileAvailableCheck = JsonConvert.DeserializeObject<int>(apiResult);
+
             string fileExt = string.Empty;
             string filePath = string.Empty;
             string spreadSheetName = string.Empty;
@@ -440,7 +447,7 @@ namespace MCPhase3.Controllers
             //bypass year and month check 
             if (posting.Equals(1))
             {
-                if (result1 == 1)
+                if (fileAvailableCheck == 1)
                 {
                     TempData["MsgM"] = "File is already uploaded for the month: " + monthsList + " and " + " payrol period: " + yearsList + " <br> You can goto Dashboard and start process on file from there. ";
                     return RedirectToAction("IndexFire", "Home", null, "uploadFile");
@@ -658,7 +665,7 @@ namespace MCPhase3.Controllers
             contributionBO.payRollYear = ContextGetValue(Constants.SessionKeyYears);
                       
             remittanceInsertApi = GetApiUrl(_apiEndpoints.TotalRecordsInserted);
-            string getRemittanceIdByFileNameApi = GetApiUrl(_apiEndpoints.RemittanceGet);
+            string getRemittanceIdByFileNameApi = GetApiUrl(_apiEndpoints.GetRemittanceId);
 
             ///API URI is getting from Apsetting.json file.
             string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
@@ -680,8 +687,8 @@ namespace MCPhase3.Controllers
                             try
                             {
                                 //## by now the RemittanceId is created, when called 'var Response = await client.PostAsync(endpoint, content)'
-                                var remitApi = new TotalRecordsInsertedAPICall();
-                                remittanceID = remitApi.GetRemittanceIdBy_FileName(contributionBO.UploadedFileName.ToUpper(), getRemittanceIdByFileNameApi).Replace(".0", "");
+                                var apiResult = await ApiGet($"{getRemittanceIdByFileNameApi}{contributionBO.UploadedFileName}");
+                                remittanceID = JsonConvert.DeserializeObject<string>(apiResult);
 
                                 _logger.LogInformation("API to get Remittance id is successfull");
 
@@ -692,7 +699,7 @@ namespace MCPhase3.Controllers
                                 eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
                                 eBO.notes = "New remitance submitted and remittance ID created for the uploaded file.";
 
-                                remitApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                                InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
                             }
                             catch (Exception ex)
                             {
@@ -780,15 +787,20 @@ namespace MCPhase3.Controllers
 
                 //Get the max Datarow id from MC_CONTRIBUTIONS_RECD to insert bulk data.
                 //## we need to get the first DataRow_RecordId from the Database.. and then create new Primary Key as we insert new records.
-                int dataRowRecordId = await callApi.counterAPI(dataCounterInsertApi, rangeOfRowsModel);
-                
+                //int dataRowRecordId = await callApi.counterAPI(dataCounterInsertApi, rangeOfRowsModel);
+                var apiResult = await ApiPost(dataCounterInsertApi, rangeOfRowsModel);
+                int dataRowRecordId = JsonConvert.DeserializeObject<int>(apiResult);
+
                 //following datatable will change column names of datatable to DB column names and insert data from excelDT.
                 DataTable newDT = dataTableToDB.KeepDataTable(dataRowRecordId + 1, userName, schemeName, clientID, id.ToString()) ;
                 
                 //Insert all the records to the database using api
                 string bulkDataInsertApi = GetApiUrl(_apiEndpoints.InsertData);
                 newDT.AcceptChanges();
-                bool InsertToDbSuccess = await callApi.InsertDataApi(newDT, bulkDataInsertApi);
+                //bool InsertToDbSuccess = await callApi.InsertDataApi(newDT, bulkDataInsertApi);
+                apiResult = await ApiPost(bulkDataInsertApi, newDT);
+                bool InsertToDbSuccess = JsonConvert.DeserializeObject<bool>(apiResult);
+
                 newDT.Dispose();
 
 
@@ -843,7 +855,7 @@ namespace MCPhase3.Controllers
 
 
             //update Event Details table File is uploaded successfully.                               
-            callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+            InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
         }
             
         /// <summary>
@@ -889,20 +901,27 @@ namespace MCPhase3.Controllers
 
             try
             {
-                string totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
+                //string totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
+                var apiResult = await ApiGet( $"{apiBaseUrlForTotalRecords}{remttanceId}");
+                string totalRecords = JsonConvert.DeserializeObject<string>(apiResult);
+
                 int total = Convert.ToInt32(totalRecords.Replace(".0", ""));
                 string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
                 //following loop will keep on until it finds a record in database.//Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
                 while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
                 {
-                        totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
+                        //totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
+                        apiResult = await ApiGet($"{apiBaseUrlForTotalRecords}{remttanceId}");
+                        totalRecords = JsonConvert.DeserializeObject<string>(apiResult);
                         total = Convert.ToInt32(totalRecords.Replace(".0", ""));
                 }
-                
+
                 //## Following is a big piece of Task- initialising the entire journey, setting values, fixing issues and many things... 
-                initialiseProcBO = await callApi.InitialiseProce(initialiseProcBO, apiBaseUrlForInitialiseProc);
-                
-                
+                //initialiseProcBO = await callApi.InitialiseProce(initialiseProcBO, apiBaseUrlForInitialiseProc);
+                apiResult = await ApiPost(apiBaseUrlForInitialiseProc, initialiseProcBO);
+                initialiseProcBO = JsonConvert.DeserializeObject<InitialiseProcBO>(apiResult);
+
+
                 //HttpContext.Session.SetString(Constants.SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
                 //Return Check API to call to check if the previous month file is completed ppse
                 result.p_REMITTANCE_ID = remttanceId;
@@ -919,15 +938,20 @@ namespace MCPhase3.Controllers
                 eBO.eventTypeID = 50;
                 eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));   //TODO: why not sending 'DateTime.Now' directly? why formatting?
                 eBO.notes = "Initial Processing Completed.";
-                callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
 
-                result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
+                //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
+                apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
+                result = JsonConvert.DeserializeObject<ReturnCheckBO>(apiResult);
+
                 //Add functionality here to restrict file if the previous month file is still pending.
 
                 AutoMatchBO autoMatchBO = new AutoMatchBO();
                 //following is call to Automatch api
-                autoMatchBO = await callApi.GetAutoMatchResult(remttanceId, apiBaseUrlForAutoMatch);
-                                
+                //autoMatchBO = await callApi.GetAutoMatchResult(remttanceId, apiBaseUrlForAutoMatch);
+                apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remttanceId}");
+                autoMatchBO = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
+
                 if (Convert.ToInt32(totalRecordsInF) < total || Convert.ToInt32(totalRecordsInF) > 10000)
                     {
                         totalRecordsInF = total.ToString();
@@ -960,7 +984,7 @@ namespace MCPhase3.Controllers
                 eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
                 eBO.notes = "Auto matching done.";
                 //update Event Details table File is uploaded successfully.                               
-                callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
                 //eventUpdate.UpdateEventDetailsTable(eBO);
                 // BO = JsonConvert.DeserializeObject<List<AutoMatchBO>>(result);
             }
@@ -990,11 +1014,22 @@ namespace MCPhase3.Controllers
             return View();
         }
 
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        [AllowAnonymous]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var exDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            var vm = new ErrorViewModel() { 
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                DisplayMessage = exDetails.Error.Message,
+                ErrorPath = exDetails.Path
+            };
+            return View(vm);
+            //return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+
         /// <summary>
         /// List to show months in dropdown menu
         /// </summary>

@@ -119,14 +119,35 @@
         </div>
         <div class="container">
             <div class="jumbotron mt-5">
-                <h3><b>Step 6 – enter payment date</b></h3><hr />
-                <div class="radio">
-                    <label class="col-md-10"><input asp-for=@Model.PaidDirectlyWYPF value="Paid directly into WYPF's' bank account." type="radio" checked />Paid directly into relevant bank account</label><input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value=@DateTime.Now placeholder="dd-MM-yyyy" type="date" asp-format="{0:dd-MM-yyyy}" class="col-md-2" required oninvalid="this.setCustomValidity('* Paid by date is required.')" oninput="setCustomValidity('')" class="col-md-2" />
+                <h3><b>Step 6 – select payment method & date</b></h3><hr />
+                <div class="row mb-3">
+                                    @*value="Paid directly into WYPF's' bank account"*@
+                    <input asp-for="@Model.PaidDirectlyWYPF" type="radio" class="btn-check" id="PaymentMethodOption_BankAccount" 
+                                    value="BACS to WYPF"
+                                   data-bs-toggle="tooltip" data-bs-title="Paid directly into WYPF's' bank account" data-bs-placement="top" checked>
+                    <label class="btn btn-outline-info col-3" for="PaymentMethodOption_BankAccount">BACS to WYPF</label>
+
+                    <input asp-for="@Model.PaidDirectlyWYPF" type="radio" class="btn-check" id="PaymentMethodOption_Cheque" 
+                                    value="Sent by cheque"
+                                   data-bs-toggle="tooltip" data-bs-title="Sent by cheque" data-bs-placement="top">
+                    <label class="btn btn-outline-info col-3 mx-2" for="PaymentMethodOption_Cheque">Sent by cheque</label>
+
+                    <input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value="@DateTime.Today.ToString("yyyy-MM-dd")" placeholder="dd-MM-yyyy" 
+                            type="date" asp-format="{0:dd-MM-yyyy}" class="col-2 mx-3" required 
+                            oninvalid="this.setCustomValidity('* Paid by date is required.')" 
+                            oninput="setCustomValidity('')" />
+
+                </div>
+          @*      <div class="radio">
+                    <label class="col-md-10">
+                        <input asp-for=@Model.PaidDirectlyWYPF value="Paid directly into WYPF's' bank account." type="radio" checked />Paid directly into relevant bank account</label>
+                        <input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value=@DateTime.Now placeholder="dd-MM-yyyy" type="date" asp-format="{0:dd-MM-yyyy}" class="col-md-2" required oninvalid="this.setCustomValidity('* Paid by date is required.')" oninput="setCustomValidity('')" class="col-md-2" />
                 </div>
 
                 <div class="radio">
-                    <label class="col-md-10"><input asp-for=@Model.PaidDirectlyWYPF value="Sent by cheque" type="radio" />Sent by cheque</label>
-                </div><br><br><hr />
+                    <label class="col-md-10">
+                        <input asp-for=@Model.PaidDirectlyWYPF value="Sent by cheque" type="radio" />Sent by cheque</label>
+                </div><br><br><hr />*@
 
                 <div class="alert alert-success" role="alert">
                     <h3>If you have verified steps 1 - 6 please click following button to Move to the next stage.</h3>
@@ -148,14 +169,14 @@
 
 
 
-@*@section Scripts {
-        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        }
-    }*@
+@section Scripts {
+  @*  <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>*@
+    }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.5.1/jquery.js">
+@*<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.5.1/jquery.js">
 
-</script>
+</script>*@
 
 <script>
 
