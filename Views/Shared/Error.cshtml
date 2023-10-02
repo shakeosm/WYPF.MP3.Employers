@@ -1,9 +1,9 @@
-﻿@model ErrorViewModel
+﻿@model MCPhase3.ViewModels.ErrorViewModel
 @{
     ViewData["Title"] = "Error";
 }
 
-<h1 class="text-danger">Error.</h1>
+<h1 class="text-danger">Error 500</h1>
 <h2 class="text-danger">An error occurred while processing your request.</h2>
 
 @if (Model.ShowRequestId)
@@ -18,7 +18,7 @@
     Sorry for the inonvenience. The Support Team has been notified this issue. Please try again later.
 </div>
 <div class="alert alert-warning h4">
-    Message: @Model.DisplayMessage <br /><br /><br />
+    @*Message: @Model.Message <br /><br /><br />*@
     Path: @Model.ErrorPath
     <hr />
     <a href="~/Admin/" class="btn btn-success" alt="Back to Home page">Back to Home page</a>

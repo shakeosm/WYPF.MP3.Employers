@@ -401,11 +401,9 @@ namespace MCPhase3.Controllers
         /// <returns>JSon Text</returns>
         public IActionResult ClearRedisUserSession(string id)
         {
-            if (id != null)
+            if ( string.IsNullOrEmpty(id) == false)
             {
-                string decryptedId = WYPF_Protector.Decrypt(id);
-
-                _cache.DeleteUserSession(decryptedId);
+                _cache.DeleteUserSession(id);
                 ClearTempData();
                 ClearSessionValues();
 

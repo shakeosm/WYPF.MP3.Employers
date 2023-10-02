@@ -76,7 +76,16 @@ namespace MCPhase3
                 options.Filters.Add<UserSessionCheckActionFilter>();
             });
 
-            services.AddMvc();           
+            services.AddMvc();
+
+            //## new fix following the PenTest report
+            services.AddHsts(options =>
+            {
+                options.Preload = true;
+                options.IncludeSubDomains = true;
+                options.MaxAge = TimeSpan.FromDays(366);
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -90,21 +99,10 @@ namespace MCPhase3
             else
             {
                 app.UseExceptionHandler("/Home/Error");
+                app.UseStatusCodePagesWithRedirects("/ErrorHandlerMiddleware/HttpStatusCodeHandler/{0}");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
+                //app.UseHsts();
             }
-
-            //call error view directly -- this works
-            //app.UseStatusCodePagesWithReExecute("/Home/Error", "?code={0}");
-
-            // this will return nice 404 error or 500 error page
-            //app.UseStatusCodePages();
-
-            app.UseStatusCodePagesWithRedirects("/ErrorHandlerMiddleware/HttpStatusCodeHandler/{0}");
-            //app.UseStatusCodePagesWithReExecute("/ErrorHandlerMiddleware/HttpStatusCodeHandler", "?statusCode={0}");
-
-            //app.UseExceptionHandler("/ErrorHandlerMiddleware/PageNotFound/{0}");
-
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
@@ -114,7 +112,6 @@ namespace MCPhase3
 
             app.UseAuthorization();
            
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

@@ -106,22 +106,23 @@
                 </div>
 
                 <div>
-                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" />
+                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" /> @*Action => /Home/Create*@
                 </div>
 
                 @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
             </div>
 
-            @if (TempData["MsgM"] != null)
+            @if (String.IsNullOrEmpty(Model.ErrorMessage) == false)
             {
-                var alterClass = TempData["MsgM"].ToString().Contains("success") ? "alert-success" : "alert-danger";
+                var alterClass = Model.ErrorMessage.ToString().Contains("success") ? "alert-success" : "alert-danger";
                 <div class="alert @alterClass border-2 mt-3 validation-message-div">
 
                     @*Html.Raw to apply Html tags inside a string*@
-                    @Html.Raw(@TempData["MsgM"].ToString())
+                    @*@Html.Raw(@TempData["MsgM"].ToString())*@
+                    @Html.Raw(@Model.ErrorMessage.ToString())
                 </div>
 
-                @if (@TempData["MsgM"].ToString() == "File is uploaded successfully")
+                @if (@Model.ErrorMessage == "File is uploaded successfully")
                 {
                     <div class="col-12 mt-3">
                         <a asp-action="Remad" class="btn btn-primary">Next </a> to check all totals are correct.

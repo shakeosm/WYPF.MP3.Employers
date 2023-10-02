@@ -7,6 +7,18 @@ namespace MCPhase3.CodeRepository
     public class CheckSpreadsheetValuesSample
     {
         CommonRepo repo = new CommonRepo();
+
+        /// <summary>This is the actual Field/Data validation on the Excel file- which is now in a DataSet.
+        /// This will generate respective error message based on the defined validation rules on each field.</summary>
+        /// <param name="dt"></param>
+        /// <param name="month"></param>
+        /// <param name="posting"></param>
+        /// <param name="validPayrollYr"></param>
+        /// <param name="paylocations"></param>
+        /// <param name="validTitles"></param>
+        /// <param name="invalidSigns"></param>
+        /// <param name="CheckSpreadSheetErrorMsg"></param>
+        /// <returns></returns>
         public string CheckSpreadsheetValues(DataTable dt,string month,string posting, string validPayrollYr, List<PayrollProvidersBO> paylocations,string[] validTitles,string[] invalidSigns, ref string CheckSpreadSheetErrorMsg)
         {
             //bool result = true;

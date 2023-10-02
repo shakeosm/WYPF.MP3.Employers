@@ -766,6 +766,7 @@
   <None Include="wwwroot\dist\js\pages\sparkline\jquery.charts-sparkline.js" />
   <None Include="wwwroot\dist\js\sidebarmenu.js" />
   <None Include="wwwroot\dist\js\waves.js" />
+  <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.13.0" />
     <PackageReference Include="Effortless.Net.Core.Encryption" Version="1.3.1" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.32.0" />

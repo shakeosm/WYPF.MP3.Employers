@@ -27,5 +27,7 @@ namespace MCPhase3.ViewModels
         [Required(ErrorMessage = "Data file is required")]
         public IFormFile PaymentFile { get; set; }
 
+        public string ErrorMessage { get; set; }
+
     }
 }

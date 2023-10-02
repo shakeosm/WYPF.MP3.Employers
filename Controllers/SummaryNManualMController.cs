@@ -67,8 +67,8 @@ namespace MCPhase3.Controllers
             //inc will keep check manual matching stage and it will not be successfully untill 
             //Process successfully completed. 
 
-            try
-            {
+            //try
+            //{
 
                 //When select to work with error and warnings on payloction level then I have to keep PaylocFile in sesssion so 
                 //when come back to this page after 1st process/during process I can get that from session.
@@ -88,7 +88,7 @@ namespace MCPhase3.Controllers
                 //List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
                 var model = new List<ErrorAndWarningViewModelWithRecords>();
 
-                string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+                //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
 
                 //pass remittance id to next action
@@ -111,17 +111,21 @@ namespace MCPhase3.Controllers
                 //model = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
                 model = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
-                var newModel1 = model.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
 
-                if (newModel1.Count < 1)
-                {
-                    return RedirectToAction("Home", "Admin");
-                }
+            if (model != null && model.Count > 0) { 
+            
+                var newModel1 = model.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
 
                 foreach (var item in newModel1)
                 {
                     item.EncryptedRowRecordID = encryptedRemID;
                 }
+            }
+            //else
+            //    {
+            //        return RedirectToAction("Home", "Admin");
+            //    }
+
 
                 var newModel = model.AsQueryable();
                 newModel = newModel.OrderByDescending(x => x.remittanceID);
@@ -131,14 +135,15 @@ namespace MCPhase3.Controllers
                 ViewBag.MaximumPaginationItemsPerPage = pageSize;       //## to show/hide the pagination control
                 // vLSContext = vLSContext.OrderByDescending(x => x.CreatedDate);
                 return View(PaginatedList<ErrorAndWarningViewModelWithRecords>.CreateAsync(newModel, pageNumber ?? 1, pageSize));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["MsgError"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex.ToString(), ex.StackTrace);
+            //    TempData["MsgError"] = "System is showing error, please try again later";
+            //    return RedirectToAction("Index", "Login");
+            //}
         }
+
 
         /// <summary>
         /// Used to show all records with a warning that is suitable for bulk approval.
@@ -150,8 +155,8 @@ namespace MCPhase3.Controllers
 
         public async Task<IActionResult> WarningsListforBulkApproval(ErrorAndWarningViewModelWithRecords summaryVM)
         {
-            try
-            {
+            //try
+            //{
                 string errorWarningSummaryKeyName = $"{CurrentUserId()}_{Constants.ErrorWarningSummaryKeyName}";
                 //following functionality is added to keep user on same warning and error page until all sorted.
                 //## if we come back here from Acknowledgement page- then the ViewModel 'summaryVM' is empty- so need to read from the Cache.. save life..
@@ -238,25 +243,26 @@ namespace MCPhase3.Controllers
                 ViewBag.status = summaryVM.ALERT_DESC + "";
 
                 return View(recordsList);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex.ToString(), ex.StackTrace);
+            //    TempData["Msg1"] = "System is showing error, please try again later";
+            //    return RedirectToAction("Index", "Login");
+            //}
 
         }
 
-        public async Task<IActionResult> GoToSummaryPage()
+        /// <summary>This is a short-circuit to go to Summary page without needing to create the URL from the Alert details child pages</summary>
+        /// <returns></returns>
+        public IActionResult GoToSummaryPage()
         {
             //var remitID = HttpContext.Session.GetString(SessionKeyRemittanceID);
             //AlertSumBO alertSumBO = new AlertSumBO() { remittanceId = EncryptUrlValue(remitID)};
 
             return RedirectToAction("Index", new AlertSumBO());
-
-
         }
+
 
         /// <summary>
         /// BulkApprove all records and update in database.
@@ -272,11 +278,11 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
             }
 
-            try
-            {                
+            //try
+            //{                
                 string result = string.Empty;
                 string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.ErrorAndWarningsApproval); 
-                string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+                //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
                 var errorAndWarningTo = new ErrorAndWarningApprovalOB();
                 errorAndWarningTo.userID = CurrentUserId();
@@ -315,13 +321,13 @@ namespace MCPhase3.Controllers
                 }
                 
                 return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex.ToString(), ex.StackTrace);
+            //    TempData["Msg1"] = "System is showing error, please try again later";
+            //    return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
+            //}
         }
 
         /// <summary>
@@ -353,32 +359,35 @@ namespace MCPhase3.Controllers
                 helpTextBO.L_USERID = userName;
                 helpTextBO.L_DATAROWID_RECD = dataRowID;
 
-                using (HttpClient client = new HttpClient())
-                {
-                    StringContent content = new StringContent(JsonConvert.SerializeObject(helpTextBO), Encoding.UTF8, "application/json");
-                    string endpoint = apiBaseUrlForErrorAndWarningsList;
+                apiResponse = await ApiPost(apiBaseUrlForErrorAndWarningsList, helpTextBO);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResponse);
 
-                    using (var Response = await client.PostAsync(endpoint, content))
-                    {
-                        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                            _logger.LogInformation("BulkApproval API Call successfull");
-                            //call following api to get this uploaded remittance id of file.
-                            apiResponse = await Response.Content.ReadAsStringAsync();
-                            recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResponse);
+                //using (HttpClient client = new HttpClient())
+                //{
+                //    StringContent content = new StringContent(JsonConvert.SerializeObject(helpTextBO), Encoding.UTF8, "application/json");
+                //    string endpoint = apiBaseUrlForErrorAndWarningsList;
+
+                //    using (var Response = await client.PostAsync(endpoint, content))
+                //    {
+                //        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
+                //        {
+                //            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+                //            _logger.LogInformation("BulkApproval API Call successfull");
+                //            //call following api to get this uploaded remittance id of file.
+                //            apiResponse = await Response.Content.ReadAsStringAsync();
+                //            recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResponse);
 
 
-                            if (recordsList.Count < 1)
-                            {
-                                return View(Constants.Error403_Page);
-                            }
+                //            //if (recordsList.Count < 1)
+                //            //{
+                //            //    return View(Constants.Error403_Page);
+                //            //}
 
-                            // TempData["msg"] = errorAndWarningTo.returnStatusTxt;
+                //            // TempData["msg"] = errorAndWarningTo.returnStatusTxt;
 
-                        }
-                    }
-                }
+                //        }
+                //    }
+                //}
 
                 foreach (var item in recordsList)
                 {
@@ -387,24 +396,28 @@ namespace MCPhase3.Controllers
 
                 ViewBag.HelpText = recordsList;
                 string result = string.Empty;
-                using (HttpClient client = new HttpClient())
-                {
-                    StringContent content = new StringContent(JsonConvert.SerializeObject(helpTextBO), Encoding.UTF8, "application/json");
-                    string endpoint = apiBaseUrlForErrorAndWarningsApproval;
 
-                    using (var Response = await client.PostAsync(endpoint, content))
-                    {
-                        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                            _logger.LogInformation("BulkApproval API Call successfull");
-                            //call following api to get this uploaded remittance id of file.
-                            result = await Response.Content.ReadAsStringAsync();
-                            memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(result);
+                apiResponse = await ApiPost(apiBaseUrlForErrorAndWarningsApproval, helpTextBO);
+                memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
+                //using (HttpClient client = new HttpClient())
+                //{
+                //    StringContent content = new StringContent(JsonConvert.SerializeObject(helpTextBO), Encoding.UTF8, "application/json");
+                //    string endpoint = apiBaseUrlForErrorAndWarningsApproval;
 
-                        }
-                    }
-                }
+                //    using (var Response = await client.PostAsync(endpoint, content))
+                //    {
+                //        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
+                //        {
+                //            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+                //            _logger.LogInformation("BulkApproval API Call successfull");
+                //            //call following api to get this uploaded remittance id of file.
+                //            result = await Response.Content.ReadAsStringAsync();
+                //            memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(result);
+
+                //        }
+                //    }
+                //}
+
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 //ViewBag.remittanceID = remID;
 
@@ -415,8 +428,9 @@ namespace MCPhase3.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
+                throw new Exception("Failed to execute UpdateSingleRecord() Process.", ex);
+                //TempData["Msg1"] = "System is showing error, please try again later";
+                //return RedirectToAction("Index", "Login");
             }
         }
         /// <summary>
@@ -425,45 +439,50 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> UpdateRecordToDataBase(MemberUpdateRecordBO updateRecordBO)
         {
-            try
-            {
+            //try
+            //{
                 updateRecordBO.modUser = HttpContext.Session.GetString(Constants.SessionKeyUserID);
 
-                string remittanceID = GetRemittanceId(returnEncryptedIdOnly: false);
+                string remittanceID_Encrypted = GetRemittanceId();
 
-                int remID = Convert.ToInt32(remittanceID);
+                //int remID = Convert.ToInt32(remittanceID);
 
                 string apiLink = GetApiUrl(_apiEndpoints.UpdateRecord);
-                using (HttpClient client = new HttpClient())
-                {
-                    StringContent content = new StringContent(JsonConvert.SerializeObject(updateRecordBO), Encoding.UTF8, "application/json");
-                    string endPoint = apiLink;
 
-                    using (var response = await client.PostAsync(apiLink, content))
-                    {
-                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                            _logger.LogInformation("Record updated successfully Call successfull");
-                            TempData["msg"] = "Record updated successfully";
-                            //call following api to get this uploaded remittance id of file.
-                            var result = await response.Content.ReadAsStringAsync();
+                string apiResponse = await ApiPost(apiLink, updateRecordBO);
+                
+                //using (HttpClient client = new HttpClient())
+                //{
+                //    StringContent content = new StringContent(JsonConvert.SerializeObject(updateRecordBO), Encoding.UTF8, "application/json");
+                //    string endPoint = apiLink;
 
-                        }
-                    }
-                }
-                string rem = EncryptUrlValue(remID.ToString());
+                //    using (var response = await client.PostAsync(apiLink, content))
+                //    {
+                //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                //        {
+                //            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+                //            _logger.LogInformation("Record updated successfully Call successfull");
+                //            TempData["msg"] = "Record updated successfully";
+                //            //call following api to get this uploaded remittance id of file.
+                //            var result = await response.Content.ReadAsStringAsync();
 
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", rem);
+                //        }
+                //    }
+                //}
+                //string rem = EncryptUrlValue(remittanceID_Encrypted);
+
+                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remittanceID_Encrypted);
                 // return RedirectToAction("Index", "SummaryNManualM", rem);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex.ToString(), ex.StackTrace);
+            //    TempData["Msg1"] = "System is showing error, please try again later";
+            //    return RedirectToAction("Index", "Login");
+            //}
         }
+
+
         /// <summary>
         /// This is new action which will handle all the loose matching and 
         /// new folder create or new starter process.
@@ -479,12 +498,12 @@ namespace MCPhase3.Controllers
 
             int.TryParse(DecryptUrlValue(id), out int dataRowID);
 
-            try
-            {
+            //try
+            //{
                 // IEnumerable<HelpForEAndAUpdateRecord> helpText = null;
                 //show employer name
                 ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
-                MemberUpdateRecordBO memberUpdateRecordBO = new MemberUpdateRecordBO();
+                //MemberUpdateRecordBO memberUpdateRecordBO = new MemberUpdateRecordBO();
                 //shows error and warnings data
                 string apiBaseUrlForUpdateRecordGetValues = GetApiUrl(_apiEndpoints.UpdateRecordGetValues);
                 //shows recent data that is inserted by using posting file 
@@ -495,26 +514,30 @@ namespace MCPhase3.Controllers
                 helpTextBO.L_DATAROWID_RECD = dataRowID;
                 helpTextBO.L_USERID = HttpContext.Session.GetString(Constants.SessionKeyUserID);
                 string result = string.Empty;
-                using (HttpClient client = new HttpClient())
-                {
-                    StringContent content = new StringContent(JsonConvert.SerializeObject(helpTextBO), Encoding.UTF8, "application/json");
-                    string endpoint = apiBaseUrlForUpdateRecordGetValues;
 
-                    using (var Response = await client.PostAsync(endpoint, content))
-                    {
-                        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                            _logger.LogInformation("BulkApproval API Call successfull");
-                            //call following api to get this uploaded remittance id of file.
-                            result = await Response.Content.ReadAsStringAsync();
-                            memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(result);
+                string apiResponse = await ApiPost(apiBaseUrlForUpdateRecordGetValues, helpTextBO);
+                MemberUpdateRecordBO memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
 
-                            // TempData["msg"] = errorAndWarningTo.returnStatusTxt;
+                //using (HttpClient client = new HttpClient())
+                //{
+                //    StringContent content = new StringContent(JsonConvert.SerializeObject(helpTextBO), Encoding.UTF8, "application/json");
+                //    string endpoint = apiBaseUrlForUpdateRecordGetValues;
 
-                        }
-                    }
-                }
+                //    using (var Response = await client.PostAsync(endpoint, content))
+                //    {
+                //        if (Response.StatusCode == System.Net.HttpStatusCode.OK)
+                //        {
+                //            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+                //            _logger.LogInformation("BulkApproval API Call successfull");
+                //            //call following api to get this uploaded remittance id of file.
+                //            result = await Response.Content.ReadAsStringAsync();
+                //            memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(result);
+
+                //            // TempData["msg"] = errorAndWarningTo.returnStatusTxt;
+
+                //        }
+                //    }
+                //}
 
                 //To cal all values/data of member record. that is already in UPM.
                 getMatchesBO.userId = HttpContext.Session.GetString(Constants.SessionKeyUserID);
@@ -523,11 +546,8 @@ namespace MCPhase3.Controllers
                 //method to get matching records from UPM
                 listOfMatches.Matches = await GetRecords(getMatchesBO);
 
-                if (listOfMatches.Matches.Count < 1)
-                {
-                    return View(Constants.Error403_Page);
-                }
-
+            if (listOfMatches.Matches.Count >= 1)
+            {
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 ViewBag.fileData = memberUpdateRecordBO;
 
@@ -537,14 +557,16 @@ namespace MCPhase3.Controllers
                 }
 
                 listOfMatches.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
+            }
+
                 return View(listOfMatches);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["Msg1"] = "System is showing error, please try again later";
-                return View(Constants.Error403_Page);
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex.ToString(), ex.StackTrace);
+            //    TempData["Msg1"] = "System is showing error, please try again later";
+            //    return View(Constants.Error403_Page);
+            //}
         }
         /// <summary>
         /// only datarowid and userid need to call api.
@@ -552,28 +574,30 @@ namespace MCPhase3.Controllers
         /// <param name="getMatchesBO"></param>
         /// <returns></returns>
         private async Task<List<GetMatchesBO>> GetRecords(GetMatchesBO getMatchesBO)
-        {
-            List<GetMatchesBO> bO = new List<GetMatchesBO>();
+        {            
             string apiLink = GetApiUrl(_apiEndpoints.MatchingRecordsUPM);
 
-            using (HttpClient client = new HttpClient())
-            {
-                StringContent content = new StringContent(JsonConvert.SerializeObject(getMatchesBO), Encoding.UTF8, "application/json");
-                string endPoint = apiLink;
+            string apiResponse = await ApiPost(apiLink, getMatchesBO);
+            List<GetMatchesBO> bO = JsonConvert.DeserializeObject<List<GetMatchesBO>>(apiResponse);
 
-                using (var response = await client.PostAsync(apiLink, content))
-                {
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                        _logger.LogInformation("Record updated successfully Call successfull");
-                        //TempData["msg"] = "Record updated successfully";
-                        //call following api to get this uploaded remittance id of file.
-                        var result = await response.Content.ReadAsStringAsync();
-                        bO = JsonConvert.DeserializeObject<List<GetMatchesBO>>(result);
-                    }
-                }
-            }
+            //using (HttpClient client = new HttpClient())
+            //{
+            //    StringContent content = new StringContent(JsonConvert.SerializeObject(getMatchesBO), Encoding.UTF8, "application/json");
+            //    string endPoint = apiLink;
+
+            //    using (var response = await client.PostAsync(apiLink, content))
+            //    {
+            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            //        {
+            //            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+            //            _logger.LogInformation("Record updated successfully Call successfull");
+            //            //TempData["msg"] = "Record updated successfully";
+            //            //call following api to get this uploaded remittance id of file.
+            //            var result = await response.Content.ReadAsStringAsync();
+            //            bO = JsonConvert.DeserializeObject<List<GetMatchesBO>>(result);
+            //        }
+            //    }
+            //}
             return bO;
         }
 
@@ -589,12 +613,12 @@ namespace MCPhase3.Controllers
             UpdateRecordModel updateRecordModel = new UpdateRecordModel();
 
             //int remID = (int)HttpContext.Session.GetInt32(SessionKeyRemittanceID);
-            string remittanceID = GetRemittanceId(returnEncryptedIdOnly: false);
+            string remittanceID = GetRemittanceId(returnAsEncrypted: false);
             // DecryptUrlValue(_cache.GetString($"{CurrentUserId()}_{Constants.SessionKeyRemittanceID}"));
 
             int remID = Convert.ToInt32(remittanceID);
 
-            string apiLink = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
+            string matchingRecordsManualApi = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
             UpdateFolder obj1 = new UpdateFolder();
             AddNewFolder obj2 = new AddNewFolder();
             AddNewPersonAndFolder obj3 = new AddNewPersonAndFolder();
@@ -649,47 +673,50 @@ namespace MCPhase3.Controllers
             bO.folderMatch = updateRecordModel.folderMatch;
             bO.userId = CurrentUserId();
             bO.note = getMatchesBO.Note;
-            try
-            {
+            
+            //try
+            //{
 
+                string apiResponse = await ApiPost(matchingRecordsManualApi, bO);
+                TempData["msg"] = "Record updated successfully";
 
-                using (HttpClient client = new HttpClient())
-                {
-                    StringContent content = new StringContent(JsonConvert.SerializeObject(bO), Encoding.UTF8, "application/json");
-                    string endPoint = apiLink;
+                //using (HttpClient client = new HttpClient())
+                //{
+                //    StringContent content = new StringContent(JsonConvert.SerializeObject(bO), Encoding.UTF8, "application/json");
+                //    string endPoint = matchingRecordsManualApi;
 
-                    using (var response = await client.PostAsync(apiLink, content))
-                    {
-                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
-                            _logger.LogInformation("Record updated successfully Call successfull");
-                            TempData["msg"] = "Record updated successfully";
-                            //call following api to get this uploaded remittance id of file.
-                            var result = await response.Content.ReadAsStringAsync();
-                        }
-                    }
-                }
+                //    using (var response = await client.PostAsync(matchingRecordsManualApi, content))
+                //    {
+                //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                //        {
+                //            // var contributionBONew = JsonConvert.SerializeObject(contributionBO);
+                //            _logger.LogInformation("Record updated successfully Call successfull");
+                //            TempData["msg"] = "Record updated successfully";
+                //            //call following api to get this uploaded remittance id of file.
+                //            var result = await response.Content.ReadAsStringAsync();
+                //        }
+                //    }
+                //}
 
                 //## So far all good- now we can update the Score and avoid clicking 'CheckReturn' button
                 //https://localhost:57132/Admin/SubmitReturn?P_PAYLOC_FILE_ID=0&P_STATUSCODE=80&p_REMITTANCE_ID=123
-                var remitInfo = new ReturnSubmitBO()
-                {
-                    p_REMITTANCE_ID = remittanceID,
-                    P_USERID = ContextGetValue(Constants.SessionKeyUserID)
-                    //rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
-                };
+                //var remitInfo = new ReturnSubmitBO()
+                //{
+                //    p_REMITTANCE_ID = remittanceID,
+                //    P_USERID = ContextGetValue(Constants.SessionKeyUserID)
+                //    //rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
+                //};
                 //TODO: we need to add the current Status value (ie: 80, 90) to update and get new status code
                 //var apiResult = await _apiCallService.UpdateScore(remitInfo);
 
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remID);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["Msg1"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Login");
-            }
+                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", GetRemittanceId());
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex.ToString(), ex.StackTrace);
+            //    TempData["Msg1"] = "System is showing error, please try again later";
+            //    return RedirectToAction("Index", "Login");
+            //}
         }
 
 
@@ -703,6 +730,8 @@ namespace MCPhase3.Controllers
             // GetMatchesBO.isActive myClass = new bO.isActive();
             return updateRecord.UpdateRecord();
         }
+
+
         private string ConverToString(MatchCollection alertid)
         {
             string result = string.Empty;
@@ -736,7 +765,7 @@ namespace MCPhase3.Controllers
             {
 
                 _ = int.TryParse(DecryptUrlValue(Id, forceDecode: false), out int dataRowID);
-                int remID = Convert.ToInt32(GetRemittanceId(returnEncryptedIdOnly: false));
+                int remID = Convert.ToInt32(GetRemittanceId(returnAsEncrypted: false));
 
                 bo.P_DATAROWID_RECD = dataRowID;
                 bo.P_USERID = CurrentUserId(); ;
@@ -782,6 +811,8 @@ namespace MCPhase3.Controllers
 
             return data;
         }
+
+
         /// <summary>
         /// Api returned dots and special chars
         /// </summary>

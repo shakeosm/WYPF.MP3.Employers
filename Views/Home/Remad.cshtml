@@ -1,8 +1,17 @@
 ﻿@model MCPhase3.Models.MonthlyContributionBO
 @{
     ViewData["Title"] = "Check Totals";
-    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";    
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 }
+
+@{
+    double employeesTotal = 0;
+    if (ViewBag.EmployeeTotal != null)    
+    {
+        employeesTotal = ViewBag.EmployeeTotal;
+    }
+}
+
 <div class="border shadow-lg p-4 mb-4 bg-white">
     @*<div class="container-fluid bg-3 text-center">
         <div class="container">*@
@@ -62,7 +71,7 @@
                 <div class="row"><h4 class="col-md-10">Total employees additional regular contributions (ARC) 2008 reg</h4><h4 class="col-md-2">£ @Model.MemberContribARCSS.ToString("N")</h4></div>
                 <div class="row"><h4 class="col-md-10">Total employees additional pension contribution (APC) reg 16 </h4><h4 class="col-md-2">£ @Model.MemberContribAPCSS.ToString("N")</h4></div>
                 <hr />
-                <div class="row"><h4 class="col-md-10"><b>Total employees contribution</b></h4><h4 class="col-md-2" id="id=" MembersTotalValue""><b>£ @Model.EmployerContribSS.ToString("N")</b></h4></div>
+                <div class="row"><h4 class="col-md-10"><b>Total employees contribution</b></h4><h4 class="col-md-2" id="MembersTotalValue"><b>£ @employeesTotal.ToString("N")</b></h4></div>
             </div>
         </div>
         <br /><br />
@@ -121,21 +130,27 @@
             <div class="jumbotron mt-5">
                 <h3><b>Step 6 – select payment method & date</b></h3><hr />
                 <div class="row mb-3">
-                                    @*value="Paid directly into WYPF's' bank account"*@
-                    <input asp-for="@Model.PaidDirectlyWYPF" type="radio" class="btn-check" id="PaymentMethodOption_BankAccount" 
-                                    value="BACS to WYPF"
-                                   data-bs-toggle="tooltip" data-bs-title="Paid directly into WYPF's' bank account" data-bs-placement="top" checked>
-                    <label class="btn btn-outline-info col-3" for="PaymentMethodOption_BankAccount">BACS to WYPF</label>
+                    <div class="col-9">
+                        @*value="Paid directly into WYPF's' bank account"*@
+                        <input asp-for="@Model.PaidDirectlyWYPF" type="radio" class="btn-check" id="PaymentMethodOption_BankAccount" 
+                                        value="Sent by BACS"
+                                       data-bs-toggle="tooltip" data-bs-title="Paid directly into relevant bank account" data-bs-placement="top" checked>
+                        <label class="btn btn-outline-info col-6" for="PaymentMethodOption_BankAccount">Paid directly into relevent bank account</label>
 
-                    <input asp-for="@Model.PaidDirectlyWYPF" type="radio" class="btn-check" id="PaymentMethodOption_Cheque" 
-                                    value="Sent by cheque"
-                                   data-bs-toggle="tooltip" data-bs-title="Sent by cheque" data-bs-placement="top">
-                    <label class="btn btn-outline-info col-3 mx-2" for="PaymentMethodOption_Cheque">Sent by cheque</label>
+                        <input asp-for="@Model.PaidDirectlyWYPF" type="radio" class="btn-check" id="PaymentMethodOption_Cheque" 
+                                        value="Sent by cheque"
+                                       data-bs-toggle="tooltip" data-bs-title="Sent by cheque" data-bs-placement="top">
+                        <label class="btn btn-outline-info col-3 mx-2" for="PaymentMethodOption_Cheque">Sent by cheque</label>
 
-                    <input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value="@DateTime.Today.ToString("yyyy-MM-dd")" placeholder="dd-MM-yyyy" 
-                            type="date" asp-format="{0:dd-MM-yyyy}" class="col-2 mx-3" required 
-                            oninvalid="this.setCustomValidity('* Paid by date is required.')" 
-                            oninput="setCustomValidity('')" />
+                    </div>
+
+                    <div class="col-3 float-right">
+                        <input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value="@DateTime.Today.ToString("yyyy-MM-dd")" placeholder="dd-MM-yyyy" 
+                                type="date" asp-format="{0:dd-MM-yyyy}" class="mx-3 form-control float-end text-right" required 
+                                oninvalid="this.setCustomValidity('* Paid by date is required.')" 
+                                oninput="setCustomValidity('')" />
+
+                    </div>
 
                 </div>
           @*      <div class="radio">

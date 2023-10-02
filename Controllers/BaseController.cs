@@ -51,14 +51,14 @@ namespace MCPhase3.Controllers
         public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
-        /// <param name="returnEncryptedIdOnly">Will return an Encrypted value if True, set false to get Number value</param>        
+        /// <param name="returnAsEncrypted">Will return an Encrypted value if True, set false to get Number value</param>        
         /// <returns>Remittance Id in Encrypted format</returns>
-        public string GetRemittanceId(bool returnEncryptedIdOnly = true) {            
+        public string GetRemittanceId(bool returnAsEncrypted = true) {            
             string encryptedValue = _cache.GetString(RemittanceIdKeyName());
 
             string decryptUrlValue = DecryptUrlValue(encryptedValue, forceDecode: false);
 
-            return returnEncryptedIdOnly ? encryptedValue : decryptUrlValue;
+            return returnAsEncrypted ? encryptedValue : decryptUrlValue;
 
         }
 
@@ -102,27 +102,11 @@ namespace MCPhase3.Controllers
         /// to insert Event Details of a remittance id.
         /// </summary>
         /// <param name="remID"></param>
-        /// <param name="url"></param>
         /// <returns></returns>
-        public async void InsertEventDetails(EventDetailsBO eBO, string apiLink)
+        public async void InsertEventDetails(EventDetailsBO eBO)
         {
-            using (HttpClient client = new HttpClient())
-            {
-                StringContent content = new StringContent(JsonConvert.SerializeObject(eBO), Encoding.UTF8, "application/json");
-                string endPoint = apiLink;
-
-                using (var response = await client.PostAsync(apiLink, content))
-                {
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                    }
-                    else
-                    {
-                        throw new Exception($"Failed to InsertEventDetails(). Check the API is active, api: {apiLink}");
-                    }
-                }
-            }
-            //return eBO;
+            string apiLink = GetApiUrl(_apiEndpoints.InsertEventDetails);
+            var apiResult = await ApiPost(apiLink, eBO);           
         }
 
 

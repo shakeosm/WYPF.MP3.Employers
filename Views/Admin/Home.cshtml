@@ -75,7 +75,7 @@
                                 <td class="remittance-id">@item.remittance_Id</td>
                                 <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
                                 <td>@item.paylocation_Name</td>@*<td>@item.return_Records</td>*@
-                                <td>@item.return_Status_Text</td>
+                                <td>@item.return_Status_Code - @item.return_Status_Text</td>
                                 <td class="latest-score text-center">@item.return_Score_Emp</td>
 
                                 @{

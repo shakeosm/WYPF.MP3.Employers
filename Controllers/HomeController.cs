@@ -110,13 +110,15 @@ namespace MCPhase3.Controllers
                     Value = x.pay_location_ID.ToString()
                 });
 
+            string fileUploadErrorMessage = _cache.GetString(Constants.FileUploadErrorMessage);
 
             var viewModel = new HomeFileUploadVM()
             {
                 MonthList = GetMonths(monthSelected),
                 YearList = GetYears(yearSelected),
                 OptionList = GetOption(postSelected),
-                PayLocationList = subPayList
+                PayLocationList = subPayList,
+                ErrorMessage = fileUploadErrorMessage,
             };
 
             return View(viewModel);
@@ -162,6 +164,31 @@ namespace MCPhase3.Controllers
             return View();
         }
 
+
+        [AllowAnonymous]        
+        public async Task<IActionResult> Error()
+        {
+            var exDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+
+            var errorDetails = new ErrorViewModel()
+            {
+
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                UserId = HttpContext.Session.GetString(Constants.UserIdKeyName),
+                ApplicationId = Constants.ApplicationId,
+                ErrorPath = exDetails?.Path,
+                Message = exDetails?.Error.Message,
+                StackTrace = exDetails?.Error.StackTrace
+
+            };
+
+            string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
+            await ApiPost(insertErrorLogApi, errorDetails);
+
+            return View(errorDetails);
+
+        }
+
         /// <summary>
         /// following Create is to work with LG pages
         /// </summary>
@@ -172,8 +199,8 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HomeFileUploadVM vm)
         {
-            if (!ModelState.IsValid) {
-                TempData["MsgM"] = "Error: You must select 'Year', 'Month' and 'PostType' to continue";
+            if (!ModelState.IsValid) {                
+                _cache.SetString(Constants.FileUploadErrorMessage, "Error: You must select 'Year', 'Month' and 'PostType' to continue");
                 return RedirectToAction("Index", "Home");
             }
 
@@ -181,10 +208,10 @@ namespace MCPhase3.Controllers
 
             if (!fileCheck.IsSuccess)
             {
-                TempData["MsgM"] = fileCheck.Message;
+                _cache.SetString(Constants.FileUploadErrorMessage, fileCheck.Message);
                 return RedirectToAction("Index", "Home");   //, null, "uploadFile");
             }
-
+           
             //Add selected name of month into Session, filename and total records in file.
             HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth);
             HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear);
@@ -233,8 +260,9 @@ namespace MCPhase3.Controllers
             {
                 if (fileAvailableCheck == 1)
                 {
-                    TempData["MsgM"] = $"File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.YearList} <br/> You can goto Dashboard and start process on file from there. ";
-                    return RedirectToAction("Index", "Home", null, "uploadFile");
+                    //TempData["MsgM"] 
+                    _cache.SetString(Constants.FileUploadErrorMessage, $"File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.YearList} <br/> You can goto Dashboard and start process on file from there. ");
+                    return RedirectToAction("Index", "Home");
                 }
             }
           
@@ -247,8 +275,8 @@ namespace MCPhase3.Controllers
             
             if (!Path.Exists(_customerUploadsLocalFolder))
             {
-                TempData["MsgM"] = "Error: File upload area not defined. Please contact support.";
-                return RedirectToAction("Index", "Home", null, "uploadFile");
+                _cache.SetString(Constants.FileUploadErrorMessage, "Error: File upload area not defined. Please contact support.");
+                return RedirectToAction("Index", "Home");
             }
 
             //clear Datatable when upload file button is clicked.
@@ -274,37 +302,36 @@ namespace MCPhase3.Controllers
             if (result.IsSuccess == false)
             {
                 System.IO.File.Delete(filePath);
-                TempData["MsgM"] = result.Message;
-                return RedirectToAction("Index", "Home", null, "uploadFile");
+                _cache.SetString(Constants.FileUploadErrorMessage, result.Message);
+                return RedirectToAction("Index", "Home");
             }
 
             try
             {
-                excelDt = CommonRepo.ExcelToDT(filePath, out errorMessage);
+                //## This will Convert the Excel sheet to a System.Data.DataTable to make it convenient to validate fields
+                excelDt = CommonRepo.ConvertExcelToDataTable(filePath, out errorMessage);
 
-                //## all good.. now store this file details in the Redis cache for further processing, if required
+                //## all good.. now store this filePath in the Redis cache for further processing, if required
                 _cache.SetString($"{CurrentUserId()}_{UploadedFilePathKey}", filePath);
             }
             catch (Exception ex)
-            {
-                TempData["MsgM"] = "File has an error or missing something " + ex.Message;
-                return RedirectToAction("Index", "Home", null, "uploadFile");
+            {                                
+                _cache.SetString(Constants.FileUploadErrorMessage, "File has an error or missing something " + ex.Message);
+                return RedirectToAction("Index", "Home");
             }
               
 
             if (excelDt == null)
-            {
-                TempData["MsgM"] = errorMessage;
-                //model.myErrorMessageText += errorMessage;
-                return RedirectToAction("Index", "Home", null, "uploadFile");                    
+            {                
+                _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
+                return RedirectToAction("Index", "Home");
             }               
 
             // change column heading Name
             if (!CommonRepo.ChangeColumnHeadings(excelDt, out errorMessage))
             {
-                TempData["MsgM"] = errorMessage;
-                // model.myErrorMessageText += errorMessage;
-                return RedirectToAction("Index", "Home", null, "uploadFile");
+                _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
+                return RedirectToAction("Index", "Home");
                 //return RedirectToAction("Index", "Home");
             }
 
@@ -327,15 +354,17 @@ namespace MCPhase3.Controllers
 
             //Seperated LG and Fire functions
             //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
+            //## This is the actual Field / Data validation on the Excel file - which is now in a DataSet. This will generate respective error message based on the defined validation rules on each field.
             string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, vm.SelectedMonth, vm.SelectedPostType.ToString(), vm.SelectedYear, subPayList,validTitles, invalidSigns, ref errorMessage);
 
             if (!errorMessage.Equals(""))
             {
-                TempData["MsgM"] = null;
                 //following tempdata is showing list of errors in file.
-                TempData["MsgM"] = "<h2> Please remove following errors from file and upload again </h2><br />" + CheckSpreadSheetErrorMsg;
+
                 //HtmlString str = new HtmlString( "<h2> Please remove following errors from file and upload again </h2>" + CheckSpreadSheetErrorMsg);
-                return RedirectToAction("Index", "Home",null, "uploadFile");
+            
+                _cache.SetString(Constants.FileUploadErrorMessage, "<h2> Please remove following errors from file and upload again </h2><br />" + CheckSpreadSheetErrorMsg);
+                return RedirectToAction("Index", "Home");
             }
             else
             {
@@ -346,15 +375,16 @@ namespace MCPhase3.Controllers
                 try
                 {
                     //save datatable for future use
-                    dataTableToDB.PassDt(0, "", "", "", "", excelDt, designDocPath);
-                    TempData["MsgM"] = "File is uploaded successfully";
+                    dataTableToDB.PassDt(0, "", "", "", "", excelDt, designDocPath);                    
 
-                    return RedirectToAction("Remad", "Home");
+                    _cache.SetString(Constants.FileUploadErrorMessage, "File is uploaded successfully");
+                    return RedirectToAction("Index", "Home");
+
                 }
                 catch (Exception ex)
                 {
-                    TempData["MsgM"] = $"File upload failed! Please check error in qoutes : <b> {ex.Message}</b >'";
-                    return RedirectToAction("Index", "Home", null, "uploadFile");
+                    _cache.SetString(Constants.FileUploadErrorMessage, $"File upload failed! Please check error in qoutes : <b> {ex.Message}</b >'");
+                    return RedirectToAction("Index", "Home");
                 }
                 finally
                 {
@@ -497,7 +527,7 @@ namespace MCPhase3.Controllers
                 //string fullPathWithFileName = Path.Combine(path,fileExt);
                 try
                 {
-                    excelDt = CommonRepo.ExcelToDT(filePath, out errorMessage);
+                    excelDt = CommonRepo.ConvertExcelToDataTable(filePath, out errorMessage);
                 }
                 catch (Exception ex)
                 {
@@ -668,7 +698,7 @@ namespace MCPhase3.Controllers
             string getRemittanceIdByFileNameApi = GetApiUrl(_apiEndpoints.GetRemittanceId);
 
             ///API URI is getting from Apsetting.json file.
-            string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+            //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
             using (HttpClient client = new HttpClient())
             {
@@ -696,10 +726,10 @@ namespace MCPhase3.Controllers
                                 eBO.remittanceID = Convert.ToInt32(remittanceID);
                                 eBO.remittanceStatus = 1;
                                 eBO.eventTypeID = 2;
-                                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
+                                //eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
                                 eBO.notes = "New remitance submitted and remittance ID created for the uploaded file.";
 
-                                InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                                InsertEventDetails(eBO);
                             }
                             catch (Exception ex)
                             {
@@ -766,7 +796,7 @@ namespace MCPhase3.Controllers
                 return View(errorAndWarningViewModelWithRecords);
             }
 
-            string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+            //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
             //copy file to local folder
             try
@@ -835,7 +865,7 @@ namespace MCPhase3.Controllers
             {
                 _logger.LogError($"Error at MoveFileForFTP(). Details:: {ex}");
                 TempData["MsgError"] = "System has failed uploading records to the database, Please contact MP3 support.";
-                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex}");
+                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex.Message[..200]}");
             }
             
             
@@ -844,18 +874,20 @@ namespace MCPhase3.Controllers
 
         public void WriteToDBEventLog(int remitID,  string eventNotes, int remittanceStatus = 1, int eventTypeID = 1)
         {
-            string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
-            var eBO = new EventDetailsBO();
-            //Update Event Details table and add File Uploaded and ready to FTP
-            eBO.remittanceID = remitID;
-            eBO.remittanceStatus = remittanceStatus;
-            eBO.eventTypeID = eventTypeID;
-            eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
-            eBO.notes = eventNotes;
+            //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+            var eBO = new EventDetailsBO
+            {
+                //Update Event Details table and add File Uploaded and ready to FTP
+                remittanceID = remitID,
+                remittanceStatus = remittanceStatus,
+                eventTypeID = eventTypeID,
+                //eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")),
+                notes = eventNotes
+            };
 
 
             //update Event Details table File is uploaded successfully.                               
-            InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+            InsertEventDetails(eBO);
         }
             
         /// <summary>
@@ -903,17 +935,17 @@ namespace MCPhase3.Controllers
             {
                 //string totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
                 var apiResult = await ApiGet( $"{apiBaseUrlForTotalRecords}{remttanceId}");
-                string totalRecords = JsonConvert.DeserializeObject<string>(apiResult);
+                //string totalRecords = JsonConvert.DeserializeObject<int>(apiResult);
 
-                int total = Convert.ToInt32(totalRecords.Replace(".0", ""));
+                int total = JsonConvert.DeserializeObject<int>(apiResult); ;// Convert.ToInt32(totalRecords.Replace(".0", ""));
                 string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
                 //following loop will keep on until it finds a record in database.//Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
                 while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
                 {
                         //totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
                         apiResult = await ApiGet($"{apiBaseUrlForTotalRecords}{remttanceId}");
-                        totalRecords = JsonConvert.DeserializeObject<string>(apiResult);
-                        total = Convert.ToInt32(totalRecords.Replace(".0", ""));
+                        //totalRecords = JsonConvert.DeserializeObject<string>(apiResult);
+                        total = JsonConvert.DeserializeObject<int>(apiResult);
                 }
 
                 //## Following is a big piece of Task- initialising the entire journey, setting values, fixing issues and many things... 
@@ -931,14 +963,14 @@ namespace MCPhase3.Controllers
 
 
                 string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc); 
-                string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
+                //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
 
                 eBO.remittanceID = remttanceId;
                 eBO.remittanceStatus = 1;
                 eBO.eventTypeID = 50;
-                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));   //TODO: why not sending 'DateTime.Now' directly? why formatting?
+                //eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")); 
                 eBO.notes = "Initial Processing Completed.";
-                InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                InsertEventDetails(eBO);
 
                 //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
                 apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
@@ -981,10 +1013,10 @@ namespace MCPhase3.Controllers
                 eBO.remittanceID = remttanceId; //Convert.ToInt32(remittanceID);
                 eBO.remittanceStatus = 1;
                 eBO.eventTypeID = 80;
-                eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
+                //eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
                 eBO.notes = "Auto matching done.";
                 //update Event Details table File is uploaded successfully.                               
-                InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
+                InsertEventDetails(eBO);
                 //eventUpdate.UpdateEventDetailsTable(eBO);
                 // BO = JsonConvert.DeserializeObject<List<AutoMatchBO>>(result);
             }
@@ -1014,20 +1046,6 @@ namespace MCPhase3.Controllers
             return View();
         }
 
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        [AllowAnonymous]
-        public IActionResult Error()
-        {
-            var exDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
-            var vm = new ErrorViewModel() { 
-                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-                DisplayMessage = exDetails.Error.Message,
-                ErrorPath = exDetails.Path
-            };
-            return View(vm);
-            //return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
 
 
         /// <summary>
@@ -1223,7 +1241,7 @@ namespace MCPhase3.Controllers
                 _logger.LogInformation("File is copied to local folder.");
             }
 
-            var scriptsCheck = CheckMaliciousScripts(filePathName);
+            var scriptsCheck = CheckMaliciousScripts(filePathName);            
 
             //## now delete the both staging files.. not required anymore
             System.IO.File.Delete(filePathName);

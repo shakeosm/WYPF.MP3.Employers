@@ -34,9 +34,11 @@
         public string ReturnCheckProc { get; set; }
         public string SubmitReturn { get; set; }
         public string InsertData { get; set; }
-        public string InsertDataCounter { get; set; }
+        public string InsertDataCounter { get; set; }        
         public string RecordReset { get; set; }
         public string DeleteRemittance { get; set; }
+        
+        public string ErrorLogCreate { get; set; }
     }
 
 }

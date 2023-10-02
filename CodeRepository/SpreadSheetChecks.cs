@@ -326,7 +326,7 @@ namespace MCPhase3.CodeRepository
                 if (!validTitles.Contains(title, StringComparer.CurrentCultureIgnoreCase))
                 {
                     //var idx = dt.Rows.IndexOf(dr);
-                    CheckSpreadSheetErrorMsg += "<BR /> You have added invalid member title  <B> </B> in  row <B>" + inc + "</B> of spreadsheet:<BR />Please add right member title to upload file<BR />";
+                    CheckSpreadSheetErrorMsg += "<BR /> You have added invalid member title in  row <B>" + inc + "</B> of spreadsheet:<BR />Please add right member title to upload file<BR />";
                     result = false;
                 }
             }
