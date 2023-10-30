@@ -63,6 +63,8 @@ namespace MCPhase3.Models
         public string ACTION_BY { get; set; }
 
         public string EncryptedRowRecordID { get; set; }
+        public string PAYLOCATIONREF { get; set; }
+        public string PAYLOCATIONNAME { get; set; }
     }
 
     public class ErrorAndWarningViewModelLists

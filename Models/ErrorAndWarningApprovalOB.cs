@@ -9,4 +9,13 @@
 
         
     }
+
+    public class ApproveWarningsInBulkVM
+    {
+        public string AlertIdList { get; set; }
+        public string UserID { get; set; }
+        public double returnStatus { get; set; }
+        public string returnStatusTxt { get; set; }
+
+    }
 }

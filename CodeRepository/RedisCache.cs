@@ -37,7 +37,7 @@ namespace MCPhase3.CodeRepository
             if (value is not null)
             {
                 var jsonData = JsonConvert.SerializeObject(value);
-                _distributedCache.SetString(cacheKeyName, jsonData, CacheOption());
+                _distributedCache.SetString(cacheKeyName, jsonData, CacheOption());                
             }
         }
 

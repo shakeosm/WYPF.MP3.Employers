@@ -56,8 +56,6 @@ namespace MCPhase3
 
             services.Configure<ApiEndpoints>(Configuration.GetSection("ApiEndpoints"));
 
-            services.AddScoped<IApiService, ApiService>();
-
             // Add Redis services to the container.
             services.AddSingleton<IRedisCache, RedisCache>();
             services.AddStackExchangeRedisCache(options => {

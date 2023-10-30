@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace MCPhase3.ViewModels
 {
     public class ErrorViewModel
@@ -12,5 +14,10 @@ namespace MCPhase3.ViewModels
         public string ErrorPath { get; set; }
         public string Message { get; set; }
         public string StackTrace { get; set; }
+        [JsonIgnore]
+        public string Source { get; set; }
+        public string RemittanceInfo { get; set; }
+
+        public string DisplayMessage { get; set; }
     }
 }

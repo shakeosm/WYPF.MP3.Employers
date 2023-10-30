@@ -14,12 +14,12 @@ namespace MCPhase3.CodeRepository
         /// <param name="month"></param>
         /// <param name="posting"></param>
         /// <param name="validPayrollYr"></param>
-        /// <param name="paylocations"></param>
+        /// <param name="validPayLocations"></param>
         /// <param name="validTitles"></param>
         /// <param name="invalidSigns"></param>
         /// <param name="CheckSpreadSheetErrorMsg"></param>
         /// <returns></returns>
-        public string CheckSpreadsheetValues(DataTable dt,string month,string posting, string validPayrollYr, List<PayrollProvidersBO> paylocations,string[] validTitles,string[] invalidSigns, ref string CheckSpreadSheetErrorMsg)
+        public string CheckSpreadsheetValues(DataTable dt,string month,string posting, string validPayrollYr, List<PayrollProvidersBO> validPayLocations,string[] validTitles,string[] invalidSigns, ref string CheckSpreadSheetErrorMsg)
         {
             //bool result = true;
             string result = string.Empty;
@@ -97,22 +97,22 @@ namespace MCPhase3.CodeRepository
 
             string employerLocErrorMsg = string.Empty;
 
-            CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckPayrollPeriod(dt, month,posting, ref payrollPeriodErrorMsg);
+            CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckPayrollPeriod(ref dt, month,posting, ref payrollPeriodErrorMsg);
             CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckSpeechMark(dt, invalidSigns, ref speechMarkErrorMsg);
-            CheckPayrollYearStatus = CodeRepository.SpreadSheetChecks.CheckPayrollYear(dt, posting, validPayrollYr, ref payrollYearErrorMsg);
-            CheckEmployerLocCodeStatus = CodeRepository.SpreadSheetChecks.CheckEmployerLocCode(dt, paylocations, ref employerLocCodeErrorMsg);
+            CheckPayrollYearStatus = CodeRepository.SpreadSheetChecks.CheckPayrollYear(ref dt, posting, validPayrollYr, ref payrollYearErrorMsg);
+            CheckEmployerLocCodeStatus = CodeRepository.SpreadSheetChecks.CheckEmployerLocCode(dt, validPayLocations, ref employerLocCodeErrorMsg);
           //richard asked to disable it 17/10/22
-             CheckMemberTitleStatus = CodeRepository.SpreadSheetChecks.CheckTitle(dt,validTitles, ref memberTitleErrorMsg);
+             CheckMemberTitleStatus = CodeRepository.SpreadSheetChecks.CheckTitle(ref dt,validTitles, ref memberTitleErrorMsg);
 
-            CheckMemberSurnameStatus = CodeRepository.SpreadSheetChecks.CheckSurname(dt, ref memberSurnameErrorMsg);
-            CheckMemberForenameStatus = CodeRepository.SpreadSheetChecks.CheckForename(dt, ref memberForenameErrorMsg);
-            CheckMemberAddress1Status = CodeRepository.SpreadSheetChecks.CheckAddress1(dt, ref memberAddress1ErrorMsg);
-            CheckMemberAddress2Status = CodeRepository.SpreadSheetChecks.CheckAddress2(dt, ref memberAddress2ErrorMsg);
-            CheckMemberPostcodeStatus = CodeRepository.SpreadSheetChecks.CheckPostcode(dt, ref memberPostcodeErrorMsg);
-            CheckMemberNINOStatus = CodeRepository.SpreadSheetChecks.CheckNINO(dt, ref memberNINOErrorMsg);
-            CheckMemberPayrefStatus = CodeRepository.SpreadSheetChecks.CheckPayRef(dt, ref memberPayrefErrorMsg);
+            CheckMemberSurnameStatus = CodeRepository.SpreadSheetChecks.CheckSurname(ref dt, ref memberSurnameErrorMsg);
+            CheckMemberForenameStatus = CodeRepository.SpreadSheetChecks.CheckForename(ref dt, ref memberForenameErrorMsg);
+            CheckMemberAddress1Status = CodeRepository.SpreadSheetChecks.CheckAddress1(ref dt, ref memberAddress1ErrorMsg);
+            CheckMemberAddress2Status = CodeRepository.SpreadSheetChecks.CheckAddress2(ref dt, ref memberAddress2ErrorMsg);
+            CheckMemberPostcodeStatus = CodeRepository.SpreadSheetChecks.CheckPostcode(ref dt, ref memberPostcodeErrorMsg);
+            CheckMemberNINOStatus = CodeRepository.SpreadSheetChecks.CheckNINO(ref dt, ref memberNINOErrorMsg);
+            CheckMemberPayrefStatus = CodeRepository.SpreadSheetChecks.CheckPayRef(ref dt, ref memberPayrefErrorMsg);
             CheckDOBStatus = CodeRepository.SpreadSheetChecks.CheckDOB(dt, ref memberDOBErrorMsg);
-            CheckFTPTFlagStatus = CodeRepository.SpreadSheetChecks.CheckFullTimePartTimeFlagForLG(dt, ref memberFTPTFlagErrorMsg);
+            CheckFTPTFlagStatus = CodeRepository.SpreadSheetChecks.CheckFullTimePartTimeFlagForLG(ref dt, ref memberFTPTFlagErrorMsg);
             CheckStdHoursStatus = CodeRepository.SpreadSheetChecks.CheckStandardHours(dt, ref memberStdHoursErrorMsg);
             CheckContractualHoursStatus = CodeRepository.SpreadSheetChecks.CheckContractualHours(dt, ref memberContractualHoursErrorMsg);
             CheckDateJSSatus = CodeRepository.SpreadSheetChecks.CheckDateJS(dt, ref memberDateJSErrorMsg);
@@ -206,6 +206,8 @@ namespace MCPhase3.CodeRepository
             return result;
 
         }
+
+
         /// <summary>
         /// checks errors in Fire file
         /// </summary>
@@ -315,27 +317,27 @@ namespace MCPhase3.CodeRepository
             string employerLocErrorMsg = string.Empty;
             string speechMarkErrorMsg = string.Empty;
 
-            CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckPayrollPeriod(dt, month, posting, ref payrollPeriodErrorMsg);
+            CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckPayrollPeriod(ref dt, month, posting, ref payrollPeriodErrorMsg);
             CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckSpeechMark(dt, invalidSigns, ref speechMarkErrorMsg);
-            CheckPayrollYearStatus = CodeRepository.SpreadSheetChecks.CheckPayrollYear(dt,posting, validPayrollYr, ref payrollYearErrorMsg);
+            CheckPayrollYearStatus = CodeRepository.SpreadSheetChecks.CheckPayrollYear(ref dt,posting, validPayrollYr, ref payrollYearErrorMsg);
             CheckEmployerLocCodeStatus = repo.CheckEmployerLocCode(dt, ref employerLocCodeErrorMsg);
             
-            CheckEmployerName = CodeRepository.SpreadSheetChecks.CheckTitle(dt,validTitles, ref employerNameErrorMsg);
-            CheckMemberTitleStatus = CodeRepository.SpreadSheetChecks.CheckEmployerName(dt, ref memberTitleErrorMsg);
+            CheckEmployerName = CodeRepository.SpreadSheetChecks.CheckTitle(ref dt,validTitles, ref employerNameErrorMsg);
+            CheckMemberTitleStatus = CodeRepository.SpreadSheetChecks.CheckEmployerName(ref dt, ref memberTitleErrorMsg);
 
-            CheckSchemeName = CodeRepository.SpreadSheetChecks.CheckFireScheme(dt, ref schemeNameErrorMsg);
+            CheckSchemeName = CodeRepository.SpreadSheetChecks.CheckFireScheme(ref dt, ref schemeNameErrorMsg);
             CheckRangRole = CodeRepository.SpreadSheetChecks.CheckRankRole(dt, ref ranRoleErrorMsg);
             CheckStdHours = CodeRepository.SpreadSheetChecks.CheckStandardHours(dt, ref stdHoursErrorMsg);
 
-            CheckMemberSurnameStatus = CodeRepository.SpreadSheetChecks.CheckSurname(dt, ref memberSurnameErrorMsg);
-            CheckMemberForenameStatus = CodeRepository.SpreadSheetChecks.CheckForename(dt, ref memberForenameErrorMsg);
-            CheckMemberAddress1Status = CodeRepository.SpreadSheetChecks.CheckAddress1(dt, ref memberAddress1ErrorMsg);
-            CheckMemberAddress2Status = CodeRepository.SpreadSheetChecks.CheckAddress2(dt, ref memberAddress2ErrorMsg);
-            CheckMemberPostcodeStatus = CodeRepository.SpreadSheetChecks.CheckPostcode(dt, ref memberPostcodeErrorMsg);
-            CheckMemberNINOStatus = CodeRepository.SpreadSheetChecks.CheckNINO(dt, ref memberNINOErrorMsg);
-            CheckMemberPayrefStatus = CodeRepository.SpreadSheetChecks.CheckPayRef(dt, ref memberPayrefErrorMsg);
+            CheckMemberSurnameStatus = CodeRepository.SpreadSheetChecks.CheckSurname(ref dt, ref memberSurnameErrorMsg);
+            CheckMemberForenameStatus = CodeRepository.SpreadSheetChecks.CheckForename(ref dt, ref memberForenameErrorMsg);
+            CheckMemberAddress1Status = CodeRepository.SpreadSheetChecks.CheckAddress1(ref dt, ref memberAddress1ErrorMsg);
+            CheckMemberAddress2Status = CodeRepository.SpreadSheetChecks.CheckAddress2(ref dt, ref memberAddress2ErrorMsg);
+            CheckMemberPostcodeStatus = CodeRepository.SpreadSheetChecks.CheckPostcode(ref dt, ref memberPostcodeErrorMsg);
+            CheckMemberNINOStatus = CodeRepository.SpreadSheetChecks.CheckNINO(ref dt, ref memberNINOErrorMsg);
+            CheckMemberPayrefStatus = CodeRepository.SpreadSheetChecks.CheckPayRef(ref dt, ref memberPayrefErrorMsg);
             CheckDOBStatus = CodeRepository.SpreadSheetChecks.CheckDOB(dt, ref memberDOBErrorMsg);
-            CheckFTPTFlagStatus = CodeRepository.SpreadSheetChecks.CheckFullTimePartTimeFlag(dt, ref memberFTPTFlagErrorMsg);
+            CheckFTPTFlagStatus = CodeRepository.SpreadSheetChecks.CheckFullTimePartTimeFlag(ref dt, ref memberFTPTFlagErrorMsg);
             //CheckStdHoursStatus = App_Code.SpreadSheetChecks.CheckStandardHours(dt, ref memberStdHoursErrorMsg);
 
             CheckScheme1992And2006Value = CodeRepository.SpreadSheetChecks.CheckPensionablePay1992And2006(dt, ref schemeValue1992And2006ErrorMsg);

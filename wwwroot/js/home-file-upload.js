@@ -69,6 +69,7 @@
                     $("#UploadFileButton").prop("disabled", true);  //## file is invalid, don't allow the user to Submit this page with invalid file..
                 } else {
                     $("#UploadFileButton").prop("disabled", false); //## Valid file- OK to submit the page and procees to next step                    
+                    $('#liveToast .toast-body').text("File contents are valid and ready to upload!");
                     $('#liveToast').toast('show');  //## show the user a Bootstrap Toast message about the success
                 }
 

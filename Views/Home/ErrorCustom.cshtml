@@ -1,0 +1,24 @@
+﻿@model MCPhase3.ViewModels.ErrorViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger mt-5">Error 500</h1>
+<h2 class="text-danger">An error occurred while processing your request.</h2>
+
+
+<h3>Request processing error.</h3>
+<div class="alert alert-danger mb-3 h3  mt-5">
+    @Model.Message    
+    <hr />
+    @Model.DisplayMessage
+</div>
+<div class="alert alert-warning h4 mt-5">
+    Path: @Model.ErrorPath
+    <hr />
+    Remittance ID: @Model.RemittanceInfo
+    <hr />
+    <a href="~/Admin/" class="btn btn-success" alt="Back to Home page">Back to Home page</a>
+</div>

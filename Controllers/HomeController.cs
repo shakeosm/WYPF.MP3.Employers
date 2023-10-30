@@ -59,7 +59,7 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <returns></returns>
         public async Task<IActionResult> Index()
-        {
+        {            
             string clientType = ContextGetValue(Constants.SessionKeyClientType);
             //Session can set here to check if logged in user is Fire or LG.
             //check if year, month and type of posting is already selected from session
@@ -111,6 +111,8 @@ namespace MCPhase3.Controllers
                 });
 
             string fileUploadErrorMessage = _cache.GetString(Constants.FileUploadErrorMessage);
+            //## Delete the message once Read.. otherwise- this will keep coming on every page request...
+            _cache.Delete(Constants.FileUploadErrorMessage);
 
             var viewModel = new HomeFileUploadVM()
             {
@@ -175,7 +177,7 @@ namespace MCPhase3.Controllers
 
                 RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
                 UserId = HttpContext.Session.GetString(Constants.UserIdKeyName),
-                ApplicationId = Constants.ApplicationId,
+                ApplicationId = Constants.EmployersPortal,
                 ErrorPath = exDetails?.Path,
                 Message = exDetails?.Error.Message,
                 StackTrace = exDetails?.Error.StackTrace
@@ -185,6 +187,25 @@ namespace MCPhase3.Controllers
             string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
             await ApiPost(insertErrorLogApi, errorDetails);
 
+            return View(errorDetails);
+
+        }
+
+
+        [AllowAnonymous]        
+        public async Task<IActionResult> ErrorCustom()
+        {
+            //### we keep the Error view model in cache.. not to pass it via URL- query string...
+            string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
+            var errorDetails = _cache.Get<ErrorViewModel>(cacheKey);
+            if (errorDetails == null) {
+                return RedirectToAction("Index", "Home");
+            }
+
+            string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
+            await ApiPost(insertErrorLogApi, errorDetails);
+
+            _cache.Delete(cacheKey);    //## once Error Details are read and displayed- delete this.. Job done!
             return View(errorDetails);
 
         }
@@ -865,7 +886,7 @@ namespace MCPhase3.Controllers
             {
                 _logger.LogError($"Error at MoveFileForFTP(). Details:: {ex}");
                 TempData["MsgError"] = "System has failed uploading records to the database, Please contact MP3 support.";
-                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex.Message[..200]}");
+                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex.Message.Substring(0,200)}");
             }
             
             
@@ -891,7 +912,7 @@ namespace MCPhase3.Controllers
         }
             
         /// <summary>
-        /// Here to start encode remittance
+        /// Here to start encode remittance.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -899,37 +920,35 @@ namespace MCPhase3.Controllers
         {
             int remttanceId = Convert.ToInt32(DecryptUrlValue(id));
 
-            HelpTextBO helpTextBO = new HelpTextBO();
+            //HelpTextBO helpTextBO = new HelpTextBO();
            
-            ReturnCheckBO result = new ReturnCheckBO();
+            ReturnCheckBO result = new();
             //AutoMatchBO autoMatchBO = new AutoMatchBO();
-            ErrorAndWarningViewModelWithRecords errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords();
-            InitialiseProcBO initialiseProcBO = new InitialiseProcBO();
-            string userID = ContextGetValue(Constants.SessionKeyUserID);
-            string empURL = GetApiUrl(_apiEndpoints.EmployerName);
             
+            
+            string userID = ContextGetValue(Constants.SessionKeyUserID);
+            //string empURL = GetApiUrl(_apiEndpoints.EmployerName);
+            
+            var errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords
+            {
+                ALERT_TYPE_REF = "ALL",
+                ALERT_CLASS = "Error and Warnings",
+                //pass encoded id to view model class
+                remittanceID = id,
+                ALERT_DESC = "All the Errors and Warnings in file"
+            };
 
-            //callApi.InsertDataApi(excelDt, insertDataConn);
-
-            //following newID needs to replace with id(remittance id)
-            int newID = remttanceId;
-            errorAndWarningViewModelWithRecords.ALERT_TYPE_REF = "ALL";
-            errorAndWarningViewModelWithRecords.ALERT_CLASS = "Error and Warnings";
-            //pass decoded id to view model class
-            errorAndWarningViewModelWithRecords.remittanceID = id; //errorAndWarningViewModelWithRecords.remittanceID = newID.ToString();
-            errorAndWarningViewModelWithRecords.ALERT_DESC = "All the Errors and Warnings in file";
-
-            List<AutoMatchBO> BO = new List<AutoMatchBO>();
-            //call Automatch api url from appsettings.json
+            //List<AutoMatchBO> BO = new List<AutoMatchBO>();
             apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch);
             //url to get total number of records in database
             string apiBaseUrlForTotalRecords = GetApiUrl(_apiEndpoints.TotalRecordsInserted);
             string apiBaseUrlForInitialiseProc = GetApiUrl(_apiEndpoints.InitialiseProc);
 
-            initialiseProcBO.P_REMITTANCE_ID = newID;
-            initialiseProcBO.P_USERID = userID;
-            //initailise procedure api is added at 25/07/22
-           
+            var initialiseProcBO = new InitialiseProcBO
+            {
+                P_REMITTANCE_ID = remttanceId,
+                P_USERID = userID
+            };
 
             try
             {
@@ -937,48 +956,66 @@ namespace MCPhase3.Controllers
                 var apiResult = await ApiGet( $"{apiBaseUrlForTotalRecords}{remttanceId}");
                 //string totalRecords = JsonConvert.DeserializeObject<int>(apiResult);
 
-                int total = JsonConvert.DeserializeObject<int>(apiResult); ;// Convert.ToInt32(totalRecords.Replace(".0", ""));
+                int total = JsonConvert.DeserializeObject<int>(apiResult);
                 string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
                 //following loop will keep on until it finds a record in database.//Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
                 while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
                 {
-                        //totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
-                        apiResult = await ApiGet($"{apiBaseUrlForTotalRecords}{remttanceId}");
-                        //totalRecords = JsonConvert.DeserializeObject<string>(apiResult);
-                        total = JsonConvert.DeserializeObject<int>(apiResult);
+                    apiResult = await ApiGet($"{apiBaseUrlForTotalRecords}{remttanceId}");
+                    total = JsonConvert.DeserializeObject<int>(apiResult);
                 }
 
                 //## Following is a big piece of Task- initialising the entire journey, setting values, fixing issues and many things... 
-                //initialiseProcBO = await callApi.InitialiseProce(initialiseProcBO, apiBaseUrlForInitialiseProc);
                 apiResult = await ApiPost(apiBaseUrlForInitialiseProc, initialiseProcBO);
                 initialiseProcBO = JsonConvert.DeserializeObject<InitialiseProcBO>(apiResult);
 
+                //## need to add a check to see what is the outcome of 'apiBaseUrlForInitialiseProc' API call..
+                if(initialiseProcBO.P_STATUSCODE == 9)
+                {
+                    //## abort mission... corrupted data found..
+                    var errorViewModel = new ErrorViewModel()
+                    {
+                        ApplicationId = Constants.EmployersPortal,
+                        ErrorPath = $"/Home/RemittanceInsertDB/{remttanceId}",
+                        Message = "Return Initialise failed with StatusCode 9.",
+                        RemittanceInfo = remttanceId.ToString(),
+                        RequestId = "0",
+                        Source = apiBaseUrlForInitialiseProc,
+                        UserId = CurrentUserId(),
+                        DisplayMessage = "The supplied file seems to have corrupt data therefore Insert operation failed. Please try to upload a file with simplified data."
+                    };
+                    string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
+                    _cache.Set(cacheKey, errorViewModel);                    
 
-                //HttpContext.Session.SetString(Constants.SessionKeyReturnInit, initialiseProcBO.P_RECORDS_PROCESSED.ToString());
+                    eBO.remittanceID = remttanceId;
+                    eBO.remittanceStatus = 1;
+                    eBO.eventTypeID = 4;
+                    eBO.notes = errorViewModel.Message;
+                    InsertEventDetails(eBO);
+
+                    return RedirectToAction("ErrorCustom", "Home");
+                }
+
+
+                eBO.remittanceID = remttanceId;
+                eBO.remittanceStatus = 1;
+                eBO.eventTypeID = 50;
+                eBO.notes = "Initial Processing Completed.";
+                InsertEventDetails(eBO);
+
+                //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
                 //Return Check API to call to check if the previous month file is completed ppse
                 result.p_REMITTANCE_ID = remttanceId;
                 result.P_USERID = userID;
                 result.P_PAYLOC_FILE_ID = 0;
 
-
-
-                string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc); 
-                //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
-
-                eBO.remittanceID = remttanceId;
-                eBO.remittanceStatus = 1;
-                eBO.eventTypeID = 50;
-                //eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")); 
-                eBO.notes = "Initial Processing Completed.";
-                InsertEventDetails(eBO);
-
-                //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
+                string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc);      //## Get 'status of a file'
                 apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
-                result = JsonConvert.DeserializeObject<ReturnCheckBO>(apiResult);
+                result = JsonConvert.DeserializeObject<ReturnCheckBO>(apiResult);   //## we get StatusCode and StatusText back, ie: 1 = Record Not Found.. 
 
                 //Add functionality here to restrict file if the previous month file is still pending.
 
-                AutoMatchBO autoMatchBO = new AutoMatchBO();
+                AutoMatchBO autoMatchBO = new ();
                 //following is call to Automatch api
                 //autoMatchBO = await callApi.GetAutoMatchResult(remttanceId, apiBaseUrlForAutoMatch);
                 apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remttanceId}");
@@ -1027,6 +1064,19 @@ namespace MCPhase3.Controllers
                 _logger.LogError($"Bulk Data or AutoMatch is failed, it is implemented in Home controller. Detail: {ex.StackTrace}");
                 TempData["MsgError"] = "Please refresh your page in couple of minutes.";
                 //RedirectToAction("RemittanceInsertDB","Home", id);
+
+                var vm = new ErrorViewModel()
+                {
+                    ApplicationId = Constants.EmployersPortal,
+                    Message = ex.Message,
+                    Source = apiBaseUrlForTotalRecords,
+                    ErrorPath = $"Home->RemittanceInsertDB(int {remttanceId})",
+                    RemittanceInfo = remttanceId.ToString(),
+                    StackTrace = ex.StackTrace,
+                    UserId = CurrentUserId()
+                };
+
+                await ErrorLog_Insert(vm);
             }
 
             return View(errorAndWarningViewModelWithRecords);
@@ -1115,18 +1165,21 @@ namespace MCPhase3.Controllers
         {
             var subPayrollList = new List<PayrollProvidersBO>();
             string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.SubPayrollProvider);
+            
+            var apiResult = await ApiGet(apiBaseUrlForSubPayrollProvider + userName);
+            subPayrollList = JsonConvert.DeserializeObject<List<PayrollProvidersBO>>(apiResult);
 
-            using (var httpClient = new HttpClient())
-            {
-                using (var response = await httpClient.GetAsync(apiBaseUrlForSubPayrollProvider + userName))
-                {
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        string result = await response.Content.ReadAsStringAsync();
-                        subPayrollList = JsonConvert.DeserializeObject<List<PayrollProvidersBO>>(result);
-                    }
-                }
-            }
+            //using (var httpClient = new HttpClient())
+            //{
+            //    using (var response = await httpClient.GetAsync(apiBaseUrlForSubPayrollProvider + userName))
+            //    {
+            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            //        {
+            //            string result = await response.Content.ReadAsStringAsync();
+            //            subPayrollList = JsonConvert.DeserializeObject<List<PayrollProvidersBO>>(result);
+            //        }
+            //    }
+            //}
 
             return subPayrollList;
         }
@@ -1222,7 +1275,7 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> ValidateFile(IFormFile formFile)
         {
             if (formFile == null) { 
-                return Json("no no no.. i am not happy with this file... no file was addeddd!! crazy man!");
+                return Json("No file added. Please add a valid file and try again.");
             }
 
             var fileTypeCheck = IsFileValid(formFile);

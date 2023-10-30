@@ -33,7 +33,7 @@ namespace MCPhase3.CodeRepository
         //                if (dr[i].ToString().Contains(checkSign1))
         //                {
         //                    //var idx = dt.Rows.IndexOf(dr);
-        //                    CheckSpreadSheetErrorMsg += "<BR /> You have added invalid sign  " + checkSign1 + "  in  " + dt.Columns[i] + " of spreadsheet:<BR />Please remove this sign to upload file<BR />";
+        //                    CheckSpreadSheetErrorMsg += "<br /> You have added invalid sign  " + checkSign1 + "  in  " + dt.Columns[i] + " of spreadsheet:<br />Please remove this sign to upload file<br />";
         //                    result = false;
         //                }
         //            } 
@@ -60,7 +60,7 @@ namespace MCPhase3.CodeRepository
                     //Replace new line Code edit on Richard's request 03/03/2021
                     if (dr[i].ToString().Contains("\r") || dr[i].ToString().Contains("\n"))
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> Remove the Line space from row  " + rowNums + " of spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> Remove the Line space from row  " + rowNums + " of spreadsheet.<br />";
                         result = false;
                     }
                 }
@@ -74,7 +74,7 @@ namespace MCPhase3.CodeRepository
             //        if (invalidSigns.Contains(dr[i]))
             //        {
             //            //var idx = dt.Rows.IndexOf(dr);
-            //            CheckSpreadSheetErrorMsg += "<BR /> You have added invalid sign <B> " + dr[i] + " </B> in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<BR />Please remove this sign to upload file<BR />";
+            //            CheckSpreadSheetErrorMsg += "<br /> You have added invalid sign <B> " + dr[i] + " </B> in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<br />Please remove this sign to upload file<br />";
             //            result = false;
             //        }
             //    }
@@ -91,7 +91,7 @@ namespace MCPhase3.CodeRepository
                         if (dr[i].ToString().ToUpper().Contains(checkSign1) && dt.Columns[i].ToString().ToUpper() != "NOTES")
                         {
                             //var idx = dt.Rows.IndexOf(dr);
-                            CheckSpreadSheetErrorMsg += "<BR /> You have added invalid sign in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<BR />";
+                            CheckSpreadSheetErrorMsg += "<br /> You have added invalid sign in  row " + rowNum + " of " + dt.Columns[i] + " of spreadsheet:<br />";
                             result = false;
                         }
                     }
@@ -101,7 +101,7 @@ namespace MCPhase3.CodeRepository
         }
 
 
-        public static bool CheckPayrollPeriod(DataTable dt, string month,string posting, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckPayrollPeriod(ref DataTable dt, string month,string posting, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             string[] validMonths = { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" };
@@ -112,7 +112,7 @@ namespace MCPhase3.CodeRepository
             int inc = 0;
             int checkRows = 0;
 
-            if (!IsColumnEmptyNewMethod1(dt, "PAYROLL_PD", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "PAYROLL_PD", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -122,7 +122,7 @@ namespace MCPhase3.CodeRepository
                         inc++;
                         checkRows = emptyRowNumber[i];
                         checkRows++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Payroll period 'PAYROLL_PD' can not be empty at row number:" + inc + " in spreadsheet.<BR />If there is no PAYROLL_PD empty cell then please select few empty rows from bottom of apreadsheet and delete them.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Payroll period 'PAYROLL_PD' can not be empty at row number:" + inc + " in spreadsheet.<br />If there is no PAYROLL_PD empty cell then please select few empty rows from bottom of apreadsheet and delete them.<br />";
                     }
                 }
                 result = false;
@@ -145,10 +145,10 @@ namespace MCPhase3.CodeRepository
                 //var fullMonth = DateTime.ParseExact(payrollPeriod, "MMMM", CultureInfo.CurrentCulture);
                     if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />";
                     }
 
-                    CheckSpreadSheetErrorMsg += "<BR />You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<B>" + inc + " </B> <BR />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.</Br>";
+                    CheckSpreadSheetErrorMsg += "<br />You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<B>" + inc + " </B> <br />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.</Br>";
                     result = false;
 
                     //Q-comment break point
@@ -173,7 +173,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />";
                         }
                         CheckSpreadSheetErrorMsg += $"You might have added wrong 'PAYROLL_PD' at row number:<b>{inc} </b> of spreadsheet.<br/>";
                         result = false;
@@ -185,14 +185,14 @@ namespace MCPhase3.CodeRepository
         }
 
 
-        public static bool CheckFireScheme(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckFireScheme(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             string[] validSchemes = { "1992", "2006", "2015" };
 
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "SCHEME_NAME", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "SCHEME_NAME", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -200,7 +200,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Scheme name 'SCHEME_NAME' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR /> Valid scheme names are: 1992, 2006, 2015";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Scheme name 'SCHEME_NAME' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br /> Valid scheme names are: 1992, 2006, 2015";
                     }
                 }
                 return result;
@@ -216,10 +216,10 @@ namespace MCPhase3.CodeRepository
                 {
                     if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />";
                     }
 
-                    CheckSpreadSheetErrorMsg += "You have entered invalid scheme name 'SCHEME_NAME', at row number: <B>" + rowNum + "</B> in spreadsheet.<BR />";
+                    CheckSpreadSheetErrorMsg += "You have entered invalid scheme name 'SCHEME_NAME', at row number: <B>" + rowNum + "</B> in spreadsheet.<br />";
                     result = false;
 
                     //Q-comment break point
@@ -230,13 +230,13 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        public static bool CheckPayrollYear(DataTable dt, string posting, string validYears, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckPayrollYear(ref DataTable dt, string posting, string validYears, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
 
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "PAYROLL_YR", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "PAYROLL_YR", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -245,7 +245,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Payroll year 'PAYROLL_YR' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Payroll year 'PAYROLL_YR' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
                 result = false;
@@ -289,15 +289,16 @@ namespace MCPhase3.CodeRepository
         /// <param name="validTitles"></param>
         /// <param name="CheckSpreadSheetErrorMsg"></param>
         /// <returns></returns>
-        public static bool CheckTitle(DataTable dt, string[] validTitles, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckTitle(ref DataTable dt, string[] validTitles, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
+            bool invalidLetterFound = false;
 
             int[] emptyRowNumber;
             int inc = 1;
             int inc1 = 0;
 
-            if (!IsColumnEmptyNewMethod1(dt, "MEMBERS_TITLE", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "MEMBERS_TITLE", out emptyRowNumber))
             {
 
                 for (int i = 0; i < emptyRowNumber.Length; i++)
@@ -307,7 +308,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's title 'MEMBERS_TITLE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's title 'MEMBERS_TITLE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
                 result = false;
@@ -317,19 +318,33 @@ namespace MCPhase3.CodeRepository
             {
                 string title = dr["MEMBERS_TITLE"].ToString().ToUpper();
                 //title = Regex.Replace(title, @"[^a-zA-Z]+", "");
-                int indexOF = title.IndexOf(".");
-                if(indexOF > 0)
-                title = title.Remove(indexOF);
+                //int indexOF = title.IndexOf(".");
+                //if(indexOF > 0)
+                //title = title.Remove(indexOF);
+                //title = title.Trim();
 
-                title = title.Trim();
+                //## Title - data cleansing- remove '.' and any blank spaces..
+                title = title.Replace(".", "").Replace(" ", "");
+
+                dr["MEMBERS_TITLE"] = title;
+
                 inc++;
+
                 if (!validTitles.Contains(title, StringComparer.CurrentCultureIgnoreCase))
                 {
                     //var idx = dt.Rows.IndexOf(dr);
-                    CheckSpreadSheetErrorMsg += "<BR /> You have added invalid member title in  row <B>" + inc + "</B> of spreadsheet:<BR />Please add right member title to upload file<BR />";
+                    CheckSpreadSheetErrorMsg += "<br /> You have added invalid member title in  row <b>" + inc + "</b> of spreadsheet:";
+                    invalidLetterFound= true;
                     result = false;
                 }
             }
+
+            if (invalidLetterFound)
+            {  //## avoid adding this to at the end of each error..
+                CheckSpreadSheetErrorMsg += "<div class='h4 text-danger mt-2 mb-2'>Please add right member title to upload file.<span>";
+            }
+
+            return result;
 
             //this validation is changed on Ola's request to only check Title in there is Date joined scheme in not null
             //foreach (DataRow dr in dt.Rows)
@@ -343,19 +358,19 @@ namespace MCPhase3.CodeRepository
 
             //        if (string.IsNullOrEmpty(title))
             //        {
-            //            CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's title 'MEMBERS_TITLE' can not be empty at row number:<B>" + inc1 + " </B> in spreadsheet.<BR />";
+            //            CheckSpreadSheetErrorMsg += "<br /> <br />Member's title 'MEMBERS_TITLE' can not be empty at row number:<B>" + inc1 + " </B> in spreadsheet.<br />";
             //            result = false;
             //        }
             //        else if (!validTitles.Contains(title, StringComparer.CurrentCultureIgnoreCase))
             //        {
             //            //var idx = dt.Rows.IndexOf(dr);
-            //            CheckSpreadSheetErrorMsg += "<BR /> You have added invalid member title  <B>" + title + " </B> in  row <B>" + inc + "</B> of spreadsheet:<BR />Please add right member title to upload file<BR />";
+            //            CheckSpreadSheetErrorMsg += "<br /> You have added invalid member title  <B>" + title + " </B> in  row <B>" + inc + "</B> of spreadsheet:<br />Please add right member title to upload file<br />";
             //            result = false;
             //        }
             //    }
             //}
 
-            return result;
+
         }
        
 
@@ -366,7 +381,7 @@ namespace MCPhase3.CodeRepository
 
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "RANK_ROLE", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "RANK_ROLE", out emptyRowNumber))
             {
 
                 for (int i = 0; i < emptyRowNumber.Length; i++)
@@ -376,7 +391,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Rank Role 'RANK_ROLE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Rank Role 'RANK_ROLE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
                 result = false;
@@ -385,13 +400,13 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        public static bool CheckEmployerName(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckEmployerName(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int inc = 0;
 
             int[] emptyRowNumber;
-            if (!IsColumnEmptyNewMethod1(dt, "EMPLOYER_NAME", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "EMPLOYER_NAME", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -399,7 +414,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Employer's name 'EMPLOYER_NAME' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Employer's name 'EMPLOYER_NAME' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
 
                     }
                 }
@@ -412,14 +427,16 @@ namespace MCPhase3.CodeRepository
 
         // Q - Amended code to get all the line numbers of Excel sheet where is some error
 
-        public static bool CheckSurname(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckSurname(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int inc = 0;
 
             int[] emptyRowNumber;
-            if (!IsColumnEmptyNewMethod1(dt, "SURNAME", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "SURNAME", out emptyRowNumber))
             {
+                //title = title.Replace(".", "");
+                //title = title.Replace(" ", "");
                 //  emptyRowNumber++;
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -427,7 +444,11 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's surname 'SURNAME' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's surname can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
+
+                    }
+                    else { 
+                        //## for the non-null/Empty fields- remove extra spaces
 
                     }
                 }
@@ -440,13 +461,13 @@ namespace MCPhase3.CodeRepository
 
         // Q - Amended code to get all the line numbers of Excel sheet where is some error
 
-        public static bool CheckForename(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckForename(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int inc = 0;
             int[] emptyRowNumber;
 
-            if (!IsColumnEmptyNewMethod1(dt, "FORENAMES", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "FORENAMES", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -454,7 +475,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's forename 'FORENAMES' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR /> ";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's forename 'FORENAMES' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br /> ";
 
                     }
                 }
@@ -466,13 +487,13 @@ namespace MCPhase3.CodeRepository
 
         // Q - Amended code to get all the line numbers of Excel sheet where is some error
 
-        public static bool CheckAddress1(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckAddress1(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int inc = 0;
             int[] emptyRowNumber;
 
-            if (!IsColumnEmptyNewMethod1(dt, "ADDRESS1", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "ADDRESS1", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -480,7 +501,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's address1 'ADDRESS1' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's address1 'ADDRESS1' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
 
                     }
 
@@ -498,7 +519,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc1 = emptyRowNumber[i];
                         inc1++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's address1 'ADDRESS1' House Number is not allowed more than 9999 at row number:<B>" + inc1 + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's 'House Number' is not allowed more than 9999 at row number:<B>" + inc1 + " </B> in spreadsheet.<br />";
 
                     }
                 }
@@ -514,7 +535,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc1 = emptyRowNumber[i];
                         inc1++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's address1 'ADDRESS1' is too short, add more than 4 characters in row:<B>" + inc1 + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's 'ADDRESS1' is too short, add more than 4 characters in row:<B>" + inc1 + " </B> in spreadsheet.<br />";
 
                     }
                 }
@@ -524,11 +545,11 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        public static bool CheckAddress2(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckAddress2(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             int[] emptyRowNumber;
             bool result = true;
-            if (!IsColumnEmptyNewMethod1(dt, "ADDRESS2", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "ADDRESS2", out emptyRowNumber))
             {
                 int inc1 = 0;
 
@@ -539,7 +560,7 @@ namespace MCPhase3.CodeRepository
                         inc1 = emptyRowNumber[i];
                         inc1++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's address2 'ADDRESS2' can not be empty at row number:<B>" + inc1 + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's address2 'ADDRESS2' can not be empty at row number:<B>" + inc1 + " </B> in spreadsheet.<br />";
 
                     }
                 }
@@ -549,12 +570,12 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        public static bool CheckPostcode(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckPostcode(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "POSTCODE", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "POSTCODE", out emptyRowNumber))
             {
 
                 for (int i = 0; i < emptyRowNumber.Length; i++)
@@ -564,7 +585,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's postcode 'POSTCODE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's postcode 'POSTCODE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -579,7 +600,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's postcode 'POSTCODE' incorrectly formated at row number:<B>" + inc + " </B> in spreadsheet. <BR /> It must be a valid postcode format inc. the space eg ‘AA1 1AA’ <BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's postcode 'POSTCODE' incorrectly formated at row number:<B>" + inc + " </B> in spreadsheet. <br /> It must be a valid postcode format inc. the space eg ‘AA1 1AA’ <br />";
                     }
                 }
 
@@ -589,12 +610,12 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        public static bool CheckNINO(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckNINO(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "NI_NUMBER", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "NI_NUMBER", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -602,7 +623,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's NI number 'NI_NUMBER' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's NI number 'NI_NUMBER' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -618,7 +639,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's NI number 'NI_NUMBER' formated incorrectly at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's NI number 'NI_NUMBER' formated incorrectly at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -628,12 +649,12 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        public static bool CheckPayRef(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckPayRef(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "PAYREF", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "PAYREF", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -642,7 +663,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's pay ref. 'PAYREF' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's pay ref. 'PAYREF' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -657,7 +678,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "DOB", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "DOB", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -665,7 +686,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's date of birth 'DOB' can not be empty at row number:<B>" + inc + " </B> or incorrect format in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's date of birth 'DOB' can not be empty at row number:<B>" + inc + " </B> or incorrect format in spreadsheet.<br />";
                     }
                 }
 
@@ -675,20 +696,20 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "DOB", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid date of birth 'DOB'. value should be like '30/10/2014'.<BR />";
+                CheckSpreadSheetErrorMsg += "<br /> <br />You have entered invalid date of birth 'DOB'. value should be like '30/10/2014'.<br />";
                 result = false;
             }
 
             return result;
         }
 
-        public static bool CheckFullTimePartTimeFlag(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckFullTimePartTimeFlag(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             string[] validValues = { "FT", "PT", "RT" };
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "FT_PT_RT_FLAG", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "FT_PT_RT_FLAG", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -696,7 +717,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Full time part time flag 'FT_PT_RT_FLAG' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Full time part time flag 'FT_PT_RT_FLAG' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
 
                     }
                 }
@@ -714,13 +735,13 @@ namespace MCPhase3.CodeRepository
         }
 
 
-        public static bool CheckFullTimePartTimeFlagForLG(DataTable dt, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckFullTimePartTimeFlagForLG(ref DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             string[] validValues = { "FT", "PT", "CS" };
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "FT_PT_CS_FLAG", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "FT_PT_CS_FLAG", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -728,7 +749,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Full time part time flag 'FT_PT_CS_FLAG' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Full time part time flag 'FT_PT_CS_FLAG' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
                 result = false;
@@ -749,7 +770,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "STD_HOURS", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "STD_HOURS", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -758,7 +779,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's pay ref. 'STD_HOURS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's pay ref. 'STD_HOURS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -780,7 +801,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "ANNUAL_RATE_OF_PENSIONABLE", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "ANNUAL_RATE_OF_PENSIONABLE", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -788,7 +809,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's pay ref. 'ANNUAL_RATE_OF_PENSIONABLE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's pay ref. 'ANNUAL_RATE_OF_PENSIONABLE' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -809,7 +830,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "AVERAGE_PENSIONABLE_PAY", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "AVERAGE_PENSIONABLE_PAY", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -817,7 +838,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's pay ref. 'AVERAGE_PENSIONABLE_PAY' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's pay ref. 'AVERAGE_PENSIONABLE_PAY' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -839,7 +860,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "EE_CONTS", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "EE_CONTS", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -847,7 +868,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's contribution 'EE_CONTS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's contribution 'EE_CONTS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -868,7 +889,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "CONTRACTUAL_HRS", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "CONTRACTUAL_HRS", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -877,7 +898,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's pay ref. 'CONTRACTUAL_HRS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's pay ref. 'CONTRACTUAL_HRS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -917,7 +938,7 @@ namespace MCPhase3.CodeRepository
                 {
                     if (!double.TryParse(rw["PENSIONABLE_PAY_1992_2006_SCHEME"].ToString(), out schemeValue))
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Number value for column 'PENSIONABLE_PAY_1992_2006_SCHEME' required at row number:<B>" + emptyRowNumber.ToString() + "</B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Number value for column 'PENSIONABLE_PAY_1992_2006_SCHEME' required at row number:<B>" + emptyRowNumber.ToString() + "</B> in spreadsheet.<br />";
                         result = false;
 
                         //Q-comment break point
@@ -930,7 +951,7 @@ namespace MCPhase3.CodeRepository
                     string temPensionValue = rw["PENSIONABLE_PAY_1992_2006_SCHEME"].ToString();
                     if (temPensionValue != string.Empty)
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Data can only be present if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:<B>" + emptyRowNumber.ToString() + "</B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Data can only be present if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:<B>" + emptyRowNumber.ToString() + "</B> in spreadsheet.<br />";
                         result = false;
 
                         //Q-comment break point
@@ -961,7 +982,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if (!double.TryParse(rw["APB_FOR_TEMP_PROMOTION_CONTS"].ToString(), out schemeValue))
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />Number value for column 'APB_FOR_TEMP_PROMOTION_CONTS' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />Number value for column 'APB_FOR_TEMP_PROMOTION_CONTS' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                             result = false;
 
                             //Q-comment break point
@@ -975,7 +996,7 @@ namespace MCPhase3.CodeRepository
                     string temPensionValue = rw["APB_FOR_TEMP_PROMOTION_CONTS"].ToString();
                     if (temPensionValue != string.Empty)
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Data can only be present in column 'APB_FOR_TEMP_PROMOTION_CONTS' if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Data can only be present in column 'APB_FOR_TEMP_PROMOTION_CONTS' if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                         result = false;
 
                         //Q-comment break point
@@ -1006,7 +1027,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if (!double.TryParse(rw["CPD_TOT_PEN_EE_CONTS"].ToString(), out schemeValue))
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />Number value for column 'CPD_TOT_PEN_EE_CONTS' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />Number value for column 'CPD_TOT_PEN_EE_CONTS' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                             result = false;
 
                             //Q-comment break point
@@ -1020,7 +1041,7 @@ namespace MCPhase3.CodeRepository
                     string temPensionValue = rw["CPD_TOT_PEN_EE_CONTS"].ToString();
                     if (temPensionValue != string.Empty)
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Data can only be present in column 'CPD_TOT_PEN_EE_CONTS' if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Data can only be present in column 'CPD_TOT_PEN_EE_CONTS' if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                         result = false;
 
                         //Q-comment break point
@@ -1051,7 +1072,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if (!double.TryParse(rw["PRCHS_OF_60TH"].ToString(), out schemeValue))
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />Number value for column 'PRCHS_OF_60TH' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />Number value for column 'PRCHS_OF_60TH' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                             result = false;
 
                             //Q-comment break point
@@ -1067,7 +1088,7 @@ namespace MCPhase3.CodeRepository
                 //    string temPensionValue = rw["PRCHS_OF_60TH"].ToString();
                 //    if (temPensionValue != string.Empty)
                 //    {
-                //        CheckSpreadSheetErrorMsg += "<BR /> <BR />Data can only be present in column 'PRCHS_OF_60TH' if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                //        CheckSpreadSheetErrorMsg += "<br /> <br />Data can only be present in column 'PRCHS_OF_60TH' if '1992 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                 //        result = false;
 
 
@@ -1097,7 +1118,7 @@ namespace MCPhase3.CodeRepository
                 {
                     if (!double.TryParse(rw["PENSIONABLE_PAY_2015_CARE_SCHEME"].ToString(), out schemeValue))
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Number value for column 'PENSIONABLE_PAY_2015_CARE_SCHEME' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Number value for column 'PENSIONABLE_PAY_2015_CARE_SCHEME' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                         result = false;
 
                         //Q-comment break point
@@ -1109,7 +1130,7 @@ namespace MCPhase3.CodeRepository
                 //{
                 //    if (rw["PENSIONABLE_PAY_2015_CARE_SCHEME"].ToString() != string.Empty)
                 //    {
-                //        CheckSpreadSheetErrorMsg = "<BR /> <BR />Data can only be present if '2015 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                //        CheckSpreadSheetErrorMsg = "<br /> <br />Data can only be present if '2015 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                 //        result = false;
                 //        break;
                 //    }
@@ -1143,7 +1164,7 @@ namespace MCPhase3.CodeRepository
                 //{
                 //    if (!double.TryParse(rw["ADDED_PENSION_CONTRIBUTIONS"].ToString(), out schemeValue))
                 //    {
-                //        CheckSpreadSheetErrorMsg += "<BR /> <BR />Number value for column 'ADDED_PENSION_CONTRIBUTIONS' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                //        CheckSpreadSheetErrorMsg += "<br /> <br />Number value for column 'ADDED_PENSION_CONTRIBUTIONS' required at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                 //        result = false;
 
                 //        //Q-comment break point
@@ -1156,7 +1177,7 @@ namespace MCPhase3.CodeRepository
                 {
                     if (rw["ADDED_PENSION_CONTRIBUTIONS"].ToString().Trim() != string.Empty)
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Data can only be present in 'ADDED_PENSION_CONTRIBUTIONS' column, if '2015 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Data can only be present in 'ADDED_PENSION_CONTRIBUTIONS' column, if '2015 or 2006 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                         result = false;
 
 
@@ -1188,7 +1209,7 @@ namespace MCPhase3.CodeRepository
                 {
                     if (fulltime_parttime_retained_flage.Equals("RT"))
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Retained 'RT' can only be present in column 'FT_PT_RT_FLAG' when scheme name is 2006 or 2015 in column 'SCHEME_NAME':" + emptyRowNumber.ToString() + " in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Retained 'RT' can only be present in column 'FT_PT_RT_FLAG' when scheme name is 2006 or 2015 in column 'SCHEME_NAME':" + emptyRowNumber.ToString() + " in spreadsheet.";
                         result = false;
 
                         //Q-comment break point
@@ -1200,7 +1221,7 @@ namespace MCPhase3.CodeRepository
                 //{
                 //    if (rw["PENSIONABLE_PAY_2015_CARE_SCHEME"].ToString() != string.Empty)
                 //    {
-                //        CheckSpreadSheetErrorMsg = "<BR /> <BR />Data can only be present if '2015 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                //        CheckSpreadSheetErrorMsg = "<br /> <br />Data can only be present if '2015 scheme' selected in column 'SCHEME_NAME' at row number:" + emptyRowNumber.ToString() + " in spreadsheet.";
                 //        result = false;
                 //        break;
                 //    }
@@ -1266,7 +1287,7 @@ namespace MCPhase3.CodeRepository
                 {
                     if (parsedDOB > ParsedDateFor1992)
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />DOB = 01/04/71 or earlier when scheme is 1992 at row:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />DOB = 01/04/71 or earlier when scheme is 1992 at row:" + emptyRowNumber.ToString() + " in spreadsheet.";
                         result = false;
 
                         //Q-comment break point
@@ -1279,7 +1300,7 @@ namespace MCPhase3.CodeRepository
                 {
                     if (parsedDOB > ParsedDateFor1992)
                     {
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />DOB = 01/04/71 or earlier when scheme is 2006 at row:" + emptyRowNumber.ToString() + " in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />DOB = 01/04/71 or earlier when scheme is 2006 at row:" + emptyRowNumber.ToString() + " in spreadsheet.";
                         result = false;
 
                         //Q-comment break point
@@ -1300,7 +1321,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "CONTRACTUAL_HRS", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "CONTRACTUAL_HRS", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -1309,7 +1330,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Member's pay ref. 'CONTRACTUAL_HRS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<BR />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Member's pay ref. 'CONTRACTUAL_HRS' can not be empty at row number:<B>" + inc + " </B> in spreadsheet.<br />";
                     }
                 }
 
@@ -1361,7 +1382,7 @@ namespace MCPhase3.CodeRepository
                 if (contractualHoursD == 0 && !flagTypes.ToString().Trim().Equals("RT"))
                 {
                     ctr++;
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />Should show 0.00 hours if ‘RT’ flag present in FT_PT_RT_FLAG column at <B>" + ctr +"</B>";
+                    CheckSpreadSheetErrorMsg += "<br /> <br />Should show 0.00 hours if ‘RT’ flag present in FT_PT_RT_FLAG column at <B>" + ctr +"</B>";
                     result = false;
 
 
@@ -1372,7 +1393,7 @@ namespace MCPhase3.CodeRepository
                 if (contractualHoursD != 0 && flagTypes.ToString().Trim().Equals("RT"))
                 {
                     ++ctr;
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />Should show 0.00 hours if ‘RT’ flag present in FT_PT_RT_FLAG column at <B>" + ctr + "</B>";
+                    CheckSpreadSheetErrorMsg += "<br /> <br />Should show 0.00 hours if ‘RT’ flag present in FT_PT_RT_FLAG column at <B>" + ctr + "</B>";
                     result = false;
 
 
@@ -1410,7 +1431,7 @@ namespace MCPhase3.CodeRepository
                 if (contractualHoursD == 0 && !flagTypes.ToString().Trim().Equals("CS"))
                 {
 
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />Should show 0.00 hours if ‘CS’ flag present in FT_PT_CS_FLAG column at <B>" + ctr + "</B>";
+                    CheckSpreadSheetErrorMsg += "<br /> <br />Should show 0.00 hours if ‘CS’ flag present in FT_PT_CS_FLAG column at <B>" + ctr + "</B>";
                     result = false;
 
 
@@ -1421,7 +1442,7 @@ namespace MCPhase3.CodeRepository
                 if (contractualHoursD != 0 && flagTypes.ToString().Trim().Equals("CS"))
                 {
 
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />Should show 0.00 hours if ‘CS’ flag present in FT_PT_CS_FLAG column at <B>" + ctr + "</B>";
+                    CheckSpreadSheetErrorMsg += "<br /> <br />Should show 0.00 hours if ‘CS’ flag present in FT_PT_CS_FLAG column at <B>" + ctr + "</B>";
                     result = false;
 
                     //Q-comment break point
@@ -1439,7 +1460,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "DATE_JOINED_SCHEME", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "You have entered invalid date joined scheme 'DATE_JOINED_SCHEME' in spreadsheet.<BR />'DATE_JOINED_SCHEME' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "You have entered invalid date joined scheme 'DATE_JOINED_SCHEME' in spreadsheet.<br />'DATE_JOINED_SCHEME' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1453,7 +1474,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "DATE_OF_LEAVING_SCHEME", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "You have entered invalid date of leaving scheme 'DATE_OF_LEAVING_SCHEME' in spreadsheet.<BR />'DATE_OF_LEAVING_SCHEME' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "You have entered invalid date of leaving scheme 'DATE_OF_LEAVING_SCHEME' in spreadsheet.<br />'DATE_OF_LEAVING_SCHEME' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1467,7 +1488,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "OPTOUT_DATE", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid opt out date 'OPTOUT_DATE' in spreadsheet.<BR />'OPTOUT_DATE' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "<br /> <br />You have entered invalid opt out date 'OPTOUT_DATE' in spreadsheet.<br />'OPTOUT_DATE' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1481,7 +1502,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "50_50_START_DATE", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid '50_50_START_DATE' in spreadsheet.<BR />'50_50_START_DATE' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "<br /> <br />You have entered invalid '50_50_START_DATE' in spreadsheet.<br />'50_50_START_DATE' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1495,7 +1516,7 @@ namespace MCPhase3.CodeRepository
             string wrongDateInFormat = string.Empty;
             if (!IsValidDate(dt, "50_50_END_DATE", ref wrongDateInFormat))
             {
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />You have entered invalid '50_50_END_DATE' in spreadsheet.<BR />'50_50_END_DATE' value should be like '30/10/2014'.";
+                CheckSpreadSheetErrorMsg += "<br /> <br />You have entered invalid '50_50_END_DATE' in spreadsheet.<br />'50_50_END_DATE' value should be like '30/10/2014'.";
                 result = false;
             }
 
@@ -1538,7 +1559,7 @@ namespace MCPhase3.CodeRepository
             bool result = true;
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "ER_CONTS", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "ER_CONTS", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -1546,7 +1567,7 @@ namespace MCPhase3.CodeRepository
                     {
                         inc = emptyRowNumber[i];
                         inc++;
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Employer's contribution can not be empty at row number:<B>" + inc + "</B> in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Employer's contribution can not be empty at row number:<B>" + inc + "</B> in spreadsheet.";
                     }
                 }
 
@@ -1577,7 +1598,7 @@ namespace MCPhase3.CodeRepository
             int[] emptyRowNumber;
             int inc = 0;
             int monthFromDropDown = DateTime.ParseExact(month, "MMMM", CultureInfo.CurrentCulture).Month;
-            if (!IsColumnEmptyNewMethod1(dt, "ANNUAL_RATE_OF_PAY", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "ANNUAL_RATE_OF_PAY", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -1587,7 +1608,7 @@ namespace MCPhase3.CodeRepository
                         {
                             inc = emptyRowNumber[i];
                             inc++;
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />Annual rate of pay 'ANNUAL_RATE_OF_PAY' can not be empty at row number:<B>" + inc + "</B> in spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />Annual rate of pay 'ANNUAL_RATE_OF_PAY' can not be empty at row number:<B>" + inc + "</B> in spreadsheet.";
                         }
                     }                   
                 }
@@ -1625,7 +1646,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if ((drWithEmptyEmployeeContrib1["PAY_50_50"].ToString().Equals(string.Empty) && drWithEmptyEmployeeContrib1["EE_CONT_50_50"].ToString().Equals(string.Empty)) && drWithEmptyEmployeeContrib1["PAY_MAIN"].ToString().Equals(string.Empty))
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />'PAY_MAIN', 'PAY_50_50' and EE_CONT_50_50 cannot be empty in one row of the spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />'PAY_MAIN', 'PAY_50_50' and EE_CONT_50_50 cannot be empty in one row of the spreadsheet.";
                             result = false;
                         }
                     }
@@ -1650,7 +1671,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if ((drWithEmptyEmployeeContrib2["PAY_50_50"].ToString() != string.Empty || drWithEmptyEmployeeContrib2["EE_CONT_50_50"].ToString() != string.Empty) && drWithEmptyEmployeeContrib2["PAY_MAIN"].ToString() != string.Empty)
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />'PAY_MAIN', 'PAY_50_50' and EE_CONT_50_50  cannot be present in one row of the spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />'PAY_MAIN', 'PAY_50_50' and EE_CONT_50_50  cannot be present in one row of the spreadsheet.";
                             result = false;
 
                             //Q-comment break point
@@ -1686,7 +1707,7 @@ namespace MCPhase3.CodeRepository
             if (dr3.Any() || dr3_1.Any())
             {
                 dtSelected3 = dr3.CopyToDataTable();
-                CheckSpreadSheetErrorMsg += "<BR /> <BR />if any of column (PAY_MAIN  or EE_CONT_MAIN both)  has value then both cannot be empty in the spreadsheet.";
+                CheckSpreadSheetErrorMsg += "<br /> <br />if any of column (PAY_MAIN  or EE_CONT_MAIN both)  has value then both cannot be empty in the spreadsheet.";
                 result = false;
             }
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1728,7 +1749,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if ((drWithEmptyEmployeeContrib1["PAY_50_50"].ToString().Equals(string.Empty) && drWithEmptyEmployeeContrib1["EE_CONT_50_50"].ToString().Equals(string.Empty)) && drWithEmptyEmployeeContrib1["EE_CONT_MAIN"].ToString().Equals(string.Empty))
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />'EE_CONT_MAIN', 'PAY_50_50' and EE_CONT_50_50 cannot be empty in one row of the spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />'EE_CONT_MAIN', 'PAY_50_50' and EE_CONT_50_50 cannot be empty in one row of the spreadsheet.";
                             result = false;
                         }
                     }
@@ -1749,7 +1770,7 @@ namespace MCPhase3.CodeRepository
                     {
                         if ((drWithEmptyEmployeeContrib2["PAY_50_50"].ToString() != string.Empty || drWithEmptyEmployeeContrib2["EE_CONT_50_50"].ToString() != string.Empty) && drWithEmptyEmployeeContrib2["EE_CONT_MAIN"].ToString() != string.Empty)
                         {
-                            CheckSpreadSheetErrorMsg += "<BR /> <BR />'EE_CONT_MAIN', 'PAY_50_50' and EE_CONT_50_50  can notbe present in one row of the spreadsheet.";
+                            CheckSpreadSheetErrorMsg += "<br /> <br />'EE_CONT_MAIN', 'PAY_50_50' and EE_CONT_50_50  can notbe present in one row of the spreadsheet.";
                             result = false;
 
                             //Q-comment break point
@@ -1791,7 +1812,7 @@ namespace MCPhase3.CodeRepository
                     (employee_pay_5050 == DBNull.Value || employee_pay_5050.ToString().Equals(string.Empty))
                    )
                 {
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />PAY_MAIN and PAY_50_50 cannot be empty in row number: <B>" + ctr +"</B>";
+                    CheckSpreadSheetErrorMsg += "<br /> <br />PAY_MAIN and PAY_50_50 cannot be empty in row number: <B>" + ctr +"</B>";
                     result = false;
 
 
@@ -1806,7 +1827,7 @@ namespace MCPhase3.CodeRepository
                     (employee_pay_5050 != DBNull.Value && !employee_pay_5050.ToString().Equals(string.Empty))
                    )
                 {
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />PAY_MAIN and PAY_50_50 cannot have values in row number: " + ctr;
+                    CheckSpreadSheetErrorMsg += "<br /> <br />PAY_MAIN and PAY_50_50 cannot have values in row number: " + ctr;
                     result = false;
 
 
@@ -1821,7 +1842,7 @@ namespace MCPhase3.CodeRepository
                     (employee_contribution_main == DBNull.Value || employee_contribution_main.ToString().Equals(string.Empty))
                    )
                 {
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />if any of column (PAY_MAIN  or EE_CONT_MAIN)  has value then both cannot be empty in row number: " + ctr;
+                    CheckSpreadSheetErrorMsg += "<br /> <br />if any of column (PAY_MAIN  or EE_CONT_MAIN)  has value then both cannot be empty in row number: " + ctr;
                     result = false;
 
 
@@ -1834,7 +1855,7 @@ namespace MCPhase3.CodeRepository
                     (employee_pay_main == DBNull.Value || employee_pay_main.ToString().Equals(string.Empty))
                    )
                 {
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />if any of column (PAY_MAIN  or EE_CONT_MAIN)  has value then both cannot be empty in row number: " + ctr;
+                    CheckSpreadSheetErrorMsg += "<br /> <br />if any of column (PAY_MAIN  or EE_CONT_MAIN)  has value then both cannot be empty in row number: " + ctr;
                     result = false;
 
 
@@ -1850,7 +1871,7 @@ namespace MCPhase3.CodeRepository
                     (employee_contribution_5050 == DBNull.Value || employee_contribution_5050.ToString().Equals(string.Empty))
                    )
                 {
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />if any of column (PAY_50_50  or EE_CONT_50_50)  has value then both cannot be empty in row number: " + ctr;
+                    CheckSpreadSheetErrorMsg += "<br /> <br />if any of column (PAY_50_50  or EE_CONT_50_50)  has value then both cannot be empty in row number: " + ctr;
                     result = false;
 
                     //Q-comment break point
@@ -1862,7 +1883,7 @@ namespace MCPhase3.CodeRepository
                     (employee_pay_5050 == DBNull.Value || employee_pay_5050.ToString().Equals(string.Empty))
                    )
                 {
-                    CheckSpreadSheetErrorMsg += "<BR /> <BR />if any of column (PAY_50_50  or EE_CONT_50_50)  has value then both cannot be empty in row number: " + ctr;
+                    CheckSpreadSheetErrorMsg += "<br /> <br />if any of column (PAY_50_50  or EE_CONT_50_50)  has value then both cannot be empty in row number: " + ctr;
                     result = false;
 
 
@@ -1883,7 +1904,7 @@ namespace MCPhase3.CodeRepository
             string[] validValues = { "F", "M" };
             int[] emptyRowNumber;
             int inc = 0;
-            if (!IsColumnEmptyNewMethod1(dt, "GENDER", out emptyRowNumber))
+            if (!IsColumnEmptyNewMethod1(ref dt, "GENDER", out emptyRowNumber))
             {
                 for (int i = 0; i < emptyRowNumber.Length; i++)
                 {
@@ -1892,7 +1913,7 @@ namespace MCPhase3.CodeRepository
                         inc = emptyRowNumber[i];
                         inc++;
 
-                        CheckSpreadSheetErrorMsg += "<BR /> <BR />Gender 'GENDER' can not be empty at row number:<B>" + inc + "</B> in spreadsheet.";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Gender 'GENDER' can not be empty at row number:<B>" + inc + "</B> in spreadsheet.";
                     }
                 }
 
@@ -1908,6 +1929,8 @@ namespace MCPhase3.CodeRepository
 
             return result;
         }
+
+
         /// <summary>
         /// Qasid added new param: rowRef to find out the row number of error column.
         /// </summary>
@@ -1953,6 +1976,7 @@ namespace MCPhase3.CodeRepository
 
             return result;
         }
+
 
         public static bool IsColumnEmpty(DataTable dt, string columnName)
         {
@@ -2013,7 +2037,7 @@ namespace MCPhase3.CodeRepository
         /// <param name="rowNumber">contains all the row numbers of datatable</param>
         /// <returns></returns>
 
-        public static bool IsColumnEmptyNewMethod1(DataTable dt, string columnName, out int[] rowNumber)
+        public static bool IsColumnEmptyNewMethod1(ref DataTable dt, string columnName, out int[] rowNumber)
         {
             bool result = true;
             rowNumber = new int[dt.Rows.Count];
@@ -2036,6 +2060,16 @@ namespace MCPhase3.CodeRepository
                     //Q-comment break point
                     //  break;
                 }
+                //## Data cleansing will be carried out in API level..
+
+                //else {
+                //    //## Remove any extra spaces.. or double spaces..
+                //    string columnValue = value.ToString().Trim();
+                //    columnValue = columnValue.ToString().Replace("  ", " ");
+                //    row[columnName] = columnValue;
+
+                //    //Console.WriteLine($"row[{columnName}] = '{row[columnName]}', length: {row[columnName].ToString().Length}, columnValue: '{columnValue}'");
+                //}
 
             }
 
@@ -2148,6 +2182,8 @@ namespace MCPhase3.CodeRepository
             //}
             return result;
         }
+
+
         //Q changed this code to check address line no characters should be more than 4
         public static bool IsAddressLineCharactersOK(DataTable dt, string columnName, out int[] rowNumber)
         {
@@ -2231,6 +2267,8 @@ namespace MCPhase3.CodeRepository
 
             return result;
         }
+
+
         static public bool IsPostCodeSpaceOK(string postcode)
         {
             bool result = true;
@@ -2311,7 +2349,7 @@ namespace MCPhase3.CodeRepository
 
             foreach (string validValue in validValues)
             {
-                allValiedValues += "<BR />" + validValue;
+                allValiedValues += "<br />" + validValue;
             }
 
             // get distinct column values
@@ -2330,7 +2368,7 @@ namespace MCPhase3.CodeRepository
 
                 if (!validValues.Contains(columnValue.Trim(), StringComparer.CurrentCultureIgnoreCase))
                 {
-                    errorMsg += "<BR /> <BR />You have entered invalid '" + columnName + "' in spreadsheet.<BR />'" + columnName + "' value can be " + allValiedValues + "at row number: " + rowRef + " of spreadsheet.";
+                    errorMsg += "<br /> <br />You have entered invalid '" + columnName + "' in spreadsheet.<br />'" + columnName + "' value can be " + allValiedValues + "at row number: " + rowRef + " of spreadsheet.";
                     result = false;
 
                     //Q-comment break point
@@ -2359,7 +2397,7 @@ namespace MCPhase3.CodeRepository
                 double parsed;
                 if (!double.TryParse(columnValue, out parsed))
                 {
-                    errorMsg += "<BR /> <BR />You have entered invalid '" + columnName + " value' in spreadsheet at row: <B>" + inc + "</B>";
+                    errorMsg += "<br /> <br />You have entered invalid '" + columnName + " value' in spreadsheet at row: <B>" + inc + "</B>";
                     result = false;
 
                     //Q-comment break point
@@ -2370,7 +2408,8 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        public static bool CheckEmployerLocCode(DataTable dt, List<PayrollProvidersBO> validPayLoc, ref string CheckSpreadSheetErrorMsg)
+
+        public static bool CheckEmployerLocCode(DataTable dt, List<PayrollProvidersBO> validPayLocList, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             int inc = 1;
@@ -2397,7 +2436,7 @@ namespace MCPhase3.CodeRepository
             //    {
             //        if(payLocID != string.Empty)
             //        {
-            //            CheckSpreadSheetErrorMsg += "<BR />'Employer Location Code' can not be empty in spreadsheet at" + payLocID +".<BR />And if there is any empty row, please delete that row.";
+            //            CheckSpreadSheetErrorMsg += "<br />'Employer Location Code' can not be empty in spreadsheet at" + payLocID +".<br />And if there is any empty row, please delete that row.";
 
             //        }                       
             //    }
@@ -2405,37 +2444,57 @@ namespace MCPhase3.CodeRepository
             //}
             // }
 
-            bool validPalocInSpreadsheet = false;
+            bool invalidPayLocationCodeFound = false;   //## an extra variable- to customize the error message.. to add a 'Solution info' at the end of all same errors..
+            bool validPalocInSpreadsheet = false;   //## mostly useless.. can be deleted..
+
             foreach (DataRow rw in dt.Rows)
             {
                 inc++;
-                validPalocInSpreadsheet = false;
+                validPalocInSpreadsheet = false;              
                 string payLocID = rw["EMPLOYER_LOC_CODE"].ToString();
 
                 // if payloc is empty string then goto next payloc to process. Some time employer add empty rows in spreadsheet
                 if (!payLocID.Equals(string.Empty))
                 {
-                    foreach (var item in validPayLoc) //(ListItem item in this.dListPayrollPrivider.Items)
+                    if (validPayLocList.Any(pl => pl.pay_location_ID == payLocID))
                     {
-                        if (item.pay_location_ID.ToString().Trim().Equals(payLocID.Trim()))
-                        {
-                            validPalocInSpreadsheet = true;
-                            break;
-                        }
+                        validPalocInSpreadsheet = true;
                     }
+                    else {
+                        CheckSpreadSheetErrorMsg += "<br />You have entered invalid 'Employer Location Code: in spreadsheet at row number: " + inc;
+                        invalidPayLocationCodeFound = true;     //## that's it- we know there is a criminal.. 
+                        result = false;
+
+                        //break;  //## break from current ForLoop.. go for the next item in the Loop..
+                    }
+
+                    //foreach (var payLocation in validPayLocList) //(ListItem item in this.dListPayrollPrivider.Items)
+                    //{
+                    //    if (payLocation.pay_location_ID.ToString().Trim().Equals(payLocID.Trim()))
+                    //    {
+                    //        validPalocInSpreadsheet = true;
+                    //    }
+                    //    else {  //## if even one invalid PayLocationCode found-> STOP there and ask the Employer to fix this error.
+                    //        validPalocInSpreadsheet= false;
+                    //        break;
+                    //    }
+                    //}
                 }
 
-                if (!validPalocInSpreadsheet)
-                {
+                //if (!validPalocInSpreadsheet){
                     //if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
                     //{
-                    //    CheckSpreadSheetErrorMsg = "<BR /> <BR />";
+                    //    CheckSpreadSheetErrorMsg = "<br /> <br />";
                     //}
 
-                    CheckSpreadSheetErrorMsg += "<BR />You have entered invalid 'Employer Location Code: in spreadsheet at row number: " + inc + ".<BR />Valid 'Employer Location Code' shown above in 'Payroll Provider' drop down list.";
-                    result = false;
+                    //CheckSpreadSheetErrorMsg += "<br />You have entered invalid 'Employer Location Code: in spreadsheet at row number: " + inc + ".<br />Valid 'Employer Location Code' shown above in 'Payroll Provider' drop down list.";
+                    //result = false;
                     //  break;
-                }
+                //}
+            }
+
+            if (invalidPayLocationCodeFound){   //## avoid adding 'message/tips' to at the end of each error..
+                CheckSpreadSheetErrorMsg += "<br/><div class='h4 text-danger mt-2 mb-2'>Tips: Valid 'Employer Location Code' is shown above in 'Payroll Provider' drop down list.</div>"; 
             }
 
             return result;

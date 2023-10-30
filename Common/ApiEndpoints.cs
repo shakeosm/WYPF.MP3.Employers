@@ -12,6 +12,7 @@
         public string AutoMatch { get; set; }
 
         public string ErrorAndWarningsApproval { get; set; }
+        public string ApproveWarningsBulkList { get; set; }
         public string UpdateRecordGetValues { get; set; }
         public string UpdateRecord { get; set; }
         public string EmployerName { get; set; }

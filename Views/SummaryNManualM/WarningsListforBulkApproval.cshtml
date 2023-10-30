@@ -4,7 +4,7 @@
     ViewData["Title"] = "Bulk data approval";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 
-    StringBuilder alertIdList = new StringBuilder(); // this will hold list of all the AlertIds to be sent to the controller for 'AcknowledgeAll' action..
+    /*StringBuilder alertIdList = new StringBuilder();*/ // this will hold list of all the AlertIds to be sent to the controller for 'AcknowledgeAll' action..
 
     var totalAlerts = Model.Where(a => a.CLEARED_FG == "N").Count();
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
@@ -60,16 +60,17 @@
 
                 @*This is simply a form, will never get posted.. sends data via url... *@
                 <form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">
-                    <table class="table table-bordered">
+                    <table id="WarningListTable" class="table table-bordered">
                         <thead class="thead-light">
                             <tr>
+                                <th>Pay Location</th>
                                 <th>First Name</th>
                                 <th>SurName</th>
                                 <th>DOB</th>
                                 <th>Ni Number</th>
                                 <th>Date Start</th>
                                 <th>Job Title</th>
-                                <th>Alert Desc</th>
+                                @*<th>Alert Desc</th>*@
                                 <th></th>
                             </tr>
                         </thead>
@@ -81,13 +82,14 @@
                                 var rowStyle = isCleared ? "table-success" : "";
 
                                 <tr class="@rowStyle">                             
+                                    <td>@item.PAYLOCATIONREF</td>
                                     <td>@item.FORENAMES</td>
                                     <td>@item.SURNAME</td>
                                     <td>@item.DOB?.ToShortDateString()</td>
                                     <td>@item.NINUMBER</td>
                                     <td>@item.DATEJOINEDSCHEME?.ToShortDateString()</td>
                                     <td>@item.JOBTITLE</td>
-                                    <td>@item.ALERT_DESC</td>
+                                    @*<td>@item.ALERT_DESC</td>*@
                                     <td class="error-status-td">
                                         @{
                                             var actionName = item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE") ? "NewMatchingCritera" : "UpdateSingleRecord";
@@ -111,7 +113,7 @@
                                         }
                                         else if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
                                         {
-                                            alertIdList.Append(item.EncryptedAlertid + ",");
+                                            @*alertIdList.Append(item.EncryptedAlertid + ",");*@
                                                     <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="btn btn-outline-primary">View</a>
                                         }
                                         else
@@ -137,8 +139,9 @@
                         <div class="col-6">
                             @if (showAcknowledgeAllButton)
                             {
-                                string idList = alertIdList.ToString();
-                                <a id="acknowledgeButton" href="~/SummaryNManualM/WarningApproval?idList=@idList" class="btn btn-primary btn-lg"> Acknowledge All</a>
+                                @*string idList = alertIdList.ToString();*@
+                                @*<a id="acknowledgeButton" href="~/SummaryNManualM/WarningApproval?idList=@idList" class="btn btn-primary btn-lg"> Acknowledge All</a>*@
+                                <a id="acknowledgeButton" href="~/SummaryNManualM/AcknowledgeAll" class="btn btn-primary btn-lg"> Acknowledge All</a>
                             }
                         </div>
 

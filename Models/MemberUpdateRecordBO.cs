@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace MCPhase3.Models
@@ -89,6 +90,8 @@ namespace MCPhase3.Models
         public string statusTxt { get; set; }
 
         public string EncryptedID { get; set; }
+
+        public List<ErrorAndWarningViewModelWithRecords> ErrorAndWarningList { get; set; }
 
         //List<HelpForEAndAUpdateRecord> helpList { get; set; }   
     }

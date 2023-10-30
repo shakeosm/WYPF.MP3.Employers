@@ -2,7 +2,6 @@
 using MCPhase3.CodeRepository.RefectorUpdateRecord;
 using MCPhase3.Common;
 using MCPhase3.Models;
-using MCPhase3.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -29,7 +28,7 @@ namespace MCPhase3.Controllers
         private readonly ILogger<SummaryNManualMController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-        private readonly IApiService _apiCallService;
+        //private readonly IApiService _apiCallService;
         ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
         List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
 
@@ -39,10 +38,9 @@ namespace MCPhase3.Controllers
         //EventsTableUpdates eventUpdate;
 
 
-        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
+        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
-            _Configure = configuration;
-            _apiCallService = ApiService;
+            _Configure = configuration;            
             _host = host;
             _logger = logger;
         }
@@ -84,17 +82,12 @@ namespace MCPhase3.Controllers
                 }
 
                 alertSumBO.L_USERID = CurrentUserId();
+                //alertSumBO.L_PAYLOC_CODE = HttpContext.Session.GetString(Constants.SessionKeyPayLocId);
 
-                //List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
-                var model = new List<ErrorAndWarningViewModelWithRecords>();
+            //List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
+            var model = new List<ErrorAndWarningViewModelWithRecords>();
 
-                //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
-
-
-                //pass remittance id to next action
-                string encryptedRemID = alertSumBO.remittanceId;    //## this is coming in Decrypted format.. good boy!
-                var remitIDStr = DecryptUrlValue(encryptedRemID);
-                int remID = Convert.ToInt32(DecryptUrlValue(encryptedRemID));
+                int remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.remittanceId));
 
                 ViewBag.remID = EncryptUrlValue(remID.ToString());
 
@@ -107,7 +100,7 @@ namespace MCPhase3.Controllers
                 //work on remittance level if null else Paylocation level
                 string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.ErrorAndWarnings);   //## api: /AlertSummaryRecordsPayLoc
 
-                alertSumBO.remittanceId = remitIDStr;
+                alertSumBO.remittanceId = remID.ToString();
                 //model = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
                 model = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
@@ -118,7 +111,7 @@ namespace MCPhase3.Controllers
 
                 foreach (var item in newModel1)
                 {
-                    item.EncryptedRowRecordID = encryptedRemID;
+                    item.EncryptedRowRecordID = alertSumBO.remittanceId;
                 }
             }
             //else
@@ -157,100 +150,136 @@ namespace MCPhase3.Controllers
         {
             //try
             //{
-                string errorWarningSummaryKeyName = $"{CurrentUserId()}_{Constants.ErrorWarningSummaryKeyName}";
-                //following functionality is added to keep user on same warning and error page until all sorted.
-                //## if we come back here from Acknowledgement page- then the ViewModel 'summaryVM' is empty- so need to read from the Cache.. save life..
+            string errorWarningSummaryKeyName = $"{CurrentUserId()}_{Constants.ErrorWarningSummaryKeyName}";
+            //following functionality is added to keep user on same warning and error page until all sorted.
+            //## if we come back here from Acknowledgement page- then the ViewModel 'summaryVM' is empty- so need to read from the Cache.. save life..
 
-                if (summaryVM.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
-                {
-                    //## if Alert.count is NULL then its an Empty, but not null// (pain in the back)
-                    summaryVM = _cache.Get<ErrorAndWarningViewModelWithRecords>(errorWarningSummaryKeyName);
-                    
-                    if(summaryVM is null){
-                        return RedirectToAction("Index", "Admin");  //## should not happen
-                    }
-                }
-                else
-                {
-                    _cache.Set(errorWarningSummaryKeyName, summaryVM);
-                }
+            if (summaryVM.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
+            {
+                //## if Alert.count is NULL then its an Empty, but not null// (pain in the back)
+                summaryVM = _cache.Get<ErrorAndWarningViewModelWithRecords>(errorWarningSummaryKeyName);
 
-                var recordsList = new List<ErrorAndWarningViewModelWithRecords>();                
-                string userName = CurrentUserId();
-               
-                var alertSumBO = new AlertSumBO()
+                if (summaryVM is null)
                 {
-                    remittanceId = summaryVM.remittanceID,
-                    L_USERID = userName
+                    return RedirectToAction("Index", "Admin");  //## should not happen
+                }
+            }
+            else
+            {
+                _cache.Set(errorWarningSummaryKeyName, summaryVM);
+            }
+
+            var recordsList = new List<ErrorAndWarningViewModelWithRecords>();
+            string userName = CurrentUserId();
+
+            var alertSumBO = new AlertSumBO()
+            {
+                remittanceId = summaryVM.remittanceID,
+                L_USERID = userName
+            };
+
+            //show error and worning on Remittance or paylocation level.
+            string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
+            if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
+            {
+                alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
+                //recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+            }
+            else
+            {
+                summaryVM.L_PAYLOC_FILE_ID = 0;
+
+                var errorAndWarningTo = new ErrorAndWarningToShowListViewModel()
+                {
+                    remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.remittanceID)),
+                    L_USERID = userName,
+                    alertType = summaryVM.ALERT_TYPE_REF,
                 };
-                
-                //show error and worning on Remittance or paylocation level.
-                string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
-                if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
-                {
-                    alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
-                    //recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
-                    var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
-                }
-                else
-                {
-                    summaryVM.L_PAYLOC_FILE_ID = 0;
 
-                    var errorAndWarningTo = new ErrorAndWarningToShowListViewModel() { 
-                        remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.remittanceID)),
-                        L_USERID = userName,
-                        alertType = summaryVM.ALERT_TYPE_REF,                    
-                    };
+                var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+                //if (recordsList.Count < 1)
+                //{
+                //    return View(Constants.Error403_Page);
+                //}
 
-                    var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
-                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
-                    //if (recordsList.Count < 1)
-                    //{
-                    //    return View(Constants.Error403_Page);
-                    //}
+                //using HttpClient client = new HttpClient();
+                //StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
+                //string endpoint = apiBaseUrlForErrorAndWarnings;
 
-                    //using HttpClient client = new HttpClient();
-                    //StringContent content = new StringContent(JsonConvert.SerializeObject(errorAndWarningTo), Encoding.UTF8, "application/json");
-                    //string endpoint = apiBaseUrlForErrorAndWarnings;
+                //using (var Response = await client.PostAsync(endpoint, content))
+                //{
+                //    if (Response.StatusCode == System.Net.HttpStatusCode.OK)
+                //    {
+                //        _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
+                //        //call following api to get this uploaded remittance id of file.
+                //        string result = await Response.Content.ReadAsStringAsync();
+                //        recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
 
-                    //using (var Response = await client.PostAsync(endpoint, content))
-                    //{
-                    //    if (Response.StatusCode == System.Net.HttpStatusCode.OK)
-                    //    {
-                    //        _logger.LogInformation($"BulkApproval API Call successfull. StringContent: {content}");
-                    //        //call following api to get this uploaded remittance id of file.
-                    //        string result = await Response.Content.ReadAsStringAsync();
-                    //        recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(result);     //TODO: cache this result .. and next time cheeck in Redis for this Object, if not found- then only call this API..
+                //        if (recordsList.Count < 1)
+                //        {
+                //            return View(Constants.Error403_Page);
+                //        }
+                //    }
+                //}
+            }
 
-                    //        if (recordsList.Count < 1)
-                    //        {
-                    //            return View(Constants.Error403_Page);
-                    //        }
-                    //    }
-                    //}
-                }
+            foreach (var record in recordsList)
+            {
+                record.EncryptedRowRecordID = EncryptUrlValue(record.DATAROWID_RECD);
+                record.EncryptedAlertid = EncryptUrlValue(record.MC_ALERT_ID);
 
-                foreach (var record in recordsList)
-                {
-                    record.EncryptedRowRecordID = EncryptUrlValue(record.DATAROWID_RECD);
-                    record.EncryptedAlertid = EncryptUrlValue(record.MC_ALERT_ID);
+            }
 
-                }
-                
-                ViewBag.alertClass = (summaryVM.ALERT_CLASS.Equals("W")) ? "Warning" : "Error";
-                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
-                ViewBag.status = summaryVM.ALERT_DESC + "";
+            //## Lets keep the list of all Warnings in the Cache.. in case the user wants to do AcknowledgeAll operation- we can retrive the Un-encrypted list and do AckAll operation
+            //List<string> BulkApprovalRecordIdList = recordsList.Where(b => b.CLEARED_FG == "N").Select(r => r.MC_ALERT_ID).ToList();
+            List<string> BulkApprovalRecordIdList = recordsList.Where(b => b.CLEARED_FG == "N").Select(r => r.EncryptedAlertid).ToList();
+            _cache.Set($"{Constants.BulkApprovalAlertIdList}_{CurrentUserId()}", BulkApprovalRecordIdList);
 
-                return View(recordsList);
-            //}
-            //catch (Exception ex)
-            //{
-            //    _logger.LogError(ex.ToString(), ex.StackTrace);
-            //    TempData["Msg1"] = "System is showing error, please try again later";
-            //    return RedirectToAction("Index", "Login");
-            //}
+            ViewBag.alertClass = (summaryVM.ALERT_CLASS.Equals("W")) ? "Warning" : "Error";
+            ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
+            ViewBag.status = summaryVM.ALERT_DESC + "";
 
+            return View(recordsList);
+            
+
+        }
+
+        /// <summary>This is a ByPass Action- when we need to AcknowledgeAll warnings- 
+        /// we can simply come here- read the list from cache- which was set from 'WarningsListforBulkApproval' Action
+        /// and use the list to do AcknowledgeAll operation</summary>
+        /// <returns></returns>
+        public async Task<IActionResult> AcknowledgeAll()
+        {
+            //## Get the cached list from Redis..
+            var bulkApprovalRecordIdList = _cache.Get<List<string>>($"{Constants.BulkApprovalAlertIdList}_{CurrentUserId()}");
+
+            if (bulkApprovalRecordIdList is null || bulkApprovalRecordIdList.Count < 1)
+            {
+                TempData["Msg1"] = "No Alert data found to acknowledge. Please try again.";
+                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
+            }
+
+            string decryptedRecordIdList = "";
+            foreach (var recordId in bulkApprovalRecordIdList)
+            {
+                decryptedRecordIdList += DecryptUrlValue(recordId) + ",";
+            }
+
+            var paramList = new ApproveWarningsInBulkVM() {
+                //AlertIdList = string.Join(",", bulkApprovalRecordIdList), //## all AlertIds will be in a string-> comma separated value.
+                AlertIdList = decryptedRecordIdList,
+                UserID = CurrentUserId()
+            };
+
+            string apiApproveWarningsBulkList = GetApiUrl(_apiEndpoints.ApproveWarningsBulkList);
+            var apiresult = await ApiPost(apiApproveWarningsBulkList, paramList);
+            paramList = JsonConvert.DeserializeObject<ApproveWarningsInBulkVM>(apiresult);  //## we get the ApiCall result in the same object and see what status we have got in return
+
+            //## All done.. now send the user back to the 'WarningsListforBulkApproval' with success status
+            return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
         }
 
         /// <summary>This is a short-circuit to go to Summary page without needing to create the URL from the Alert details child pages</summary>
@@ -329,6 +358,42 @@ namespace MCPhase3.Controllers
             //    return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
             //}
         }
+
+
+        // <summary>
+        /// this action is used to approve a single Warning - by Ajax calls..        
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public async Task<IActionResult> WarningAcknowledge(string alertId)
+        {
+            var result = new TaskResults();
+
+            string ErrorAndWarningsApprovalUrl = GetApiUrl(_apiEndpoints.ErrorAndWarningsApproval);
+            int.TryParse(DecryptUrlValue(alertId), out int decryptedAlertId);
+
+            if (decryptedAlertId < 1) {
+                result.Message = "Invalid Alert Id.";
+                return Json(result);
+            }
+
+            ErrorAndWarningApprovalOB errorAndWarningTo = new()
+            {
+                userID = CurrentUserId(),
+                alertID = decryptedAlertId
+            };
+
+            var apiResult = await ApiPost(ErrorAndWarningsApprovalUrl, errorAndWarningTo);
+            errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(apiResult);
+            string approvalResult = errorAndWarningTo.returnStatusTxt;
+
+            result.IsSuccess = true;
+            result.Message = approvalResult;
+            
+            return Json(result);
+
+        }
+
 
         /// <summary>
         /// This action will show all the selected data on view.
@@ -418,8 +483,9 @@ namespace MCPhase3.Controllers
                 //    }
                 //}
 
+                
                 memberUpdateRecordBO.dataRowID = dataRowID;
-                //ViewBag.remittanceID = remID;
+                memberUpdateRecordBO.ErrorAndWarningList = recordsList;
 
                 memberUpdateRecordBO.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
                 return View(memberUpdateRecordBO);
@@ -618,7 +684,6 @@ namespace MCPhase3.Controllers
 
             int remID = Convert.ToInt32(remittanceID);
 
-            string matchingRecordsManualApi = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
             UpdateFolder obj1 = new UpdateFolder();
             AddNewFolder obj2 = new AddNewFolder();
             AddNewPersonAndFolder obj3 = new AddNewPersonAndFolder();
@@ -673,11 +738,11 @@ namespace MCPhase3.Controllers
             bO.folderMatch = updateRecordModel.folderMatch;
             bO.userId = CurrentUserId();
             bO.note = getMatchesBO.Note;
-            
+
             //try
             //{
-
-                string apiResponse = await ApiPost(matchingRecordsManualApi, bO);
+            string matchingRecordsManualApi = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
+            string apiResponse = await ApiPost(matchingRecordsManualApi, bO);
                 TempData["msg"] = "Record updated successfully";
 
                 //using (HttpClient client = new HttpClient())

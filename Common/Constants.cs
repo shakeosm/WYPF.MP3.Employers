@@ -2,7 +2,7 @@
 {
     public static class Constants
     {
-        public const int ApplicationId = 2;    //## API=1, Employers = 2; Admin = 3
+        public const int EmployersPortal = 2;    //## API=1, Employers = 2; Admin = 3
         public const string SessionKeyUserID = "_UserName";
         //Paylocation and Employer both are same.
         public const string SessionKeyPayLocName = "_PayLocName";
@@ -29,10 +29,12 @@
         public const string SessionGuidKeyName = "SessionGUID";    //## for Redis cross check
         public const string UserIdKeyName = "LoggedInAs";    
         public const string ErrorWarningSummaryKeyName = "ErrorAndWarningSummaryVM";    
+        public const string BulkApprovalAlertIdList = "BulkApprovalRecordIdList";    
         
         /// <summary>The complete File path and name of the file uploaded by the Customer</summary>
         public const string UploadedFilePathKey = "UploadedFilePathName";    
         public const string FileUploadErrorMessage = "FileUploadErrorMessage";    
+        public const string CustomErrorDetails = "CustomErrorDetails";      //# to show the user a custom error message in a Error500 page
 
         public const string Error403_Page = @"~/Views/Errors/Errror403.cshtml";
         public const string AccountLockedMessage = "Your account is temporarily locked to prevent unauthorized use. Please try again later in 30 minutes, and if you still have trouble, contact WYPF.";

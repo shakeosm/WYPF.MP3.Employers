@@ -1,6 +1,7 @@
 ﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using MCPhase3.ViewModels;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -148,7 +149,14 @@ namespace MCPhase3.Controllers
             else
             {
                 throw new Exception($"Failed to connect to: {apiUrl}, Status: {response.StatusCode}");
+                
             }
+        }
+
+        public async Task ErrorLog_Insert(ErrorViewModel errorViewModel)
+        {
+            string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
+            await ApiPost(insertErrorLogApi, errorViewModel);
         }
 
     }

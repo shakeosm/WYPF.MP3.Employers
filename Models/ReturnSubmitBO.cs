@@ -6,7 +6,10 @@
         public string P_USERID { get; set; }
         public int P_STATUSCODE { get; set; }
         public string p_REMITTANCE_ID { get; set; }
-        public string RETURN_STATUSTEXT { get; set; }
-        public int? RETURN_STATUSCODE { get; set; }
+        public string L_STATUSTEXT { get; set; }
+        public int? L_STATUSCODE { get; set; }
+
+        public bool Success { get; set; }
+        public string Message { get; set; }
     }
 }

@@ -1,5 +1,9 @@
 ﻿$(function () {
 
+    $('#WarningListTable').DataTable({
+        stateSave: true
+    });
+
     $(".reset-record-button").click(function () {
 
         Swal.fire({

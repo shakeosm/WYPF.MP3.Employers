@@ -13,6 +13,9 @@
           sizes="16x16"
           href="~/img/wypf_mainlogoIco.png" />
     <!-- Custom CSS -->
+    <link href="~/css/app-custom-style.css" rel="stylesheet" />
+
+    <!-- Charting CSS - 3rd party -->
     <link href="~/assets/libs/flot/css/float-chart.css" rel="stylesheet" />
     <!-- Custom CSS -->
     <link href="~/dist/css/style.min.css" rel="stylesheet" />
@@ -73,6 +76,21 @@
             <a style="color: green;font:bold" href="https://www.wypf.org.uk/">WYPF</a>.
             <partial name="_applicationversioninfo.cshtml" />
         </footer>
+    </div>
+
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="~/img/wypf_mainlogoIco.png" class="rounded me-2" style="height:32px; width:32px;" alt="...">
+                <strong class="me-auto">MC3 Employers Portal</strong>
+                <small>few seconds ago</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                File contents are valid and ready to upload!
+            </div>
+        </div>
     </div>
 
     <script src="~/assets/libs/jquery/dist/jquery.min.js"></script>

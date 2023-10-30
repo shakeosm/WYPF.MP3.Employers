@@ -1,7 +1,7 @@
 ﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
-using MCPhase3.Services;
+using MCPhase3.ViewModels;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -20,13 +21,11 @@ namespace MCPhase3.Controllers
     public class AdminController : BaseController
     {
         private readonly IConfiguration _configuration;
-        private readonly IApiService _apiService;
         //TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         
-        public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IApiService ApiService, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
+        public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
             _configuration = configuration;
-            _apiService = ApiService;
         }
 
 
@@ -415,15 +414,15 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("Logout", "Home");
             }
             rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
-            //rBO.P_PAYLOC_FILE_ID = paylocID;
             rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
+            //rBO.P_PAYLOC_FILE_ID = paylocID;
             //rBO.p_REMITTANCE_ID = remID;
 
             //## call the 'WebapiBaseUrlForSubmitReturn' API
-            var apiResult = await _apiService.UpdateScore(rBO);
+            var apiResult = await SubmitReturn_UpdateScore(rBO);
             if (apiResult.IsSuccess)
             {
-                TempData["msg1"] = "File uploaded to WYPF database successfully.";
+                TempData["msg1"] = $"Score updated, Remittance: {rBO.p_REMITTANCE_ID}. Status: {apiResult.Message}";
                 TempData["submitReturnMsg"] = apiResult.Message;
             }
             else {
@@ -432,6 +431,49 @@ namespace MCPhase3.Controllers
 
             return RedirectToAction("Home", "Admin");
         }
+
+
+        /// <summary>This will update Score for a Remittance</summary>
+        /// <param name="rBO">ReturnSubmitBO Model</param>
+        /// <returns>ApiCallResult View Model</returns>
+        async Task<ApiCallResultVM> SubmitReturn_UpdateScore(ReturnSubmitBO rBO)
+        {
+            string WebapiBaseUrlForSubmitReturn = GetApiUrl(_apiEndpoints.SubmitReturn);
+            var apiResult = new ApiCallResultVM() { IsSuccess = false };
+            try
+            {
+                var contents = await ApiPost(WebapiBaseUrlForSubmitReturn, rBO);
+                rBO = JsonConvert.DeserializeObject<ReturnSubmitBO>(contents);
+                
+                var statusCode = (int)rBO.L_STATUSCODE.GetValueOrDefault(0);
+
+                //apiResult.IsSuccess = (statusCode < 3 || statusCode > 4);    //## 4 = 'You may not update returns at this stage'; 3 = Locked by another Process
+                apiResult.IsSuccess = rBO.Success;
+                apiResult.Message = rBO.Message;
+
+                return apiResult;
+            }
+            catch (Exception ex)
+            {
+                var errorDetails = new ErrorViewModel()
+                {
+
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                    UserId = HttpContext.Session.GetString(Constants.UserIdKeyName),
+                    ApplicationId = Constants.EmployersPortal,
+                    ErrorPath = ex.Source + ",  url: " + WebapiBaseUrlForSubmitReturn,
+                    Message = ex.Message,
+                    StackTrace = ex.StackTrace
+
+                };
+
+                string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
+                await ApiPost(insertErrorLogApi, errorDetails);
+                return apiResult;
+            }                        
+        }
+
+
         /// <summary>
         /// Delete a remittance including all processes and data at Employer level.
         /// </summary>
@@ -442,8 +484,9 @@ namespace MCPhase3.Controllers
             int remID =Convert.ToInt32(DecryptUrlValue(id));
             string result = string.Empty;
             string apiCallDeleteRemittance = GetApiUrl(_apiEndpoints.DeleteRemittance);
+            string userId = CurrentUserId();
 
-            string apiResponse = await ApiGet(apiCallDeleteRemittance + remID);
+            string apiResponse = await ApiGet($"{apiCallDeleteRemittance}{remID}/{userId}");
             result = JsonConvert.DeserializeObject<string>(apiResponse);
 
             //using (var httpClient = new HttpClient())
@@ -466,9 +509,10 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> DeleteRemittanceAjax(string id)
         {
             int remID = Convert.ToInt32(DecryptUrlValue(id));
-            string apiCallDeleteRemittance = GetApiUrl(_apiEndpoints.DeleteRemittance);
+            string userId = CurrentUserId();
+            string apiDeleteRemittanceUrl = GetApiUrl(_apiEndpoints.DeleteRemittance);
 
-            string apiResponse = await ApiGet(apiCallDeleteRemittance + remID);
+            string apiResponse = await ApiGet($"{apiDeleteRemittanceUrl}{remID}/{userId}");
             string result = JsonConvert.DeserializeObject<string>(apiResponse);
 
             return Json(result);
