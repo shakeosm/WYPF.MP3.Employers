@@ -21,8 +21,7 @@ namespace MCPhase3.Controllers
     public class AdminController : BaseController
     {
         private readonly IConfiguration _configuration;
-        //TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
-        
+
         public AdminController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
             _configuration = configuration;
@@ -39,12 +38,10 @@ namespace MCPhase3.Controllers
 
                 remittanceID = Convert.ToInt32(GetRemittanceId(returnAsEncrypted: false)), // we can put variable name with variable value when calling a function to make it more readable                    
                 remittanceStatus = 1,
-                eventTypeID = 105,                
+                eventTypeID = 105,
                 notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
             };
-            //eventUpdate.UpdateEventDetailsTable(eBO);
-            //update Event Details table File is uploaded successfully.
-            //I have disabled it for staff.
+
             InsertEventDetails(eBO);
 
             return RedirectToAction("Index");
@@ -65,19 +62,11 @@ namespace MCPhase3.Controllers
         {
             //string payrolID = string.Empty;
             DashboardBO detailBO = new DashboardBO();
-            //dashboardBO = new List<DashboardBO>();
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
             var userid = ContextGetValue(Constants.SessionKeyUserID);
-            //payrolID = ContextGetValue(Constants.SessionKeyPayLocId);
-
-            //List<DashboardBO> dashboardBO = new List<DashboardBO>();
-            // DashboardBO dashboardBO1 = new DashboardBO();
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
-           // var userid = GetContextValue(SessionKeyUserID);
             detailBO.userId = userid;
-            //detailBO.L_PAYROLL_PROVIDER = payrolID;
             detailBO.L_PAYROLL_PROVIDER = null;
-            //detailBO.statusType = "COMPLETED";
             detailBO.statusType = "WYPF";
 
             List<DashboardBO> dashboardBO = await getDashboardValues(detailBO);
@@ -94,7 +83,7 @@ namespace MCPhase3.Controllers
             int remID = Convert.ToInt32(DecryptUrlValue(remittanceId));
             List<DashboardHistScoreBO> dashboardScoreHistBO = await getDashboardScoreHist(remID);
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
-            
+
             return View(dashboardScoreHistBO);
         }
 
@@ -107,7 +96,7 @@ namespace MCPhase3.Controllers
             int remID = Convert.ToInt32(DecryptUrlValue(remittanceId));
             List<DashboardHistScoreBO> dashboardScoreHistBO = await getDashboardScoreHist(remID);
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
-            
+
             return PartialView("_ScoreHistory", dashboardScoreHistBO);
         }
 
@@ -121,6 +110,8 @@ namespace MCPhase3.Controllers
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
             return View();
         }
+
+
         /// <summary>
         /// Update password for Staff and Employers
         /// </summary>
@@ -136,8 +127,9 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdatePassword(LoginBO loginBO)
         {
-            if (!ModelState.IsValid) {
-                ModelState.AddModelError("Password","Invalid password. Please use a strong password.");
+            if (!ModelState.IsValid)
+            {
+                ModelState.AddModelError("Password", "Invalid password. Please use a strong password.");
                 return View(loginBO);
             }
 
@@ -160,10 +152,10 @@ namespace MCPhase3.Controllers
 
             ViewBag.isStaff = 1;
             loginBO.userName = ContextGetValue(Constants.SessionKeyUserID);
-            var  result = (Password) await UpdatePasswordMethod(loginBO);
+            var result = (Password)await UpdatePasswordMethod(loginBO);
             if (result == Password.Updated)
             {
-                TempData["Msg1"] = "Password updated successfully, please login using new password.";                
+                TempData["Msg1"] = "Password updated successfully, please login using new password.";
                 return RedirectToAction("Logout", "Login");
             }
             if (result == Password.Invalid)     //## this will not happen.. as we already have verified against RegEx.Match()
@@ -177,7 +169,8 @@ namespace MCPhase3.Controllers
                 TempData["UpdateMessage"] = "Old Password is not correct, please try again.";
                 return RedirectToAction("UpdatePassword", "Admin");
             }
-            else {
+            else
+            {
                 TempData["UpdateMessage"] = "Failed to updated password, please try again.";
                 return RedirectToAction("UpdatePassword", "Admin");
             }
@@ -189,21 +182,6 @@ namespace MCPhase3.Controllers
             string apiResponse = await ApiPost(apiBaseUrlForLoginCheck, loginBO);
             loginBO.result = JsonConvert.DeserializeObject<int>(apiResponse);
 
-            //string apiResponse = string.Empty;
-            //using (var httpClient = new HttpClient())
-            //{
-            //    StringContent content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
-            //    // string endPoint = apiLink;
-
-            //    using (var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content))
-            //    {
-            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //        {
-            //            string result = await response.Content.ReadAsStringAsync();
-            //            loginBO.result = JsonConvert.DeserializeObject<int>(result);
-            //        }
-            //    }
-            //}
             return loginBO.result;
 
         }
@@ -220,45 +198,29 @@ namespace MCPhase3.Controllers
             var apiResult = new List<DashboardBO>();
 
             string apiResponse = await ApiPost(apiBaseUrlForDashboard, dashboardBO);
-            if (string.IsNullOrEmpty(apiResponse) == false) { 
+            if (string.IsNullOrEmpty(apiResponse) == false)
+            {
                 apiResult = JsonConvert.DeserializeObject<List<DashboardBO>>(apiResponse);
             }
 
-            //using (var httpClient = new HttpClient())
-            //{
-            //    StringContent content = new StringContent(JsonConvert.SerializeObject(dashboardBO), Encoding.UTF8, "application/json");
-            //    using (var response = await httpClient.PostAsync(apiBaseUrlForDashboard, content))
-            //    {
-            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //        {
-            //            string result = await response.Content.ReadAsStringAsync();
-            //            apiResult = JsonConvert.DeserializeObject<List<DashboardBO>>(result);
-            //        }
-            //    }
-            //}
 
-            //if (status.Equals("completed"))
-            //{
-            //    return listBO.Where(x =>Convert.ToInt32(x.return_Status_Code) >= 105).ToList();
-            //}
-
-            //return listBO.Where(x => Convert.ToInt32(x.return_Status_Code) < 110).ToList();           
             if (apiResult != null && apiResult.Count > 0)
             {
                 foreach (var item in apiResult)
                 {
                     item.remittance_IdEnc = EncryptUrlValue(item.remittance_Id.ToString());
                 }
-                
+
                 return apiResult.OrderByDescending(d => d.remittance_Id).ToList();
             }
-            else { 
+            else
+            {
                 return new List<DashboardBO>();
             }
         }
 
 
-        public async Task<IActionResult> Home( )
+        public async Task<IActionResult> Home()
         {
             try
             {
@@ -298,7 +260,7 @@ namespace MCPhase3.Controllers
         public async Task<ActionResult> GetSubmissionDetails(string remittanceId)
         {
 
-            if (!string.IsNullOrEmpty(remittanceId) )
+            if (!string.IsNullOrEmpty(remittanceId))
             {
                 string WebapiBaseUrlForDetailEmpList = GetApiUrl(_apiEndpoints.DetailEmpList);
                 string remid = DecryptUrlValue(remittanceId);
@@ -315,17 +277,6 @@ namespace MCPhase3.Controllers
                 string apiResponse = await ApiPost(WebapiBaseUrlForDetailEmpList, paramList);
                 var submissionDetails = JsonConvert.DeserializeObject<List<DashboardBO>>(apiResponse);
 
-                //using (var httpClient = new HttpClient())
-                //{
-                //    var content = new StringContent(JsonConvert.SerializeObject(paramList), Encoding.UTF8, "application/json");
-
-                //    using var response = await httpClient.PostAsync(WebapiBaseUrlForDetailEmpList, content);
-                //    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                //    {
-                //        string result = await response.Content.ReadAsStringAsync();
-                //        submissionDetails = JsonConvert.DeserializeObject<List<DashboardBO>>(result);
-                //    }
-                //}
 
                 return PartialView("_SubmissionDetails", submissionDetails);
             }
@@ -340,30 +291,19 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<GetRemittanceStatusByUserBO>> getDashboardValuesForEmployers(string userid, string status)
         {
-            string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.DashboardEmployers);            
+            string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.DashboardEmployers);
 
             string apiResponse = await ApiGet(apiBaseUrlForDashboard + userid);
             var listBO = JsonConvert.DeserializeObject<List<GetRemittanceStatusByUserBO>>(apiResponse);
 
-            //using (var httpClient = new HttpClient())
-            //{
-            //    using (var response = await httpClient.GetAsync(apiBaseUrlForDashboard + userid))
-            //    {
-            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //        {
-            //            string result = await response.Content.ReadAsStringAsync();
-            //            listBO = JsonConvert.DeserializeObject<List<GetRemittanceStatusByUserBO>>(result);
-            //        }
-            //    }
-            //}
 
             if (status.Equals("completed"))
             {
                 return listBO.Where(x => x.event_Type_ID > 100).ToList();
             }
-           
-             return listBO.Where(x => x.event_Type_ID <= 100).ToList();
-            
+
+            return listBO.Where(x => x.event_Type_ID <= 100).ToList();
+
         }
 
 
@@ -379,21 +319,11 @@ namespace MCPhase3.Controllers
             string apiResponse = await ApiGet(apiBaseUrlForDashboardScoreHist + remittanceId);
             var listBO = JsonConvert.DeserializeObject<List<DashboardHistScoreBO>>(apiResponse);
 
-            //using (var httpClient = new HttpClient())
-            //{
-            //    using (var response = await httpClient.GetAsync(apiBaseUrlForDashboardScoreHist + remittanceId))
-            //    {
-            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //        {
-            //            string result = await response.Content.ReadAsStringAsync();
-            //            listBO = JsonConvert.DeserializeObject<List<DashboardHistScoreBO>>(result);
-            //        }
-            //    }
-            //}
 
-            if(listBO != null && listBO.Count > 0)
+            if (listBO != null && listBO.Count > 0)
             {
-                foreach (var item in listBO){
+                foreach (var item in listBO)
+                {
                     item.remittanceId_Encrypted = EncryptUrlValue(item.remittance_Id.ToString());
                 }
             }
@@ -410,13 +340,10 @@ namespace MCPhase3.Controllers
         {
             if (rBO.p_REMITTANCE_ID == null)
             {
-                // remID = Convert.ToInt32(GetContextValue(SessionKeyRemittanceID));
                 return RedirectToAction("Logout", "Home");
             }
             rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
             rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
-            //rBO.P_PAYLOC_FILE_ID = paylocID;
-            //rBO.p_REMITTANCE_ID = remID;
 
             //## call the 'WebapiBaseUrlForSubmitReturn' API
             var apiResult = await SubmitReturn_UpdateScore(rBO);
@@ -425,7 +352,8 @@ namespace MCPhase3.Controllers
                 TempData["msg1"] = $"Score updated, Remittance: {rBO.p_REMITTANCE_ID}. Status: {apiResult.Message}";
                 TempData["submitReturnMsg"] = apiResult.Message;
             }
-            else {
+            else
+            {
                 TempData["msg1"] = "Failed to update WYPF database.";
             }
 
@@ -444,10 +372,9 @@ namespace MCPhase3.Controllers
             {
                 var contents = await ApiPost(WebapiBaseUrlForSubmitReturn, rBO);
                 rBO = JsonConvert.DeserializeObject<ReturnSubmitBO>(contents);
-                
+
                 var statusCode = (int)rBO.L_STATUSCODE.GetValueOrDefault(0);
 
-                //apiResult.IsSuccess = (statusCode < 3 || statusCode > 4);    //## 4 = 'You may not update returns at this stage'; 3 = Locked by another Process
                 apiResult.IsSuccess = rBO.Success;
                 apiResult.Message = rBO.Message;
 
@@ -470,7 +397,7 @@ namespace MCPhase3.Controllers
                 string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
                 await ApiPost(insertErrorLogApi, errorDetails);
                 return apiResult;
-            }                        
+            }
         }
 
 
@@ -481,25 +408,12 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> DeleteRemittance(string id)
         {
-            int remID =Convert.ToInt32(DecryptUrlValue(id));
-            string result = string.Empty;
+            int remID = Convert.ToInt32(DecryptUrlValue(id));
             string apiCallDeleteRemittance = GetApiUrl(_apiEndpoints.DeleteRemittance);
             string userId = CurrentUserId();
 
             string apiResponse = await ApiGet($"{apiCallDeleteRemittance}{remID}/{userId}");
-            result = JsonConvert.DeserializeObject<string>(apiResponse);
-
-            //using (var httpClient = new HttpClient())
-            //{
-            //    using (var response = await httpClient.GetAsync(apiCallDeleteRemittance + remID))
-            //    {
-            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //        {
-            //            result = await response.Content.ReadAsStringAsync();
-            //            result = JsonConvert.DeserializeObject<string>(result);
-            //        }
-            //    }
-            //}
+            string result = JsonConvert.DeserializeObject<string>(apiResponse);
 
             TempData["msgDelete"] = result;
             return RedirectToAction("Home");

@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Services\" />
     <Folder Include="Views\Shared\Partials\" />
     <Folder Include="wwwroot\FilesForFTP\" />
     <Folder Include="wwwroot\DesignXML\" />

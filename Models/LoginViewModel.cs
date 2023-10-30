@@ -2,7 +2,7 @@
 
 namespace MCPhase3.Models
 {
-    public class DummyLoginViewModel
+    public class LoginViewModel
     {
         [Required(ErrorMessage = "Username is required")]
         public string UserName { get; set; }

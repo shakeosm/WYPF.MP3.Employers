@@ -4,8 +4,6 @@
     ViewData["Title"] = "Bulk data approval";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 
-    /*StringBuilder alertIdList = new StringBuilder();*/ // this will hold list of all the AlertIds to be sent to the controller for 'AcknowledgeAll' action..
-
     var totalAlerts = Model.Where(a => a.CLEARED_FG == "N").Count();
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
 

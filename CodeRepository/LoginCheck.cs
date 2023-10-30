@@ -2,7 +2,6 @@
 using MCPhase3.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Threading.Tasks;
 
 namespace MCPhase3.CodeRepository
@@ -11,7 +10,7 @@ namespace MCPhase3.CodeRepository
     {
         public const string SessionKeyUserID = "_UserName";
         public const string SessionKeyPayLocName = "_PayLocName";
-        DummyLoginViewModel dLogin = new DummyLoginViewModel();
+        LoginViewModel dLogin = new LoginViewModel();
 
         public async Task<IViewComponentResult> InvokeAsync()
         {

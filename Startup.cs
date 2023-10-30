@@ -1,7 +1,6 @@
 using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.ActionFilters;
 using MCPhase3.Common;
-using MCPhase3.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
@@ -40,7 +39,8 @@ namespace MCPhase3
 
             // The Tempdata provider cookie is not essential. Make it essential
             // so Tempdata is functional when tracking is disabled.
-            services.Configure<CookieTempDataProviderOptions>(options => {
+            services.Configure<CookieTempDataProviderOptions>(options =>
+            {
                 options.Cookie.IsEssential = true;
             });
 
@@ -58,19 +58,17 @@ namespace MCPhase3
 
             // Add Redis services to the container.
             services.AddSingleton<IRedisCache, RedisCache>();
-            services.AddStackExchangeRedisCache(options => {
+            services.AddStackExchangeRedisCache(options =>
+            {
                 options.Configuration = Configuration.GetConnectionString("RedisCacheUrl");
                 //    options.InstanceName = builder.Configuration.GetValue<string>("RedisInstance");
             });
 
-
-            //remittance protector classes Dependency injection
-            //services.AddSingleton<UniqueCode>();
-            //services.AddSingleton<CustomDataProtection>();
             services.AddDataProtection().SetDefaultKeyLifetime(TimeSpan.FromDays(10)).SetApplicationName("MP3.Phase3");
 
             //## Setting the UserSession Check ActionFilter Globally-> for All Controller->Actions
-            services.AddControllersWithViews((options) => {
+            services.AddControllersWithViews((options) =>
+            {
                 options.Filters.Add<UserSessionCheckActionFilter>();
             });
 
@@ -92,7 +90,7 @@ namespace MCPhase3
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-             
+
             }
             else
             {
@@ -109,13 +107,13 @@ namespace MCPhase3
             app.UseRouting();
 
             app.UseAuthorization();
-           
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
-                    name: "default",                    
+                    name: "default",
                     pattern: "{controller=Login}/{action=Index}/{id?}");
-            });            
+            });
         }
     }
 }

@@ -19,22 +19,22 @@ namespace MCPhase3.Controllers
 {
     public class LoginController : BaseController
     {
-        PayrollProvidersBO payrollBO = new PayrollProvidersBO();       
-        DummyLoginViewModel loginDetails = new DummyLoginViewModel();
+        PayrollProvidersBO payrollBO = new PayrollProvidersBO();
+        LoginViewModel loginDetails = new LoginViewModel();
 
-        string uploadedFileName = string.Empty;     
+        string uploadedFileName = string.Empty;
         private readonly IConfiguration _configuration;
 
         public LoginController(IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
             _configuration = configuration;
         }
-       
+
         public IActionResult Index()
         {
             //## following function will check if session has value then login user with out showing login page again.
-            bool sessionResult = SessionHasValue(); 
-            
+            bool sessionResult = SessionHasValue();
+
             if (sessionResult)
             {
                 return RedirectToAction("Index", "Admin");
@@ -46,24 +46,25 @@ namespace MCPhase3.Controllers
 
 
         [HttpPost]
-        [ValidateAntiForgeryToken]       
-        public async Task<IActionResult> Index(DummyLoginViewModel loginDetails)
-        {            
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Index(LoginViewModel loginDetails)
+        {
             //check username and password
             var loginResult = await LoginCheckMethod(loginDetails.UserName, loginDetails.Password);
 
             //## Yes, the user is valid, but we haven't Logged the user in yet. need to see if there is another session running anywhere
-             if (loginResult == (int)LoginStatus.Valid) { 
+            if (loginResult == (int)LoginStatus.Valid)
+            {
 
                 var sessionInfo = GetUserSessionInfo(loginDetails);
-            
+
                 //## we need to confirm their is only one login session for this user.. 
                 if (sessionInfo.HasExistingSession)
                 {
                     //## Notify the user - whether they wanna kill the existing one and continue here...?
                     sessionInfo.Password = ""; //## don't take the password back to the UI
                     return View("MultipleSessionPrompt", sessionInfo);
-                
+
                 }
                 //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
                 return await ProceedToLogIn(loginDetails);
@@ -86,18 +87,18 @@ namespace MCPhase3.Controllers
             return View(loginDetails);
 
         }
-       
+
 
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProceedCurrentSession(DummyLoginViewModel vm)
+        public async Task<IActionResult> ProceedCurrentSession(LoginViewModel vm)
         {
             //## The user wasn't logged in, rather shown a warning message to take action- coz they have another session opened somewhere... 
             //## Now the user has decided to stay/continue this current login.. and kills the other session...
             var currentBrowserSessionId = Guid.NewGuid().ToString();
             var sessionInfo = GetUserSessionInfo(vm);
-                        
+
             _cache.Delete(SessionInfoKeyName());
 
             //## Create a new one
@@ -108,21 +109,21 @@ namespace MCPhase3.Controllers
 
             //## create entries in Session Cookies, too..
             ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session
-            
+
             //## The user was authenticated first, then shown a screen - either to continue on this browser or close this browser.            
             return await ProceedToLogIn(vm);
         }
 
 
-        private async Task<IActionResult> ProceedToLogIn(DummyLoginViewModel vm)
-        {           
+        private async Task<IActionResult> ProceedToLogIn(LoginViewModel vm)
+        {
             var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId")
                                                .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
             try
             {
                 //Once usernames copied to new table then uncomment following line of code
-                payrollBO = await CallPayrollProviderService(vm.UserName);                
+                payrollBO = await CallPayrollProviderService(vm.UserName);
             }
             catch (Exception ex)
             {
@@ -150,25 +151,23 @@ namespace MCPhase3.Controllers
             {
                 TempData["MainHeading"] = "Fire - Contribution Advice";
                 TempData["isFire"] = true;
-                //isFileFire.isFire = true;
-                HttpContext.Session.SetString(SessionKeyClientType, "FIRE");                    
+                HttpContext.Session.SetString(SessionKeyClientType, "FIRE");
             }
             else
             {
                 TempData["isFire"] = false;
-                //isFileFire.isFire = false;
                 HttpContext.Session.SetString(SessionKeyClientType, "LG");
             }
-                
+
             return RedirectToAction("Index", "Admin");
-            
+
         }
 
 
         /// <summary>This will read Redis cache and find if there is any entry for this user session</summary>
         /// <param name="userId">User Id</param>
         /// <returns>UserSessionInfoVM object</returns>
-        private UserSessionInfoVM GetUserSessionInfo(DummyLoginViewModel vm)
+        private UserSessionInfoVM GetUserSessionInfo(LoginViewModel vm)
         {
             //## Get the session info from Redis cache            
             HttpContext.Session.SetString(Constants.UserIdKeyName, vm.UserName);
@@ -176,7 +175,7 @@ namespace MCPhase3.Controllers
 
             if (sessionInfo is null)
             {
-                var currentBrowserSessionId = Guid.NewGuid().ToString();    
+                var currentBrowserSessionId = Guid.NewGuid().ToString();
 
                 ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session
                 ContextSetValue(Constants.UserIdKeyName, vm.UserName);
@@ -215,17 +214,13 @@ namespace MCPhase3.Controllers
         private async Task<PayrollProvidersBO> CallPayrollProviderService(string userName)
         {
             string apiBaseUrlForPayrollProvider = GetApiUrl(_apiEndpoints.PayrollProvider);
-            string apiResponse = String.Empty;
-           
             using (var httpClient = new HttpClient())
             {
-                using (var response = await httpClient.GetAsync(apiBaseUrlForPayrollProvider + userName))
+                using var response = await httpClient.GetAsync(apiBaseUrlForPayrollProvider + userName);
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        string result = await response.Content.ReadAsStringAsync();
-                        payrollBO = JsonConvert.DeserializeObject<PayrollProvidersBO>(result);
-                    }
+                    string result = await response.Content.ReadAsStringAsync();
+                    payrollBO = JsonConvert.DeserializeObject<PayrollProvidersBO>(result);
                 }
             }
 
@@ -240,18 +235,16 @@ namespace MCPhase3.Controllers
         private async Task<int> LoginCheckMethod(LoginBO loginBO)
         {
             string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);
-            
+
             using (var httpClient = new HttpClient())
             {
                 StringContent content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
 
-                using (var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content))
+                using var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content);
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        string result = await response.Content.ReadAsStringAsync();
-                        loginBO.result = JsonConvert.DeserializeObject<int>(result);
-                    }
+                    string result = await response.Content.ReadAsStringAsync();
+                    loginBO.result = JsonConvert.DeserializeObject<int>(result);
                 }
             }
             return loginBO.result;
@@ -259,7 +252,8 @@ namespace MCPhase3.Controllers
 
         private async Task<int> LoginCheckMethod(string userId, string password)
         {
-            var loginBO = new LoginBO() { 
+            var loginBO = new LoginBO()
+            {
                 userName = userId,
                 password = password
             };
@@ -287,12 +281,12 @@ namespace MCPhase3.Controllers
         private bool SessionHasValue()
         {
             bool result = false;
-           
+
             if (!string.IsNullOrEmpty(HttpContext.Session.GetString(Constants.SessionKeyUserID)))
-            {  
-                result = true;               
+            {
+                result = true;
             }
-            
+
             TempData["Msg1"] = null;  //## to clear any previously stored garbage.. we should avoid using this TempDtat completely
             TempData["msg"] = null;
 
@@ -314,7 +308,7 @@ namespace MCPhase3.Controllers
             var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
 
             _cache.DeleteUserSession(currentUserId);    //## Deletes the User session in Redis Cache..
-            
+
             //## Browser Session Id and Redis SessionId-> are they same..?
             if (sessionInfo != null)
             {
@@ -401,7 +395,7 @@ namespace MCPhase3.Controllers
         /// <returns>JSon Text</returns>
         public IActionResult ClearRedisUserSession(string id)
         {
-            if ( string.IsNullOrEmpty(id) == false)
+            if (string.IsNullOrEmpty(id) == false)
             {
                 _cache.DeleteUserSession(id);
                 ClearTempData();

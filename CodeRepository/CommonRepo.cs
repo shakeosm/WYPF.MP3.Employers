@@ -165,194 +165,10 @@ namespace MCPhase3.CodeRepository
                 return null;
             }
 
-
             return dtTable;
         }
 
-        //try
-        //{
-        //    // Retrieve schema information about tables.
-        //    //Because tables include tables, views, and other objects,
-        //    //restrict to just TABLE in the Object array of restrictions.
-        //    //schemaTable = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
-        //    //new object[] { null, null, null, null });
-        //    schemaTable = dtTable;
-        //}
-        //catch (Exception ex)
-        //{
-        //    errorMessage = ex.Message;
-        //    //Logger.Write(LogLevel.ERROR, ex.Message);
-        //    //con.Close();
-        //    //con.Dispose();
-        //    return null;
-        //}
 
-
-        //string sheetNameInDT = string.Empty;
-        ////List the table name from each row in the schema table.
-        //string drData = "";
-        //try
-        //{
-        //    foreach (DataColumn dc in schemaTable.Columns)
-        //        drData = drData + (drData.Length == 0 ? "" : ",") + dc.ColumnName;
-
-        //    // check sheet name within excel file exist or not
-        //    foreach (DataRow dr in schemaTable.Rows)
-        //    {
-        //        drData = "";
-        //        foreach (DataColumn dc in schemaTable.Columns)
-        //            drData = drData + (drData.Length == 0 ? "" : ",") + dr[dc.ColumnName].ToString();
-
-        //       // sheetNameInDT = dr["TABLE_NAME"].ToString().Trim().ToUpper();//dr["TABLE_NAME"].ToString().Trim().ToUpper();
-        //        if (sheetNameEx.Contains(sheetName.Trim().ToUpper()))
-        //        {
-        //            tableFound = true;
-        //            break;
-        //        }
-        //    }
-
-        //    if (!tableFound)
-        //    {
-        //        errorMessage = " Excel spreadsheet 'MC_Data' not found with in Excel file.";
-        //        //Logger.Write(LogLevel.ERROR, "Excel spreadsheet not found with in excel file");
-        //        return null;
-        //    }
-
-        //OleDbDataAdapter objda = new OleDbDataAdapter("Select * from [" + sheetNameInDT + "] ", con);
-
-        //        //objda.Fill(myTable);
-        //        myTable = schemaTable;
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        errorMessage = ex.Message;
-        //        //Logger.Write(LogLevel.ERROR, ex.Message);
-        //        //con.Close();
-        //        //con.Dispose();
-        //        return null;
-        //    }
-        //    finally
-        //    {
-        //        //con.Close();
-        //        //con.Dispose();
-        //    }
-
-        //    // delete top rows from dataTable
-
-        //    try
-        //    {
-        //        if (IgnoreTopNoOfLines < myTable.Rows.Count)
-        //        {
-        //            for (int ctr = 0; ctr < IgnoreTopNoOfLines; ctr++)
-        //            {
-        //                myTable.Rows[ctr].Delete();
-        //            }
-
-        //            myTable.AcceptChanges();
-        //        }
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        errorMessage = ex.Message;
-        //        //Logger.Write(LogLevel.ERROR, ex.Message);
-        //        return null;
-        //    }
-
-        //    return myTable;
-        //}
-
-
-        //public static bool OpenOleDBConnection(string fileName, ref OleDbConnection con)
-        //{
-        //    bool result = true;
-
-        //    string xlsCon = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" + fileName + "; Extended Properties=\"Excel 12.0;  HDR=Yes; IMEX=1;\"  ";
-        //    con = new OleDbConnection(xlsCon);
-        //    try
-        //    {
-        //        if (con.State != ConnectionState.Open)
-        //            con.Open();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = false;
-        //    }
-
-        //    return result;
-        //}
-        //public static DataTable OpenOleDBConnection_XXX(string fileName, ref OleDbConnection con)
-        //{
-        //    bool result = true;
-        //    string sheetName = string.Empty;
-        //    DataTable dtTable = new DataTable();
-        //    List<string> rowList = new List<string>();
-        //    ISheet sheet;
-
-        //    using (var stream = new FileStream(fileName, FileMode.Open))
-        //    {
-        //        stream.Position = 0;
-        //        XSSFWorkbook xssWorkbook = new XSSFWorkbook(stream);
-        //        sheet = xssWorkbook.GetSheetAt(0);
-        //        //get the name of sheet from Excel.
-        //        sheetName = xssWorkbook.GetSheetAt(0).SheetName;
-        //        IRow headerRow = sheet.GetRow(0);
-        //        int cellCount = headerRow.LastCellNum;
-        //        for (int j = 0; j < cellCount; j++)
-        //        {
-        //            ICell cell = headerRow.GetCell(j);
-        //            if (cell == null || string.IsNullOrWhiteSpace(cell.ToString())) continue;
-        //            {
-        //                dtTable.Columns.Add(cell.ToString());
-        //            }
-        //        }
-        //        for (int i = (sheet.FirstRowNum + 1); i <= sheet.LastRowNum; i++)
-        //        {
-        //            IRow row = sheet.GetRow(i);
-        //            if (row == null) continue;
-        //            if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
-        //            for (int j = row.FirstCellNum; j < cellCount; j++)
-        //            {
-        //                if (row.GetCell(j) != null)
-        //                {
-        //                    if (!string.IsNullOrEmpty(row.GetCell(j).ToString()) && !string.IsNullOrWhiteSpace(row.GetCell(j).ToString()))
-        //                    {
-        //                        rowList.Add(row.GetCell(j).ToString());
-        //                    }
-        //                }
-        //            }
-        //            if (rowList.Count > 0)
-        //                dtTable.Rows.Add(rowList.ToArray());
-        //            rowList.Clear();
-        //        }
-        //    }
-        //    return dtTable; 
-        //}
-
-
-        //public bool CheckFileIsExcel(string fileName)
-        //{
-        //    bool result = true;
-
-        //    OleDbConnection con = null;
-        //    string xlsCon = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" + fileName + "; Extended Properties=\"Excel 12.0;  HDR=Yes; IMEX=1;\"  ";
-        //    con = new OleDbConnection(xlsCon);
-        //    try
-        //    {
-        //        if (con.State != ConnectionState.Open)
-        //        {
-        //            con.Open();
-        //            con.Close();
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = false;
-        //    }
-
-        //    return result;
-        //}
         /// <summary>
         /// Function is seperated below this function for Fire becaurse Fire has more column headings.
         /// </summary>
@@ -382,6 +198,8 @@ namespace MCPhase3.CodeRepository
 
             return result;
         }
+
+
         public static bool ChangeColumnHeadingsFire(DataTable dt, out string errorMessage)
         {
             errorMessage = string.Empty;
@@ -407,39 +225,10 @@ namespace MCPhase3.CodeRepository
             return result;
         }
 
-        //    public bool DeleteUploadedFile(string fileFullName, out string errorMsg)
-        //{
-        //    bool answer = true;
-        //    errorMsg = string.Empty;
-        //    try
-        //    {
-        //        System.IO.File.Delete(fileFullName);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        errorMsg = "File delete exception from server. " + ex.Message;
-        //        answer = false;
-        //    }
-
-        //    return answer;
-        //}
 
         public static DataTable ConvertAllFieldsToString(DataTable dt)
         {
-            //nameOfMonthDt I am using to save values that I want to use on different views.
-            //if (nameOfMonthDT.Columns.Count > 0)
-            //{
-            //  nameOfMonthDT.Clear();
-
-            //}
-
-            ///Session I am using to keep the values that I needed to use on different pages/views     
-            // HttpContext.Session.SetString(SessionKeyMonth, nameOfMonth.ToString());
-            //nameOfMonthDT.Columns.Add(nameOfMonth.ToString());
-            //nameOfMonthDT.Columns.Add(fileName);
-
-            // int numberOfRows = dt.Rows.Count;
-            //nameOfMonthDT.Columns.Add((numberOfRows - 1).ToString());
+            //nameOfMonthDt I am using to save values that I want to use on different views.            
 
             DataTable dtClone = dt.Clone(); //just copy structure, no data
             for (int i = 0; i < dtClone.Columns.Count; i++)
@@ -481,20 +270,6 @@ namespace MCPhase3.CodeRepository
 
             }
 
-            //List<System.Data.DataRow> removeRowIndex = new List<System.Data.DataRow>();
-            //foreach (DataRow dr in dtClone.Rows)
-            //{
-            //    if (CheckRowEmpty(dr))
-            //    {
-            //        removeRowIndex.Add(dr);
-            //    }
-
-            //}
-            //// Remove all blank of in-valid rows
-            //foreach (System.Data.DataRow rowIndex in removeRowIndex)
-            //{
-            //    dtClone.Rows.Remove(rowIndex);
-            //}
             valuePassDT = dtClone.Copy();
             return dtClone;
         }
@@ -505,16 +280,10 @@ namespace MCPhase3.CodeRepository
             return valuePassDT;
         }
 
-        // public static DataTable MonthandPayrollDT()
-        //{
-        //  return nameOfMonthDT;
-        //}
+
         public bool CheckEmployerLocCode(DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
-
-
-
             // get paylocations from spreadsheet
             DataTable newDt = dt;//dt.DefaultView.ToTable(true, new String[] { "EMPLOYER_LOC_CODE" });
             int inc = 1;
@@ -567,17 +336,9 @@ namespace MCPhase3.CodeRepository
                 //Q - added condition to check if pay loc is not empty as well
                 if (!validPalocInSpreadsheet && !payLocID.Equals(string.Empty))
                 {
-                    //if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
-                    //{
-                    //    CheckSpreadSheetErrorMsg = "<BR /> <BR />";
-                    //}
-
                     CheckSpreadSheetErrorMsg += "<BR />You have entered invalid 'Employer Location Code:<B>"
                             + payLocID + "</B> in spreadsheet at row number: " + inc + ".<BR />Valid 'Employer Location Code' shown above in 'Payroll Provider' drop down list.";
-                    result = false;
-
-                    //        //Q-comment break point
-                    //     break;
+                    result = false;  break;
                 }
 
             }

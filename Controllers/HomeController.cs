@@ -31,19 +31,16 @@ namespace MCPhase3.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _host;
-        private readonly IConfiguration _Configure;        
+        private readonly IConfiguration _Configure;
         private readonly string _customerUploadsLocalFolder;
         string remittanceInsertApi = string.Empty;
         string apiBaseUrlForAutoMatch = string.Empty;
-        //following class I am using to consume api's
-        //TotalRecordsInsertedAPICall callApi = new TotalRecordsInsertedAPICall();
         EventDetailsBO eBO = new EventDetailsBO();
-        //EventsTableUpdates eventUpdate;
         InsertDataTable dataTableToDB = new InsertDataTable();
         DataTable excelDt;
         DataTable excelDt1;
-        MyModel modelDT = new MyModel();        
-        CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();               
+        MyModel modelDT = new MyModel();
+        CheckSpreadsheetValuesSample repo = new CheckSpreadsheetValuesSample();
 
         public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, Cache, Provider, ApiEndpoints)
         {
@@ -53,17 +50,17 @@ namespace MCPhase3.Controllers
             _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
 
         }
-        
+
         /// <summary>
         /// To LG - Remittance page
         /// </summary>
         /// <returns></returns>
         public async Task<IActionResult> Index()
-        {            
+        {
             string clientType = ContextGetValue(Constants.SessionKeyClientType);
             //Session can set here to check if logged in user is Fire or LG.
             //check if year, month and type of posting is already selected from session
-            string monthSelected = ContextGetValue(Constants.SessionKeyMonth)?? string.Empty;
+            string monthSelected = ContextGetValue(Constants.SessionKeyMonth) ?? string.Empty;
             string yearSelected = ContextGetValue(Constants.SessionKeyYears) ?? string.Empty;
             string postSelected = ContextGetValue(Constants.SessionKeyPosting) ?? string.Empty;
             string userName = ContextGetValue(Constants.SessionKeyUserID);
@@ -71,44 +68,44 @@ namespace MCPhase3.Controllers
             //client type is null or empty goto login page again
             if (string.IsNullOrEmpty(clientType))
             {
-                return RedirectToAction("Index","Login");
+                return RedirectToAction("Index", "Login");
             }
 
             //if logged in user is Fire then goto FireIndex
             if (clientType.Equals("FIRE"))
             {
-                return RedirectToAction("IndexFire","Home");
-            }           
+                return RedirectToAction("IndexFire", "Home");
+            }
 
             ViewBag.Months = GetMonths(monthSelected).Select(x => new SelectListItem()
             {
                 Text = x.text,
                 Value = x.value
             });
-   
-                ViewBag.Years = GetYears(yearSelected).Select(x => new SelectListItem()
-                {
-                    Text = x.years,
-                    Value = x.years
-                });
-           
-                ViewBag.Posting = GetOption(postSelected).Select(x => new SelectListItem()
-                {
-                    Text = x.text,
-                    Value = x.value
-                });
-          
+
+            ViewBag.Years = GetYears(yearSelected).Select(x => new SelectListItem()
+            {
+                Text = x.years,
+                Value = x.years
+            });
+
+            ViewBag.Posting = GetOption(postSelected).Select(x => new SelectListItem()
+            {
+                Text = x.text,
+                Value = x.value
+            });
+
             List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
             //staff login for frontend to upload a file for Employers causing an issue where it is getting a "-" in list which 
             //throws an exception.
 
-            subPayList = subPayList.Where(x=>x.pay_location_ID != null).ToList();             
+            subPayList = subPayList.Where(x => x.pay_location_ID != null).ToList();
 
-                ViewBag.Paylocations = subPayList.Select(x => new SelectListItem()
-                {
-                    Text = x.pay_location_name,
-                    Value = x.pay_location_ID.ToString()
-                });
+            ViewBag.Paylocations = subPayList.Select(x => new SelectListItem()
+            {
+                Text = x.pay_location_name,
+                Value = x.pay_location_ID.ToString()
+            });
 
             string fileUploadErrorMessage = _cache.GetString(Constants.FileUploadErrorMessage);
             //## Delete the message once Read.. otherwise- this will keep coming on every page request...
@@ -167,7 +164,7 @@ namespace MCPhase3.Controllers
         }
 
 
-        [AllowAnonymous]        
+        [AllowAnonymous]
         public async Task<IActionResult> Error()
         {
             var exDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
@@ -192,13 +189,14 @@ namespace MCPhase3.Controllers
         }
 
 
-        [AllowAnonymous]        
+        [AllowAnonymous]
         public async Task<IActionResult> ErrorCustom()
         {
             //### we keep the Error view model in cache.. not to pass it via URL- query string...
             string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
             var errorDetails = _cache.Get<ErrorViewModel>(cacheKey);
-            if (errorDetails == null) {
+            if (errorDetails == null)
+            {
                 return RedirectToAction("Index", "Home");
             }
 
@@ -220,7 +218,8 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HomeFileUploadVM vm)
         {
-            if (!ModelState.IsValid) {                
+            if (!ModelState.IsValid)
+            {
                 _cache.SetString(Constants.FileUploadErrorMessage, "Error: You must select 'Year', 'Month' and 'PostType' to continue");
                 return RedirectToAction("Index", "Home");
             }
@@ -232,7 +231,7 @@ namespace MCPhase3.Controllers
                 _cache.SetString(Constants.FileUploadErrorMessage, fileCheck.Message);
                 return RedirectToAction("Index", "Home");   //, null, "uploadFile");
             }
-           
+
             //Add selected name of month into Session, filename and total records in file.
             HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth);
             HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear);
@@ -255,7 +254,7 @@ namespace MCPhase3.Controllers
             //Member titles coming from config - 
             string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             //Check all invalid signs from file and show error to employer
-            string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);
+            string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
             //update Event Details table File is uploaded successfully.
             string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileAvailable);
@@ -263,7 +262,7 @@ namespace MCPhase3.Controllers
             //check if records were uploaded previously for the selected month and year.
             //int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
             var apiResult = await ApiPost(apiBaseUrlForCheckFileAvailable, fileCheckBO);
-            int fileAvailableCheck = JsonConvert.DeserializeObject<int>(apiResult);            
+            int fileAvailableCheck = JsonConvert.DeserializeObject<int>(apiResult);
 
             string fileExt = string.Empty;
             string filePath = string.Empty;
@@ -276,7 +275,7 @@ namespace MCPhase3.Controllers
             //get list of paylocations
             List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
             //bypass year and month check 
-            
+
             if (vm.SelectedPostType == (int)PostingType.First)
             {
                 if (fileAvailableCheck == 1)
@@ -286,33 +285,24 @@ namespace MCPhase3.Controllers
                     return RedirectToAction("Index", "Home");
                 }
             }
-          
-           
+
+
 
             if (excelDt != null)
             {
                 excelDt.Clear();
             }
-            
+
             if (!Path.Exists(_customerUploadsLocalFolder))
             {
                 _cache.SetString(Constants.FileUploadErrorMessage, "Error: File upload area not defined. Please contact support.");
                 return RedirectToAction("Index", "Home");
             }
 
-            //clear Datatable when upload file button is clicked.
-            //var fileNameForUpload = Path.GetFileNameWithoutExtension(vm.PaymentFile.FileName);
-            //fileExt = Path.GetExtension(vm.PaymentFile.FileName);
-
-            //fileNameForUpload  = $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType.ToString()}_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
-
-            
-            //filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
-
             filePath = GenerateFilePathNameForUpload(vm.PaymentFile, fileNamePrefix: $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType}_");
             using (FileStream fileStream = new(filePath, FileMode.Create))
             {
-                await vm.PaymentFile.CopyToAsync(fileStream);                
+                await vm.PaymentFile.CopyToAsync(fileStream);
                 _logger.LogInformation("File is copied to local folder.");
             }
 
@@ -336,17 +326,17 @@ namespace MCPhase3.Controllers
                 _cache.SetString($"{CurrentUserId()}_{UploadedFilePathKey}", filePath);
             }
             catch (Exception ex)
-            {                                
+            {
                 _cache.SetString(Constants.FileUploadErrorMessage, "File has an error or missing something " + ex.Message);
                 return RedirectToAction("Index", "Home");
             }
-              
+
 
             if (excelDt == null)
-            {                
+            {
                 _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
                 return RedirectToAction("Index", "Home");
-            }               
+            }
 
             // change column heading Name
             if (!CommonRepo.ChangeColumnHeadings(excelDt, out errorMessage))
@@ -357,10 +347,9 @@ namespace MCPhase3.Controllers
             }
 
             // convert all fields in data table to string
-            // modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt, monthsList, fileNameWithoutExt);
             modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt);
 
-                                
+
             int numberOfRows = modelDT.stringDT.Rows.Count;
 
             //Add selected name of month into Session, filename and total records in file.
@@ -369,34 +358,31 @@ namespace MCPhase3.Controllers
 
             var fileNameForUpload = Path.GetFileName(filePath);
             HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
-            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows-1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
 
             // var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
             //Seperated LG and Fire functions
             //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
             //## This is the actual Field / Data validation on the Excel file - which is now in a DataSet. This will generate respective error message based on the defined validation rules on each field.
-            string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, vm.SelectedMonth, vm.SelectedPostType.ToString(), vm.SelectedYear, subPayList,validTitles, invalidSigns, ref errorMessage);
+            string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, vm.SelectedMonth, vm.SelectedPostType.ToString(), vm.SelectedYear, subPayList, validTitles, invalidSigns, ref errorMessage);
 
             if (!errorMessage.Equals(""))
             {
-                //following tempdata is showing list of errors in file.
-
-                //HtmlString str = new HtmlString( "<h2> Please remove following errors from file and upload again </h2>" + CheckSpreadSheetErrorMsg);
-            
+                //following tempdata is showing list of errors in file.            
                 _cache.SetString(Constants.FileUploadErrorMessage, "<h2> Please remove following errors from file and upload again </h2><br />" + CheckSpreadSheetErrorMsg);
                 return RedirectToAction("Index", "Home");
             }
             else
             {
-                    
+
                 //string designDocPath = GetConfigValue("DesginXMLFilePath");
                 //read design XML from wwwroot folder
                 string designDocPath = string.Concat(this._host.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
                 try
                 {
                     //save datatable for future use
-                    dataTableToDB.PassDt(0, "", "", "", "", excelDt, designDocPath);                    
+                    dataTableToDB.PassDt(0, "", "", "", "", excelDt, designDocPath);
 
                     _cache.SetString(Constants.FileUploadErrorMessage, "File is uploaded successfully");
                     return RedirectToAction("Index", "Home");
@@ -412,16 +398,17 @@ namespace MCPhase3.Controllers
                     excelDt.Dispose();
                     modelDT.stringDT.Dispose();
                 }
-                                      
+
             }
-            
+
         }
 
 
         private TaskResults IsFileValid(IFormFile file)
         {
             var result = new TaskResults { IsSuccess = false, Message = string.Empty };
-            if (file is null) {
+            if (file is null)
+            {
                 result.Message += "No file selected.";
                 return result;
             }
@@ -465,15 +452,17 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("IndexFire", "Home", null, "uploadFile");
 
             }
-            //TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
-            CheckFileUploadedBO fileCheckBO = new CheckFileUploadedBO();
-            fileCheckBO.P_Month = monthsList;
-            fileCheckBO.P_Year = yearsList;
+
+            CheckFileUploadedBO fileCheckBO = new()
+            {
+                P_Month = monthsList,
+                P_Year = yearsList
+            };
             string userName = ContextGetValue(Constants.SessionKeyUserID);
             string empName = ContextGetValue(Constants.SessionKeyEmployerName);
             string empID = ContextGetValue(Constants.SessionKeyPayLocId);
-            HttpContext.Session.SetString(Constants.SessionKeySchemeName, "FIRE");
             fileCheckBO.P_EMPID = empID;
+            HttpContext.Session.SetString(Constants.SessionKeySchemeName, "FIRE");
 
             string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             //Check all invalid signs from file and show error to employer
@@ -521,7 +510,7 @@ namespace MCPhase3.Controllers
                     excelDt.Clear();
                 }
                 //clear Datatable when upload file button is clicked.
-                               
+
                 var fileNameWithoutExt = Path.GetFileNameWithoutExtension(files.FileName);
                 fileExt = Path.GetExtension(files.FileName);
 
@@ -535,15 +524,15 @@ namespace MCPhase3.Controllers
                 {
                     TempData["MsgM"] = "Error: File upload area not defined. Please contact support.";
                     return RedirectToAction("Index", "Home", null, "uploadFile");
-                }               
+                }
 
                 //copy file to local folder
-                using (FileStream fileStream = new (filePath, FileMode.Create))
+                using (FileStream fileStream = new(filePath, FileMode.Create))
                 {
                     await files.CopyToAsync(fileStream);
                     _logger.LogInformation("File is copied to local folder.");
                 }
-              
+
                 //saved file
                 //string fullPathWithFileName = Path.Combine(path,fileExt);
                 try
@@ -563,7 +552,6 @@ namespace MCPhase3.Controllers
                     return RedirectToAction("IndexFire", "Home", null, "uploadFile");
                 }
                 //allow a sign in a column
-                //excelDt = AllowedSigns(excelDt);
                 // change column heading Name
                 if (!CommonRepo.ChangeColumnHeadingsFire(excelDt, out errorMessage))
                 {
@@ -577,7 +565,7 @@ namespace MCPhase3.Controllers
                 // modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt, monthsList, fileNameWithoutExt);
                 modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt);
 
-                int numberOfRows = modelDT.stringDT.Rows.Count;              
+                int numberOfRows = modelDT.stringDT.Rows.Count;
 
                 //Add selected name of month into Session, filename and total records in file.
                 HttpContext.Session.SetString(Constants.SessionKeyMonth, monthsList.ToString());
@@ -589,9 +577,9 @@ namespace MCPhase3.Controllers
                 HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows).ToString());
 
                 //var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                
+
                 //Seperated LG and Fire functions
-                string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, monthsList, posting, yearsList, subPayList,validTitles, invalidSigns, ref errorMessage);
+                string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValues(modelDT.stringDT, monthsList, posting, yearsList, subPayList, validTitles, invalidSigns, ref errorMessage);
                 //Seperated LG and Fire functions
                 //string CheckSpreadSheetErrorMsg = repo.CheckSpreadsheetValuesFire(modelDT.stringDT, ref errorMessage);               
 
@@ -606,8 +594,6 @@ namespace MCPhase3.Controllers
                     TempData["MsgM"] += "File is uploaded successfully";
 
                     //save datatable for future use
-                    //DataTable dtable = dataTableToDB.KeepDataTable(excelDt);
-                    //dtable.Clear();
                     //read design XML from wwwroot folder
                     string designDocPath = string.Concat(_host.WebRootPath, "\\DesignXML\\DataIntegration_Design.xml");
                     //save datatable for future use
@@ -628,7 +614,7 @@ namespace MCPhase3.Controllers
                     {
                         excelDt.Dispose();
                         modelDT.stringDT.Dispose();
-                    }                   
+                    }
                 }
             }
         }
@@ -641,11 +627,11 @@ namespace MCPhase3.Controllers
         [HttpGet]
         public IActionResult Remad()
         {
-            
+
             DataTable dt = CommonRepo.PassDataTableToViews();
             //modelDT.stringDT = CommonRepo.ConvertAllFieldsToString(excelDt);
             RemadShowTotalsValues formTotals = new RemadShowTotalsValues();
-            MonthlyContributionBO contributionBO = new MonthlyContributionBO();             
+            MonthlyContributionBO contributionBO = new MonthlyContributionBO();
 
             contributionBO = formTotals.GetSpreadsheetValues(dt);
             double employeeTotal = contributionBO.MemberContribSS + contributionBO.MemberContrib5050SS + contributionBO.MemberContribAPCSS + contributionBO.MemberContribPOESSS + contributionBO.MemberContribARCSS;
@@ -701,7 +687,7 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> Remad(MonthlyContributionBO contributionBO)
         {
             //RemadShowTotalsValues formTotals = new RemadShowTotalsValues();
-            
+
             string remittanceID = string.Empty;
             contributionBO.UserLoginID = ContextGetValue(Constants.SessionKeyUserID);
             contributionBO.UserName = ContextGetValue(Constants.SessionKeyUserID);
@@ -714,7 +700,7 @@ namespace MCPhase3.Controllers
             contributionBO.UploadedFileName = ContextGetValue(Constants.SessionKeyFileName);//monthAndPayroll.Columns[1].ColumnName;
             contributionBO.ClientID = ContextGetValue(Constants.SessionKeyClientId);
             contributionBO.payRollYear = ContextGetValue(Constants.SessionKeyYears);
-                      
+
             remittanceInsertApi = GetApiUrl(_apiEndpoints.TotalRecordsInserted);
             string getRemittanceIdByFileNameApi = GetApiUrl(_apiEndpoints.GetRemittanceId);
 
@@ -771,7 +757,7 @@ namespace MCPhase3.Controllers
                             _logger.LogError(string.Empty, "Error occured while calling Remittance Insert API");
                             TempData["Msg"] = "System is showing some error to send Remittance totals, Please try again";
                             //monthAndPayroll.Clear();
-                           
+
                             return View(contributionBO);
                         }
                     }
@@ -792,7 +778,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> MoveFileForFTP(string id)
         {
-            
+
             RangeOfRowsModel rangeOfRowsModel = new RangeOfRowsModel();
             //only remittance id is provided in following model class for view
             var errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords();
@@ -825,15 +811,15 @@ namespace MCPhase3.Controllers
                 string clientID = ContextGetValue(Constants.SessionKeyClientId);
                 string schemeName = ContextGetValue(Constants.SessionKeySchemeName);
                 string userName = ContextGetValue(Constants.SessionKeyUserID);
-                
+
                 //get total records from in file from datatable.
                 int totalRecordsInF = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
-                totalRecordsInF ++;
+                totalRecordsInF++;
                 rangeOfRowsModel.P_USERID = userName;
                 rangeOfRowsModel.P_REMITTANCE_ID = Convert.ToInt32(id);
                 rangeOfRowsModel.P_NUMBER_OF_VALUES_REQUIRED = totalRecordsInF;
 
-                
+
                 string dataCounterInsertApi = GetApiUrl(_apiEndpoints.InsertDataCounter);   // will return- [P_FIRST_ROWID_VALUE] from 'RangeRowsReturn' api
 
                 //Get the max Datarow id from MC_CONTRIBUTIONS_RECD to insert bulk data.
@@ -843,8 +829,8 @@ namespace MCPhase3.Controllers
                 int dataRowRecordId = JsonConvert.DeserializeObject<int>(apiResult);
 
                 //following datatable will change column names of datatable to DB column names and insert data from excelDT.
-                DataTable newDT = dataTableToDB.KeepDataTable(dataRowRecordId + 1, userName, schemeName, clientID, id.ToString()) ;
-                
+                DataTable newDT = dataTableToDB.KeepDataTable(dataRowRecordId + 1, userName, schemeName, clientID, id.ToString());
+
                 //Insert all the records to the database using api
                 string bulkDataInsertApi = GetApiUrl(_apiEndpoints.InsertData);
                 newDT.AcceptChanges();
@@ -857,28 +843,22 @@ namespace MCPhase3.Controllers
 
                 if (InsertToDbSuccess)
                 {
-                    //eBO.remittanceID = Convert.ToInt32(id);
-                    //eBO.remittanceStatus = 1;   //TODO: use enums
-                    //eBO.eventTypeID = 4;        //TODO: use enums
-                    //eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
-                    //eBO.notes = "Bulk data insert into database.";
-                    //callApi.InsertEventDetails(eBO, apiBaseUrlForInsertEventDetails);
-                    //update Event Details table File is uploaded successfully.                               
                     WriteToDBEventLog(Convert.ToInt32(id), "Bulk data insert into database.", 1, 4);
                 }
                 else
                 {
                     TempData["MsgError"] = "System has failed uploading records to the database, Please contact MP3 support.";
                     WriteToDBEventLog(Convert.ToInt32(id), "FAILED to execute Bulk data insert into database.", 1, 4);
-                    RedirectToAction("Admin","Home");
+                    RedirectToAction("Admin", "Home");
                 }
 
                 //## Once BULK-INSERT to DB is success- we can move our User data file to the DONE folder...
                 bool fileMovedToDone = CommonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));
-                if (fileMovedToDone) { 
+                if (fileMovedToDone)
+                {
                     string logInfoText = $"Moved user uploaded file, from: {filePathName}, to: {destPath}";
                     _logger.LogInformation(logInfoText);
-                    WriteToDBEventLog(Convert.ToInt32(id), logInfoText);                
+                    WriteToDBEventLog(Convert.ToInt32(id), logInfoText);
                 }
 
             }
@@ -886,14 +866,14 @@ namespace MCPhase3.Controllers
             {
                 _logger.LogError($"Error at MoveFileForFTP(). Details:: {ex}");
                 TempData["MsgError"] = "System has failed uploading records to the database, Please contact MP3 support.";
-                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex.Message.Substring(0,200)}");
+                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex.Message.Substring(0, 200)}");
             }
-            
-            
+
+
             return View(errorAndWarningViewModelWithRecords);
         }
 
-        public void WriteToDBEventLog(int remitID,  string eventNotes, int remittanceStatus = 1, int eventTypeID = 1)
+        public void WriteToDBEventLog(int remitID, string eventNotes, int remittanceStatus = 1, int eventTypeID = 1)
         {
             //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
             var eBO = new EventDetailsBO
@@ -902,15 +882,13 @@ namespace MCPhase3.Controllers
                 remittanceID = remitID,
                 remittanceStatus = remittanceStatus,
                 eventTypeID = eventTypeID,
-                //eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")),
                 notes = eventNotes
             };
-
 
             //update Event Details table File is uploaded successfully.                               
             InsertEventDetails(eBO);
         }
-            
+
         /// <summary>
         /// Here to start encode remittance.
         /// </summary>
@@ -920,20 +898,14 @@ namespace MCPhase3.Controllers
         {
             int remttanceId = Convert.ToInt32(DecryptUrlValue(id));
 
-            //HelpTextBO helpTextBO = new HelpTextBO();
-           
             ReturnCheckBO result = new();
-            //AutoMatchBO autoMatchBO = new AutoMatchBO();
-            
-            
+
             string userID = ContextGetValue(Constants.SessionKeyUserID);
-            //string empURL = GetApiUrl(_apiEndpoints.EmployerName);
-            
+
             var errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords
             {
                 ALERT_TYPE_REF = "ALL",
                 ALERT_CLASS = "Error and Warnings",
-                //pass encoded id to view model class
                 remittanceID = id,
                 ALERT_DESC = "All the Errors and Warnings in file"
             };
@@ -952,9 +924,7 @@ namespace MCPhase3.Controllers
 
             try
             {
-                //string totalRecords = await callApi.GetTotalRecordsCount(remttanceId, apiBaseUrlForTotalRecords);
-                var apiResult = await ApiGet( $"{apiBaseUrlForTotalRecords}{remttanceId}");
-                //string totalRecords = JsonConvert.DeserializeObject<int>(apiResult);
+                var apiResult = await ApiGet($"{apiBaseUrlForTotalRecords}{remttanceId}");
 
                 int total = JsonConvert.DeserializeObject<int>(apiResult);
                 string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
@@ -970,7 +940,7 @@ namespace MCPhase3.Controllers
                 initialiseProcBO = JsonConvert.DeserializeObject<InitialiseProcBO>(apiResult);
 
                 //## need to add a check to see what is the outcome of 'apiBaseUrlForInitialiseProc' API call..
-                if(initialiseProcBO.P_STATUSCODE == 9)
+                if (initialiseProcBO.P_STATUSCODE == 9)
                 {
                     //## abort mission... corrupted data found..
                     var errorViewModel = new ErrorViewModel()
@@ -985,7 +955,7 @@ namespace MCPhase3.Controllers
                         DisplayMessage = "The supplied file seems to have corrupt data therefore Insert operation failed. Please try to upload a file with simplified data."
                     };
                     string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
-                    _cache.Set(cacheKey, errorViewModel);                    
+                    _cache.Set(cacheKey, errorViewModel);
 
                     eBO.remittanceID = remttanceId;
                     eBO.remittanceStatus = 1;
@@ -1015,26 +985,26 @@ namespace MCPhase3.Controllers
 
                 //Add functionality here to restrict file if the previous month file is still pending.
 
-                AutoMatchBO autoMatchBO = new ();
+                AutoMatchBO autoMatchBO = new();
                 //following is call to Automatch api
                 //autoMatchBO = await callApi.GetAutoMatchResult(remttanceId, apiBaseUrlForAutoMatch);
                 apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remttanceId}");
                 autoMatchBO = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
 
                 if (Convert.ToInt32(totalRecordsInF) < total || Convert.ToInt32(totalRecordsInF) > 10000)
-                    {
-                        totalRecordsInF = total.ToString();
-                    }
+                {
+                    totalRecordsInF = total.ToString();
+                }
 
                 TempData["showOnlyTotals"] = "Total records in uploaded file are <b>: " + totalRecordsInF + "</b><br />"
                                   + " Total number of records inserted successfully into database are: <b>" + total + "</b><br />"
-                                  +" Employers processed:  <b>" + initialiseProcBO.P_EMPLOYERS_PROCESSED + "</b><br />";
+                                  + " Employers processed:  <b>" + initialiseProcBO.P_EMPLOYERS_PROCESSED + "</b><br />";
 
                 TempData["msgExtra"] = "Total records in uploaded file are <b>: " + totalRecordsInF + "</b><br />"
                                     + " Total number of records inserted successfully into database are: <b>" + total + "</b><br />"
                                     + "Persons Matched : " + autoMatchBO.personMatchCount + "<br />"
                                     + "Folders Matched : " + autoMatchBO.folderMatchCount + "<br />"
-                                    //+ "Records ready to post : " + GetIntValueFromString(totalMatched) + "<br />"
+                                   //+ "Records ready to post : " + GetIntValueFromString(totalMatched) + "<br />"
                                    ;
 
                 //check if AutoMatch successfull then proceed otherwise skip and take file to Dashboard.
@@ -1050,20 +1020,16 @@ namespace MCPhase3.Controllers
                 eBO.remittanceID = remttanceId; //Convert.ToInt32(remittanceID);
                 eBO.remittanceStatus = 1;
                 eBO.eventTypeID = 80;
-                //eBO.eventDate = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
                 eBO.notes = "Auto matching done.";
-                //update Event Details table File is uploaded successfully.                               
+
                 InsertEventDetails(eBO);
-                //eventUpdate.UpdateEventDetailsTable(eBO);
-                // BO = JsonConvert.DeserializeObject<List<AutoMatchBO>>(result);
             }
-            
+
             catch (Exception ex)
             {
 
                 _logger.LogError($"Bulk Data or AutoMatch is failed, it is implemented in Home controller. Detail: {ex.StackTrace}");
                 TempData["MsgError"] = "Please refresh your page in couple of minutes.";
-                //RedirectToAction("RemittanceInsertDB","Home", id);
 
                 var vm = new ErrorViewModel()
                 {
@@ -1088,7 +1054,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public IActionResult LooseMatchRecords(int remID)
         {
-            return RedirectToAction("RemittanceInsertDB", new { id = remID});
+            return RedirectToAction("RemittanceInsertDB", new { id = remID });
         }
 
         public IActionResult Privacy()
@@ -1132,9 +1098,9 @@ namespace MCPhase3.Controllers
                new NameOfMonths{ text = "File has previous month data", value = "3" }
 
             }.ToList();
-            
+
             return postings;
-            
+
 
         }
         /// <summary>
@@ -1143,18 +1109,18 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public List<YearsBO> GetYears(string valueItem)
         {
-            
-           
-            var validYears = ConfigGetValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);            
+
+
+            var validYears = ConfigGetValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             var yearList = validYears.Select(a => new YearsBO()
             {
                 years = a
             }).ToList();
-                                    
-            return yearList;            
+
+            return yearList;
 
         }
-        
+
 
         /// <summary>
         /// following method will show list of sub payroll provider with login name and id
@@ -1165,21 +1131,9 @@ namespace MCPhase3.Controllers
         {
             var subPayrollList = new List<PayrollProvidersBO>();
             string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.SubPayrollProvider);
-            
+
             var apiResult = await ApiGet(apiBaseUrlForSubPayrollProvider + userName);
             subPayrollList = JsonConvert.DeserializeObject<List<PayrollProvidersBO>>(apiResult);
-
-            //using (var httpClient = new HttpClient())
-            //{
-            //    using (var response = await httpClient.GetAsync(apiBaseUrlForSubPayrollProvider + userName))
-            //    {
-            //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //        {
-            //            string result = await response.Content.ReadAsStringAsync();
-            //            subPayrollList = JsonConvert.DeserializeObject<List<PayrollProvidersBO>>(result);
-            //        }
-            //    }
-            //}
 
             return subPayrollList;
         }
@@ -1191,15 +1145,15 @@ namespace MCPhase3.Controllers
             string[] allwedSigns = ConfigGetValue("AllowedSigns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             string[] allowedColumns = ConfigGetValue("AllowedColumns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             int countRows = dataTable.Rows.Count;
-            for (int i=0; i < countRows; i++)
+            for (int i = 0; i < countRows; i++)
             {
                 foreach (var item in allowedColumns)
                 {
                     foreach (var sign in allwedSigns)
                     {
-                        dataTable.Rows[i][item] = dataTable.Rows[i][item].ToString().Replace(sign,"");
-                    }                    
-                }               
+                        dataTable.Rows[i][item] = dataTable.Rows[i][item].ToString().Replace(sign, "");
+                    }
+                }
             }
             try
             {
@@ -1213,7 +1167,7 @@ namespace MCPhase3.Controllers
             finally
             {
                 dataTable.Dispose();
-            }                       
+            }
         }
 
         /// <summary>
@@ -1225,14 +1179,15 @@ namespace MCPhase3.Controllers
         private TaskResults CheckMaliciousScripts(string filePathName)
         {
             //## Convert the Excel file to CSV first
-            var csvPath = Path.GetDirectoryName(filePathName) + "/csv/";            
-            var csvFileName  = Path.GetFileNameWithoutExtension(filePathName) + ".csv";
+            var csvPath = Path.GetDirectoryName(filePathName) + "/csv/";
+            var csvFileName = Path.GetFileNameWithoutExtension(filePathName) + ".csv";
             var csvFilePath = csvPath + csvFileName;
             var isConverted = ConvertExcelToCsv.Convert(filePathName, csvFilePath);
-                        
+
             var result = new TaskResults { IsSuccess = false, Message = string.Empty };
 
-            if (isConverted == false) {
+            if (isConverted == false)
+            {
                 result.Message = "File format error. Please try another file.";
                 return result;
             }
@@ -1248,7 +1203,7 @@ namespace MCPhase3.Controllers
                     {
                         if (item.ToLower().Contains(tag))
                         {
-                            result.Message = "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>";                            
+                            result.Message = "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>";
                         }
                     }
                 }
@@ -1274,7 +1229,8 @@ namespace MCPhase3.Controllers
         [HttpPost]
         public async Task<IActionResult> ValidateFile(IFormFile formFile)
         {
-            if (formFile == null) { 
+            if (formFile == null)
+            {
                 return Json("No file added. Please add a valid file and try again.");
             }
 
@@ -1294,14 +1250,14 @@ namespace MCPhase3.Controllers
                 _logger.LogInformation("File is copied to local folder.");
             }
 
-            var scriptsCheck = CheckMaliciousScripts(filePathName);            
+            var scriptsCheck = CheckMaliciousScripts(filePathName);
 
             //## now delete the both staging files.. not required anymore
             System.IO.File.Delete(filePathName);
 
             //## Now check results for malicious script Validations..
             if (scriptsCheck.IsSuccess)
-            {                
+            {
                 return Json("success");
             }
 

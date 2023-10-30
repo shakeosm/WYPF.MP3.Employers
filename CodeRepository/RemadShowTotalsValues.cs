@@ -1,9 +1,6 @@
 ﻿using MCPhase3.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MCPhase3.CodeRepository
 {
@@ -15,7 +12,7 @@ namespace MCPhase3.CodeRepository
 
         MonthlyContributionBO MonthlyContributionBObject = new MonthlyContributionBO();
         CheckSpreadsheetValuesSample CheckSpreadsheetValues = new CheckSpreadsheetValuesSample();
-       // CommonRepo repo = new CommonRepo();
+        // CommonRepo repo = new CommonRepo();
         public MonthlyContributionBO GetSpreadsheetValues(DataTable stringDT)
         {
             //bool answer = true;
@@ -44,18 +41,13 @@ namespace MCPhase3.CodeRepository
                 this.MonthlyContributionBObject.EmployeePay5050 = GetSum(stringDT, "PAY_50_50");
 
             }
-            //else
-            //{
-            //    // spreadSheetReadStatusMsg = errorMessage;
-            //    return MonthlyContributionBObject;
-            //}
 
             return MonthlyContributionBObject;
         }
+
         public double GetSum(DataTable dt, string columnName)
         {
             double sum = 0;
-
 
             foreach (DataRow row in dt.Rows)
             {
@@ -79,6 +71,6 @@ namespace MCPhase3.CodeRepository
 
             return Math.Round(sum, 2);
 
-        }      
+        }
     }
 }

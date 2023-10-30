@@ -1,9 +1,7 @@
-﻿using System;
+﻿using MCPhase3.CodeRepository.HelperClasses;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using MCPhase3.CodeRepository.HelperClasses;
 
 namespace MCPhase3.CodeRepository.InsertDataProcess
 {
@@ -22,8 +20,8 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
         public void PassDt(int row, string userName, string schemeName, string clientID, string remittanceID, DataTable newData, string path)
         {
             //DataTable newData;
-           //newData table does not have rem and client id in start but when it was called 1st time I added both in datatable
-           //so If I needed to call again this function I do not need to add them and only need to add their values.
+            //newData table does not have rem and client id in start but when it was called 1st time I added both in datatable
+            //so If I needed to call again this function I do not need to add them and only need to add their values.
             if (string.IsNullOrEmpty(remittanceID))
             {
                 readAndSaveXML(newData, path);
@@ -59,23 +57,14 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             }
         }
 
-        public DataTable KeepDataTable(int row, string userName,string schemeName, string clientID, string remittanceID)
+        public DataTable KeepDataTable(int row, string userName, string schemeName, string clientID, string remittanceID)
         {
-            try
-            {
-                //PassDT will have already xml document path so I keep it empty here.
-                PassDt(row, userName, schemeName, clientID, remittanceID, dtInsert, "");
-                return dtInsert;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                dtInsert.Dispose();
-            }
-           
+
+            //PassDT will have already xml document path so I keep it empty here.
+            PassDt(row, userName, schemeName, clientID, remittanceID, dtInsert, "");
+            return dtInsert;
+
+
         }
 
     }

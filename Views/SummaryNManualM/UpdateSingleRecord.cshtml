@@ -228,37 +228,14 @@
                                 <input asp-for="@Model.contractHours" class="form-control">
                             </div>
 
-                            <div class="form-group NR_DJS_BLANK">
-                                @{
-                                    bool is_NEW_FLDR_DATE_WARN = false;
-                                    @foreach (var item in (ViewBag.HelpText as IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>))
-                                    {
-
-                                        if (item.ALERT_TYPE_REF.Equals("NEW_FLDR_DATE_WARN"))
-                                        {
-                                            is_NEW_FLDR_DATE_WARN = true;
-                                            break;
-                                        }
-
-                                    }
-                                    if (is_NEW_FLDR_DATE_WARN)
-                                    {
-                                        <label style="color:red;" class="control-label">Date Joined</label>
-                                    }
-                                    else
-                                    {
-                                        @Html.Label("Date Joined")
-
-                                    }
-                                }
-
-
+                            <div class="form-group NR_DJS_BLANK NEW_FLDR_DATE_WARN NEW_FLDR">
+                                <label class="control-label">Date Joined</label>
                                 <input asp-for="@Model.dateJoined" class="form-control">
                             </div>
 
 
                             <div class="form-group">
-                                <label class="control-label">Enrolment Type</label>
+                                <label class="control-label">Enrolment Type</label>                                
                                 @* <input asp-for="enrolmentType" class="form-control">*@
                                 <select asp-for="@Model.enrolmentType" class="form-select">
                                     <option value=""></option>
@@ -266,31 +243,8 @@
                                     <option value="AUTO">AUTO</option>
                                 </select>
                             </div>
-                            <div class="form-group LVR_DATA_MISMATCH LVR_BEFORE_LTST_STAT LVR_DOD_PRESENT">
-
-                                @{
-                                    bool is_LVR_BEFORE_JOIN = false;
-                                    @foreach (var item in (ViewBag.HelpText as IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>))
-                                    {
-                                        if (item.ALERT_TYPE_REF.Contains("LVR_BEFORE_JOIN"))
-                                        {
-                                            is_LVR_BEFORE_JOIN = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (is_LVR_BEFORE_JOIN)
-                                    {
-                                        <label style="color:red;" class="control-label">Date Left</label>
-
-                                    }
-                                    else
-                                    {
-                                        @Html.Label("Date Left")
-
-                                    }
-                                }
-
+                            <div class="form-group LVR_DATA_MISMATCH LVR_BEFORE_LTST_STAT LVR_DOD_PRESENT LVR_BEFORE_JOIN">
+                                <label class="control-label">Date Left</label>
                                 <input asp-for="@Model.dateLeft" class="form-control">
                             </div>
 
