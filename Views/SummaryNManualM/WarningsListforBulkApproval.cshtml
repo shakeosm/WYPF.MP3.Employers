@@ -40,8 +40,7 @@
                     <tr>
                         <td>@ViewBag.alertClass</td>
                         <td><b>@ViewBag.status</b></td>
-                        <td class="text-center h3"><span id="TotalErrorCountSpan" class="badge bg-danger rounded-pill">@totalAlerts</span></td>
-                        @*<td class="text-center h3 text-danger">@ViewBag.total</td>*@
+                        <td class="text-center h3"><span id="TotalErrorCountSpan" class="badge bg-danger rounded-pill">@totalAlerts</span></td>                        
                     </tr>
                 </thead>
             </table>
@@ -63,12 +62,12 @@
                             <tr>
                                 <th>Pay Location</th>
                                 <th>First Name</th>
-                                <th>SurName</th>
+                                <th>Surname</th>
                                 <th>DOB</th>
                                 <th>Ni Number</th>
                                 <th>Date Start</th>
                                 <th>Job Title</th>
-                                @*<th>Alert Desc</th>*@
+                                
                                 <th></th>
                             </tr>
                         </thead>
@@ -87,7 +86,7 @@
                                     <td>@item.NINUMBER</td>
                                     <td>@item.DATEJOINEDSCHEME?.ToShortDateString()</td>
                                     <td>@item.JOBTITLE</td>
-                                    @*<td>@item.ALERT_DESC</td>*@
+                                    
                                     <td class="error-status-td">
                                         @{
                                             var actionName = item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE") ? "NewMatchingCritera" : "UpdateSingleRecord";

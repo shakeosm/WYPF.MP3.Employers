@@ -47,6 +47,29 @@ namespace MCPhase3.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>This will only be used to pass to WYPF by Emp for processing</summary>
+        /// <returns></returns>
+        public IActionResult SubmitForProcessingAjax()
+        {
+            var taskResult = new TaskResults();
+            var currentRemittance = Convert.ToInt32(GetRemittanceId(returnAsEncrypted: false)); // we can put variable name with variable value when calling a function to make it more readable                    
+
+            EventDetailsBO eBO = new()
+            {
+
+                remittanceID = currentRemittance,
+                remittanceStatus = 1,
+                eventTypeID = 105,
+                notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
+            };
+
+            InsertEventDetails(eBO);
+
+            taskResult.IsSuccess = true;
+            taskResult.Message = $"The remittance: {currentRemittance} is successfully passed to WYPF for further processing.";
+            return Json(taskResult);
+        }
+
 
         /// <summary>
         /// show list of all the remittance to employers

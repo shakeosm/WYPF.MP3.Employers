@@ -14,6 +14,62 @@
         $("#passwordPolicyDialog").modal("show");
     });
 
+    //## This button is a short-circuit for Employers to pass a Remittance file to WYPF, when they fee lazy!
+    $("#passToWYPF").on("click", function () {
+        
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Please confirm to submit the file to WYPF! You cannot revert this action.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Submit!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                SubmitForProcessingAjax();
+
+            }
+        });
+
+    });
+
+    function SubmitForProcessingAjax() {
+        $.ajax({
+            type: "GET",
+            url: '/Admin/SubmitForProcessingAjax',
+            data: null,
+            success: function (response) {
+                hideOverlaySpinner();
+
+                if (response.isSuccess === true) {
+                    Swal.fire({
+                        title: "Submitted!",
+                        text: response.message,
+                        icon: "success"
+                    });
+
+                    window.location.href = "/Admin/Home";
+
+                } else {
+                    Swal.fire({
+                        title: "Failed!",
+                        text: "Operation failed to pass the remittance file to WYPF. Please contact WYPF-Admin.",
+                        icon: "error"
+                    });
+                }                
+            },
+            failure: function (response) {
+                console.log(response.responseText);
+                hideOverlaySpinner();
+            },
+            error: function (response) {
+                console.log(response.responseText);
+                hideOverlaySpinner();
+            }
+        });
+    };
+
 });
 
 
