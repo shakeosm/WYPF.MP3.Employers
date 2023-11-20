@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MCPhase3.Models
 {
-    public class DashboardBO
+    public class RemittanceItemVM
     {
         public string userId { get; set; }
         public int remittance_Id { get; set; }
@@ -36,10 +34,10 @@ namespace MCPhase3.Models
         public string RETURN_PERIOD { get; set; }
 
     }
-    public class DashboardViewModelNew
+
+    public class DashboardWrapperVM
     {
-        public DashboardBO BO { get; set; }
-        public List<DashboardBO> dashboardBO { get; set; }
-        public IEnumerable<DashboardBO> details { get; set; }
+        public RemittanceItemVM BO { get; set; }
+        public List<RemittanceItemVM> RemittanceList { get; set; }
     }
 }

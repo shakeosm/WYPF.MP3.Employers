@@ -309,7 +309,7 @@ namespace MCPhase3.Controllers
 
             //## malicious script check
             //TODO: Use NugetPackage for Excel operation: 'https://www.nuget.org/packages/CsvHelper.Excel.Core/'
-            var result = CheckMaliciousScripts(filePath);
+            var result = CheckMaliciousScripts_And_EmptyRows(filePath);
             if (result.IsSuccess == false)
             {
                 System.IO.File.Delete(filePath);
@@ -856,7 +856,7 @@ namespace MCPhase3.Controllers
                 bool fileMovedToDone = CommonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));
                 if (fileMovedToDone)
                 {
-                    string logInfoText = $"Moved user uploaded file, from: {filePathName}, to: {destPath}";
+                    string logInfoText = $"Moved user uploaded file to: {destPath}";
                     _logger.LogInformation(logInfoText);
                     WriteToDBEventLog(Convert.ToInt32(id), logInfoText);
                 }
@@ -1172,11 +1172,12 @@ namespace MCPhase3.Controllers
 
         /// <summary>
         /// This will convert the Excel to CSV file, then look for any malicious scripts in the file.
+        /// Also checks for Empty Rows in the Excel sheet
         /// If found- return with error. Otherwise- returns empty text
         /// </summary>
         /// <param name="filePathName">Excel file name to check</param>
         /// <returns>File processing error</returns>
-        private TaskResults CheckMaliciousScripts(string filePathName)
+        private TaskResults CheckMaliciousScripts_And_EmptyRows(string filePathName)
         {
             //## Convert the Excel file to CSV first
             var csvPath = Path.GetDirectoryName(filePathName) + "/csv/";
@@ -1194,27 +1195,40 @@ namespace MCPhase3.Controllers
 
             var maliciousTags = ConfigGetValue("MaliciousTags").Split(",");
 
-            try
+            var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');
+            
+            int rowCounter = 1;
+            string rowNumberList = "";
+
+            foreach (var item in contents)  //## read line by line Rows in the CSV/ExcelSheet
             {
-                var contents = System.IO.File.ReadAllText(csvFilePath).Split('\n');
-                foreach (var item in contents)  //## read line by line Rows in the CSV/ExcelSheet
+                foreach (var tag in maliciousTags)  //## Read each invalid characters listed in the Config file
                 {
-                    foreach (var tag in maliciousTags)  //## Read each invalid characters listed in the Config file
+                    if (item.ToLower().Contains(tag))
                     {
-                        if (item.ToLower().Contains(tag))
-                        {
-                            result.Message = "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>";
-                        }
+                        result.Message = "Error: Invalid characters found in the file. Please remove the invalid symbols from the file and try again. <br/>Please avoid symbols, ie: <h3>" + string.Join(" , ", maliciousTags) + "</h3>";
                     }
                 }
-                System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. delete it once processed
 
+                //## Check for empty Excel rows- which are simply some commas without values in a CSV file, ie: ",,,,,,,," You can view this opening the file with Notepad                    
+                if (item.ToLower().StartsWith(",,,") || item.ToLower()=="\r") //## at least 3 commas means- there are and will be more empty cells.. which makes empty rows
+                {
+                    //result.Message = "<i class='fas fa-exclamation-triangle mr-4 fa-lg'></i><div class='h4'>Error: There are empty rows found in the Excel file. Please delete the empty rows and try again.</div>";
+                    
+                    rowNumberList += rowCounter + ", "; //## This is the Text holding all Empty Row numbers, to display the user.. ie: "2,5,8"                    
+                }
+
+                rowCounter++;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.InnerException.ToString());
-                throw;
+            //## if Empty rows found and we have generated a string with the list of Row numbers- then finish the end Tag for <div>
+            if (rowNumberList != "") {
+                string warningMessage = "<i class='fas fa-exclamation-triangle mr-4 fa-lg'></i><div class='h4'>Error: Empty rows found in the Excel file. Row: " + rowNumberList + "</div>";
+
+                result.Message = $"{warningMessage}<div class='h5 text-primary'>Please delete the empty rows and try again.</div>";
             }
+            
+
+            System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. delete it once processed
 
             result.IsSuccess = string.IsNullOrEmpty(result.Message);
             return result;  //## success! All good!
@@ -1250,7 +1264,7 @@ namespace MCPhase3.Controllers
                 _logger.LogInformation("File is copied to local folder.");
             }
 
-            var scriptsCheck = CheckMaliciousScripts(filePathName);
+            var scriptsCheck = CheckMaliciousScripts_And_EmptyRows(filePathName);
 
             //## now delete the both staging files.. not required anymore
             System.IO.File.Delete(filePathName);

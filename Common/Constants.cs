@@ -43,6 +43,7 @@
         public const string SessionExpiredMessage = "Session is expired. Please log in again.";
         
         public const string StatusType_EMPLOYER = "EMPLOYER";
+        public const string StatusType_COMPLETE = "COMPLETE";
 
         public static string RedisKeyList()
         {

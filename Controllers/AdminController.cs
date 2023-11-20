@@ -83,16 +83,17 @@ namespace MCPhase3.Controllers
 
         public async Task<IActionResult> CompletedFiles(int? pageNumber)
         {
-            //string payrolID = string.Empty;
-            DashboardBO detailBO = new DashboardBO();
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
-            var userid = ContextGetValue(Constants.SessionKeyUserID);
-            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
-            detailBO.userId = userid;
-            detailBO.L_PAYROLL_PROVIDER = null;
-            detailBO.statusType = "WYPF";
 
-            List<DashboardBO> dashboardBO = await getDashboardValues(detailBO);
+            var userid = ContextGetValue(Constants.SessionKeyUserID);
+            
+            var dashboardFilter = new RemittanceSelectParamBO
+            {
+                UserId = userid,
+                StatusType = Constants.StatusType_COMPLETE
+            };
+
+            List<RemittanceItemVM> dashboardBO = await GetRemittanceListByStatus(dashboardFilter);
 
             return View(dashboardBO);
         }
@@ -215,15 +216,15 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <param name="userid"></param>
         /// <returns></returns>
-        private async Task<List<DashboardBO>> getDashboardValues(DashboardBO dashboardBO)
+        private async Task<List<RemittanceItemVM>> GetRemittanceListByStatus(RemittanceSelectParamBO dashboardFilter)
         {
             string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.Dashboard);
-            var apiResult = new List<DashboardBO>();
+            var apiResult = new List<RemittanceItemVM>();
 
-            string apiResponse = await ApiPost(apiBaseUrlForDashboard, dashboardBO);
+            string apiResponse = await ApiPost(apiBaseUrlForDashboard, dashboardFilter);
             if (string.IsNullOrEmpty(apiResponse) == false)
             {
-                apiResult = JsonConvert.DeserializeObject<List<DashboardBO>>(apiResponse);
+                apiResult = JsonConvert.DeserializeObject<List<RemittanceItemVM>>(apiResponse);
             }
 
 
@@ -238,41 +239,34 @@ namespace MCPhase3.Controllers
             }
             else
             {
-                return new List<DashboardBO>();
+                return new List<RemittanceItemVM>();
             }
         }
 
 
         public async Task<IActionResult> Home()
         {
-            try
+            //check of PaylocID session has value then empty it.
+            if (ContextGetValue(Constants.SessionKeyPaylocFileID) != null)
             {
-                //check of PaylocID session has value then empty it.
-                if (ContextGetValue(Constants.SessionKeyPaylocFileID) != null)
-                {
-                    HttpContext.Session.Clear();
-                }
-
-                var paramList = new DashboardBO
-                {
-                    userId = ContextGetValue(Constants.SessionKeyUserID),
-                    L_PAYROLL_PROVIDER = null,
-                    statusType = Constants.StatusType_EMPLOYER
-                };
-
-                var viewModel = new DashboardViewModelNew
-                {
-                    dashboardBO = await getDashboardValues(paramList)
-                };
-
-                return View(viewModel);
+                HttpContext.Session.Clear();
             }
-            catch (Exception ex)
+
+            var paramList = new RemittanceSelectParamBO
             {
-                TempData["MsgError"] = "System is showing error, please try again later";
-                return RedirectToAction("Index", "Admin");
-            }
+                UserId = ContextGetValue(Constants.SessionKeyUserID),
+                StatusType = Constants.StatusType_EMPLOYER
+            };
+
+            var viewModel = new DashboardWrapperVM
+            {
+                RemittanceList = await GetRemittanceListByStatus(paramList)
+            };
+
+            return View(viewModel);
+           
         }
+
 
         /// <summary>
         /// This will be used from Admin dashboard- to show the details of a Pending submission file
@@ -295,11 +289,8 @@ namespace MCPhase3.Controllers
                     L_STATUSTYPE = "ALL"
                 };
 
-                //var submissionDetails = new List<DashboardBO>();
-
                 string apiResponse = await ApiPost(WebapiBaseUrlForDetailEmpList, paramList);
-                var submissionDetails = JsonConvert.DeserializeObject<List<DashboardBO>>(apiResponse);
-
+                var submissionDetails = JsonConvert.DeserializeObject<List<RemittanceItemVM>>(apiResponse);
 
                 return PartialView("_SubmissionDetails", submissionDetails);
             }

@@ -1,4 +1,4 @@
-﻿@model MCPhase3.Models.DashboardViewModelNew;
+﻿@model MCPhase3.Models.DashboardWrapperVM;
 @{
     ViewData["Title"] = "Files History";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
@@ -68,7 +68,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.dashboardBO)
+                        @foreach (var item in Model.RemittanceList)
                         {
                             @*<tr class="@selectRow">*@
                             <tr data-remittance-id="@item.remittance_IdEnc"
