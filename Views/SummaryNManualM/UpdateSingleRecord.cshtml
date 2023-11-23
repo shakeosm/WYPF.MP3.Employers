@@ -128,12 +128,12 @@
                     <div class="row">
                         <div class="col-md-5 col-sm-5 col-xs-12">
 
-                            <div class="form-group">
+                            <div class="form-group PER_LM_NI_SAM_ER PER_LM_NI_DIF_ER">
                                 <label class="control-label">First Name</label>
                                 <input asp-for="@Model.forenames" class="form-control" required oninvalid="this.setCustomValidity('* First name is required.')" oninput="setCustomValidity('')">
                                 <span asp-validation-for="@Model.forenames" class="text-danger"></span>
                             </div>
-                            <div class="form-group SNAME_MIS">
+                            <div class="form-group SNAME_MIS PER_LM_NI_SAM_ER PER_LM_NI_DIF_ER">
                                 <label class="control-label">SurName</label>
                                 <input asp-for="@Model.lastName" class="form-control" required oninvalid="this.setCustomValidity('* Last name is required.')" oninput="setCustomValidity('')">
                             </div>
@@ -174,7 +174,7 @@
                                 <label class="control-label">Title</label>
                                 <input asp-for="@Model.title" class="form-control" required oninvalid="this.setCustomValidity('* Title is required.')" oninput="setCustomValidity('')">
                             </div>
-                            <div class="form-group DOB_MIS">
+                            <div class="form-group DOB_MIS PER_LM_NI_SAM_ER PER_LM_NI_DIF_ER">
                                 <label class="control-label">DOB</label>
                                 <input asp-for="@Model.DOB" class="form-control" required oninvalid="this.setCustomValidity('* Date of birth is required.')" oninput="setCustomValidity('')">
                             </div>
@@ -182,7 +182,7 @@
                                 <label class="control-label">Gender</label>
                                 <input asp-for="@Model.gender" class="form-control" required oninvalid="this.setCustomValidity('* Gender is required.')" oninput="setCustomValidity('')">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group PER_LM_NOT_NI_SAM_ER PER_LM_NOT_NI_DIF_ER">
                                 <label class="control-label">NI Number</label>
                                 <input asp-for="@Model.NI" class="form-control" required oninvalid="this.setCustomValidity('* NI is required.')" oninput="setCustomValidity('')">
                             </div>
@@ -228,13 +228,13 @@
                                 <input asp-for="@Model.contractHours" class="form-control">
                             </div>
 
-                            <div class="form-group NR_DJS_BLANK NEW_FLDR_DATE_WARN NEW_FLDR">
+                            <div class="form-group NEW_FLDR NR_DJS_BLANK NR_DJS_INVALID NR_ENROLMENT_BLANK NR_ENROLMENT_INVALID">
                                 <label class="control-label">Date Joined</label>
                                 <input asp-for="@Model.dateJoined" class="form-control">
                             </div>
 
 
-                            <div class="form-group">
+                            <div class="form-group NEW_FLDR NR_DJS_BLANK NR_DJS_INVALID NR_ENROLMENT_BLANK NR_ENROLMENT_INVALID">
                                 <label class="control-label">Enrolment Type</label>                                
                                 @* <input asp-for="enrolmentType" class="form-control">*@
                                 <select asp-for="@Model.enrolmentType" class="form-select">
@@ -243,12 +243,12 @@
                                     <option value="AUTO">AUTO</option>
                                 </select>
                             </div>
-                            <div class="form-group LVR_DATA_MISMATCH LVR_BEFORE_LTST_STAT LVR_DOD_PRESENT LVR_BEFORE_JOIN">
+                            <div class="form-group LVR_BEFORE_JOIN LVR_BEFORE_LTST_STAT LVR_DATA_MISMATCH LVR_DEATH_PROC LVR_DOD_PRESENT LVR_LEAVER_PROC LVR_NOT_ACTIVE LVR_NSQ_PROC LVR_WRONG_PAYLOC OO_DATE_AND_LVR_DATE UNAPFLCG_LEAVER">
                                 <label class="control-label">Date Left</label>
                                 <input asp-for="@Model.dateLeft" class="form-control">
                             </div>
 
-                            <div class="form-group OPTOUT_NOT_ACTIVE OPTOUT_NSQ_PROC OPTOUT_WRONG_PAYLOC OO_FLAG_INVALID OO_NO_FLAG">
+                            <div class="form-group OO_DATE_IN_FUTURE OO_DATE_TOO_OLD OO_FLAG_INVALID OO_NO_DATE OO_NO_FLAG OPTOUT_BEFORE_JOIN OPTOUT_DEATH_PROC OPTOUT_DOD_PRESENT OPTOUT_LEAVER_PROC OPTOUT_NOT_ACTIVE OPTOUT_NSQ_PROC OPTOUT_WRONG_PAYLOC UNAPFLCG_OPTOUT">
                                 <label class="control-label">Opt Out Flag</label>
                                 @*<input asp-for="@Model.optOutFlag" class="form-control">*@
                                 <select asp-for="@Model.optOutFlag" class="form-select">
@@ -259,7 +259,7 @@
 
                             </div>
 
-                            <div class="form-group OO_DATE_TOO_OLD OO_DATE_IN_FUTURE OPTOUT_NOT_ACTIVE OPTOUT_NSQ_PROC OPTOUT_WRONG_PAYLOC">
+                            <div class="form-group OO_DATE_IN_FUTURE OO_DATE_TOO_OLD OO_FLAG_INVALID OO_NO_DATE OO_NO_FLAG OPTOUT_BEFORE_JOIN OPTOUT_DEATH_PROC OPTOUT_DOD_PRESENT OPTOUT_LEAVER_PROC OPTOUT_NOT_ACTIVE OPTOUT_NSQ_PROC OPTOUT_WRONG_PAYLOC UNAPFLCG_OPTOUT">
                                 <label class="control-label">Opt Out Date</label>
                                 <input asp-for="@Model.optOutDate" class="form-control">
                             </div>

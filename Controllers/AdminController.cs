@@ -368,7 +368,7 @@ namespace MCPhase3.Controllers
             }
             else
             {
-                TempData["msg1"] = "Failed to update WYPF database.";
+                TempData["MsgError"] = $"Failed to update WYPF database. Reason: {apiResult.Message}";
             }
 
             return RedirectToAction("Home", "Admin");

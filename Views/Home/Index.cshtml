@@ -114,8 +114,8 @@
 
             @if (String.IsNullOrEmpty(Model.ErrorMessage) == false)
             {
-                var alterClass = Model.ErrorMessage.ToString().Contains("success") ? "alert-success" : "alert-danger";
-                <div class="alert @alterClass border-2 mt-3 validation-message-div">
+                var alertClass = Model.ErrorMessage.ToString().Contains("success") ? "alert-success" : "alert-danger";
+                <div class="alert @alertClass border-2 mt-3 validation-message-div">
 
                     @*Html.Raw to apply Html tags inside a string*@
                     @*@Html.Raw(@TempData["MsgM"].ToString())*@

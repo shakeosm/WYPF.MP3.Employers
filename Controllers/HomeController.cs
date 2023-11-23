@@ -1010,7 +1010,7 @@ namespace MCPhase3.Controllers
                 //check if AutoMatch successfull then proceed otherwise skip and take file to Dashboard.
                 if (autoMatchBO.L_STATUS_CODE == 3)
                 {
-                    TempData["Msg1"] = "Previous month file is still in process by WYPF";
+                    TempData["MsgError"] = "Previous month file is still in process by WYPF";
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -1220,9 +1220,10 @@ namespace MCPhase3.Controllers
 
                 rowCounter++;
             }
+
             //## if Empty rows found and we have generated a string with the list of Row numbers- then finish the end Tag for <div>
             if (rowNumberList != "") {
-                string warningMessage = "<i class='fas fa-exclamation-triangle mr-4 fa-lg'></i><div class='h4'>Error: Empty rows found in the Excel file. Row: " + rowNumberList + "</div>";
+                string warningMessage = "<i class='fas fa-exclamation-triangle mr-4 fa-lg'></i><div class='h4'>Error: Empty rows found in the Excel file. Rows: " + rowNumberList + "</div>";
 
                 result.Message = $"{warningMessage}<div class='h5 text-primary'>Please delete the empty rows and try again.</div>";
             }

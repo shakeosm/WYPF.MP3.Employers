@@ -1,7 +1,10 @@
 ﻿$(function () {
-    $('#PendingSubmissionTable').DataTable();
+    $('#PendingSubmissionTable').DataTable({
+        stateSave: true,
+    });
     
     $('#CompletedSubmissionTable').DataTable({
+        stateSave: true,
         order: [[2, 'desc']],
     });
     
@@ -66,6 +69,20 @@
         });
 
     });
+
+    //## submit-return-button.Click()
+    //submit-return-button
+    //$(document).on('click', '.submit-return-button', function () {
+    $('.submit-return-button').on("click", function () {
+        console.log('click, .submit-return-button');
+
+        $(this).prop('disabled', true);
+        $("#overlay").fadeIn(300);  //## let this load the 'Loading-Spinner' so the user won't click on the button again- and calling the same proc - twice
+        setTimeout(() => {
+            console.log("Delayed for 1 second.");
+        }, "500");
+    });
+
 
     //###   This is to update the 'Score History' while already showing the current score in the Popup Modal
     $(document).on('click', '#UpdateScoreButton', function () {

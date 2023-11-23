@@ -61,10 +61,10 @@
                             <th><b>Payroll</b></th>
                             <th><b>Status</b></th>
                             <th class="text-center"><b>Latest Score %</b></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
+                            <th>@* Select *@</th>
+                            <th>@* Score History *@</th>
+                            <th>@* Check Return *@</th>
+                            <th>@* Delete *@</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,9 +82,9 @@
                                 <td>@item.RETURN_PERIOD</td>
                                 <td class="remittance-id">@item.remittance_Id</td>
                                 <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
-                                <td>@item.paylocation_Name</td>@*<td>@item.return_Records</td>*@
-                                <td>@item.return_Status_Code - @item.return_Status_Text</td>
-                                <td class="latest-score text-center">@item.return_Score_Emp</td>
+                                <td>@item.paylocation_Name</td>
+                                <td>@item.return_Status_Code - @item.return_Status_Text</td> @*Status*@
+                                <td class="latest-score text-center">@item.return_Score_Emp</td>@* Latest Score *@
 
                                 @{
                                     ReturnSubmitBO alertSumBO = new ReturnSubmitBO();
@@ -100,13 +100,18 @@
 
                                 @if (@item.return_Status_Code == "70" || @item.return_Status_Code == "65" || @item.return_Status_Code == "60")
                                 {
-                                    <td><a asp-action="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=@item.remittance_Id class="btn btn-outline-secondary disabled">Select</a></td>
+                                    /* 70='Ready to match' */
+                                    <td>@*Select*@</td>
                                     <td>
-                                        @*<a asp-action="MasterDetailEmp" asp-controller="Admin" asp-route-remittanceID=@item.remittance_Id.ToString() class="btn btn-outline-info">@item.action_Button_Text</a>*@
-                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
+                                        @*Score History*@
                                     </td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>                                        
+                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info submit-return-button" })
+                                    </td>
+                                    
+                                    <td>
+                                        @*Delete *@
+                                    </td>
 
                                 }
                                 else
@@ -121,11 +126,11 @@
                                         <a class="btn btn-outline-info score-history-button"
                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Show Score History">Score History</a>
                                     </td>
-                                    <td>
-                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info" })
+                                    <td class="text-center">
+                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info submit-return-button" })
                                     </td>
                                     <td>
-                                        <a class="btn btn-outline-danger delete-remittance-button" )>Delete</a>
+                                        <a class="btn btn-outline-danger delete-remittance-button">Delete</a>
                                     </td>
                                 }
                             </tr>
