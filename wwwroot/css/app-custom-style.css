@@ -2,3 +2,9 @@
     background: lightsteelblue;
     color: #000;
 }
+
+.error-item-viewed {
+    background-color: #cccbcb !important;
+    color: #595757;
+    font-style: italic;
+}

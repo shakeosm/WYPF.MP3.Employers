@@ -89,7 +89,7 @@
                                     
                                     <td class="error-status-td">
                                         @{
-                                            var actionName = item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE") ? "NewMatchingCritera" : "UpdateSingleRecord";
+                                            var actionName = item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE") ? "MemberFolderMatching" : "UpdateSingleRecord";
                                         }
                                         @if (isCleared)
                                         {
@@ -136,14 +136,12 @@
                         <div class="col-6">
                             @if (showAcknowledgeAllButton)
                             {
-                                @*string idList = alertIdList.ToString();*@
-                                @*<a id="acknowledgeButton" href="~/SummaryNManualM/WarningApproval?idList=@idList" class="btn btn-primary btn-lg"> Acknowledge All</a>*@
-                                <a id="acknowledgeButton" href="~/SummaryNManualM/AcknowledgeAll" class="btn btn-primary btn-lg"> Acknowledge All</a>
+                                <a id="acknowledgeButton" href="~/ErrorWarning/AcknowledgeAll" class="btn btn-primary btn-lg"> Acknowledge All</a>
                             }
                         </div>
 
                         <div class="col-6">
-                            <a asp-action="GoToSummaryPage" class="btn btn-primary btn-lg"> Exit</a>
+                            <a asp-action="GoToSummaryPage" class="btn btn-primary btn-lg"> Back</a>
                         </div>
                     </div>
                 </form>

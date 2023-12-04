@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MCPhase3.Models
 {
-    public class GetMatchesBO
+    public class MatchingPersonVM
     {
         public int dataRowId { get; set; }
         public string userId { get; set; }
@@ -44,5 +41,11 @@ namespace MCPhase3.Models
         public string Matched_Flag { get; set; }
 
     }
-   
+    public class MatchingRecordQueryVM
+    {
+        public int dataRowId { get; set; }
+        public string userId { get; set; }
+    }
+
+
 }

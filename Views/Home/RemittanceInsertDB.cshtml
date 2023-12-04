@@ -75,13 +75,8 @@
                         <h3>Error and Warnings</h3>
                         <p style="font-size:small;">Shows all data alerts and their count.   User may return or show list of all records with specific alert.</p><br />
                     </div>
-                    @*@Html.ActionLink("View errors and warnings summary", "Index", "SummaryNManualM", new { remittanceID = @Model.remittanceID })*@
-                    <a href="/SummaryNManualM/index?remittanceID=@Model.remittanceID" class="btn btn-primary mr-2">View errors and warnings summary</a>
+                    <a href="/ErrorWarning/index?remittanceID=@Model.remittanceID" class="btn btn-primary mr-2">View errors and warnings summary</a>
                     
-                    @*@Html.ActionLink("View and amend records with errors and warnings", "WarningsListforBulkApproval", "SummaryNManualM", @Model)<br />*@
-                    @*@Html.ActionLink("Loose match records", "LooseMatchRecords", "Home", new { remID = @Model.remittanceID })<br />*@
-                    @*<b> @Html.ActionLink("Exit and return later", "Index", "Admin", @Model)</b><br />*@
-
                     <a href="/Admin/index?remittanceID=@Model.remittanceID" class="btn btn-danger">Exit and return later</a>
                     @*@Html.ActionLink("Exit and return later", "Index", "Admin", @Model)*@
 

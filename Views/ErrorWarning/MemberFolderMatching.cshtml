@@ -1,0 +1,253 @@
+﻿@model MCPhase3.Models.GetMatchesViewModel
+@{
+    ViewData["Title"] = "Loose Match Records";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    bool niAvailable = false;
+    
+    //## We need to display options for each matching person. So- there can be 1+ matching person and each can have 1+ folders.
+    //## So- first make a GroupBy of PersonId- then display them in each group of PersonId
+    var groupByPersonId = Model.MatchingPersonList.GroupBy(m => m.personId);
+    string radioButtonId = "";
+}
+
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid bg-3 text-center">
+        <div class="container">
+
+            <div class="row alert alert-primary">
+                <div class="col-8">
+                    <h3>Error and Warnings</h3>
+                    <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
+                </div>
+                <div class="col-4">
+                    <a href="~/ErrorWarning/UpdateSingleRecord?id=@Model.DataRowEncryptedId" class="btn btn-info float-end"
+                       data-bs-toggle="tooltip" data-bs-placement="top" title="Switch between- Matching/Editing views">
+                        <i class="mdi mdi-loop me-1 ms-1"></i>
+                        Switch view
+                    </a>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+
+                        <!-- progressbar -->
+                        <ul id="progressbar">
+                            <li class="active" id="account"><strong>File Upload</strong></li>
+                            <li class="active" id="personal"><strong>Check Totals</strong></li>
+                            <li class="active" id="personal"><strong>Data Processing</strong></li>
+                            <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
+                            <li class="active" id="personal"><strong>Loose Matches</strong></li>
+                            <li id="payment"><strong>Submit to Database</strong></li>
+                            <li id="confirm"><strong>Finish</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["error"] != null)
+    {
+        <div class="container-floud">
+            <div class="alert-danger">
+                <div class="alert alert-danger">
+
+                    @TempData["error"].ToString()
+                </div>
+            </div>
+        </div>
+    }
+
+    <label>Employer: <b>@Model.EmployersName</b></label>
+    <style>
+        .TextBoxAsLabel {
+            border: none;
+            background-color: #fff;
+            background: transparent;
+        }
+    </style>
+
+    <form asp-action="MemberFolderMatching" id="myForm" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <h3>Contributions Data Received</h3>
+        <div class="form-group">
+
+            <table class="table table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Forenames</th>
+                        <th>Surname</th>
+                        <th>NI Number</th>
+                        <th>Date of Birth</th>
+                        <th>PostCode</th>
+                        <th>FolderRef</th>
+                        <th>PayLocation</th>
+                        @*<th>Status</th>*@
+                        <th>Date Joined</th>
+                        <th>Date Left</th>
+                        <th>PayRef</th>
+                        @*<th>ServiceType</th>*@
+
+                        <th>PostRef</th>
+                        <th>Hours</th>
+                        <th>Job Title</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@Model.MemberRecord.forenames</td>
+                        <td>@Model.MemberRecord.lastName</td>
+                        <td><b>@Model.MemberRecord.NI</b></td>
+                        <td>
+                            @Model.MemberRecord.DOB?.ToShortDateString()
+                        </td>
+                        <td>@Model.MemberRecord.postCode</td>
+                        <td>@Model.MemberRecord.memberNo</td>
+                        <td>@Model.MemberRecord.employerName</td>
+                        @*<td></td>*@
+                        <td>
+                            @Model.MemberRecord.dateJoined?.ToShortDateString()
+                        </td>
+                        <td>
+                            <b>
+                                @Model.MemberRecord?.dateLeft?.ToShortDateString()
+                            </b>
+                        </td>
+                        <td>@Model.MemberRecord.payRef</td>
+
+                        <td>@Model.MemberRecord.postRef</td>
+
+                        <td>@Model.MemberRecord.HOURS_CONCATENATED</td>
+                        <td>@Model.MemberRecord.jobTitle</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <br />
+
+            <h3>Potential Matches</h3>
+            <p>Select one option</p>
+            @* ## Loop through the Matching list..
+            First loop is by PersonId...
+            Second loop for each Folder inside a Person- whatever Folder they have..
+            *@
+
+            @foreach (var person in groupByPersonId)
+            {
+                /* 1. show the Person's Info, ie: Name, NI, DoB, PostCode */
+                var matchingPerson = Model.MatchingPersonList.FirstOrDefault(p => p.personId == person.Key);
+
+                <div class="border shadow p-3 mb-3">
+                    <table class="table table-bordered table-success mb-3">
+                        <tr>
+                            <th>Forenames</th>
+                            <th>Surname</th>
+                            <th>NI Number</th>
+                            <th>Date of Birth</th>
+                            <th>PostCode</th>
+                        </tr>
+                        <tr>
+                            <td>@matchingPerson.upperForeNames</td>
+                            <td>@matchingPerson.upperSurName</td>
+                            <td>@matchingPerson.NINO</td>
+                            <td>@matchingPerson.DOB.ToShortDateString()</td>
+                            <td>@matchingPerson.postCode</td>
+
+                        </tr>
+                    </table>
+
+                    <!--if a new record does not match to any record in UPM then show view file record to create new folder-->
+                    @if (Model.MatchingPersonList.Where(m => m.personId == person.Key).Count() == 0)
+                    {
+                        <input type="radio" class="btn-check" name="ActiveProcess" id="LooseMatch" value="AddNewFolder_1002" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="LooseMatch">"</label>
+                    }
+
+                    @* 2. Show all the matching Folders for this current Person *@
+                    <table class="table table-bordered table-sm table-hover person-folder-matching-table">
+                        <thead>
+                            <tr class="table-light">
+                                <th>Select Folder</th>
+                                <th>PayLocation</th>
+                                <th>Status</th>
+                                <th>Date Joined</th>
+                                <th>Date Left</th>
+                                <th>PayRef</th>
+                                <th>PostRef</th>
+                                <th>Hours</th>
+                                <th>Job Title</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var folder in Model.MatchingPersonList.Where(m => m.personId == person.Key))
+                            {
+                                <!--following NI check will be applied to check if NI is matched with received records-->
+                                if (@Model.MemberRecord.NI == folder.NINO)
+                                {
+                                    niAvailable = true;
+                                }
+                                if (folder.folderRef == "NEWREC")
+                                {
+                                    radioButtonId = "NEWREC_" + @folder.personId;
+                                }
+                                else
+                                {
+                                    radioButtonId = "UpdateFolder_" + @folder.folderId;
+                                }
+
+                                <tr>
+                                    <td class="text-center">
+                                        <input type="radio" class="btn-check matching-folder-radio-btn" name="ActiveProcess" id="@radioButtonId" value="@radioButtonId" autocomplete="off">
+                                        <label class="btn btn-outline-primary" for="@radioButtonId">@folder.folderRef</label>
+                                    </td>
+                                    <td>@folder.payLocationName</td>
+                                    <td>@folder.statusDesc</td>
+                                    <td>@folder.dateJoined?.ToShortDateString()</td>
+                                    <td>@folder.dateLeft?.ToShortDateString()</td>
+                                    <td class="text-center">@folder.payRef</td>
+                                    <td class="text-center">@folder.postRef</td>
+                                    <td class="text-center">@folder.HOURS_CONCATENATED</td>
+                                    <td>@folder.jobTitle</td>
+                                </tr>
+
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            }
+
+
+            <!-- Notes section for user -->
+            <div class="mt-2 p-2 border">
+                Choose a UPM record to match to from the above list. 
+                If WYPF’s person data differs we will update it to match the contributions.
+            </div>
+
+            <div class="mt-2 p-2">
+                @if (!niAvailable){
+                    <input type="radio" class="btn-check" name="ActiveProcess" id="AddNewPersonAndFolder" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="AddNewPersonAndFolder">New Person</label>
+                    <span>Confirm that a new person should be created from the contributions data. Only available if NI number is not already on file at WYPF.</span>
+                }
+            </div>
+
+            <div class="row p-4">
+                <div class="offset-3 col-3">
+                    <a href="javascript:window.open('','_self').close();" class="btn btn-secondary btn-lg">Back</a>                    
+                </div>
+                <div class="col-3">
+                    <button class="btn btn-success form-control col-6" type="submit" id="btnSubmit">Submit</button>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/js/new-matching-criteria.js"></script>
+}

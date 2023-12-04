@@ -13,6 +13,12 @@
   <PropertyGroup Condition=" '$(Configuration)' != '' AND '$(Configuration)' != 'Debug' ">
     <EnvironmentName>'$(Configuration)'</EnvironmentName>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="CodeRepository\RefectorUpdateRecord\**" />
+    <Content Remove="CodeRepository\RefectorUpdateRecord\**" />
+    <EmbeddedResource Remove="CodeRepository\RefectorUpdateRecord\**" />
+    <None Remove="CodeRepository\RefectorUpdateRecord\**" />
+  </ItemGroup>
   
 
   <ItemGroup>

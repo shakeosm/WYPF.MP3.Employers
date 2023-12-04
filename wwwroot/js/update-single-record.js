@@ -14,13 +14,18 @@ $(function () {
 
     }); //## End: 'acknowledge-alert-item").click()
 
+    $("#closeBrowserTab").click(function () {
+        
+    });
+    
+
     function ApproveWarning(caller, alertId) {
         var formData = new FormData();
         formData.append('alertId', alertId);
 
         $.ajax({
             type: "POST",
-            url: "/SummaryNManualM/WarningAcknowledge",
+            url: "/ErrorWarning/WarningAcknowledge",
             data: formData,
             processData: false,
             contentType: false,

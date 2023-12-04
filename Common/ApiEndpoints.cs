@@ -26,7 +26,7 @@
 
         public string MatchingRecordsUPM { get; set; }
         public string MatchingRecordsManual { get; set; }
-        public string Dashboard { get; set; }
+        public string DashboardRecentSubmission { get; set; }
         public string DashboardEmployers { get; set; }
         public string DashboardScoreHist { get; set; }
         public string CheckFileAvailable { get; set; }

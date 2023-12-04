@@ -47,12 +47,12 @@
                                 <td>@item.score_Employer</td>
                                 <td></td>
                                 @{ remittanceID = @item.remittance_Id;}
-                                @*<td> @Html.ActionLink("Select", "Index", "SummaryNManualM", new { remittanceID = "176448" })<br /></td>*@
+                                @*<td> @Html.ActionLink("Select", "Index", "ErrorWarning", new { remittanceID = "176448" })<br /></td>*@
                             </tr>                           
                         }
                     <tr>
-                        <td><a href="Index" asp-controller="SummaryNManualM" asp-route-remittanceID=remittanceID class="btn btn-cyan">Select</a></td>
-                        <td><a href="~/Admin/Home" class="btn btn-outline-info">Back</a>@*|<a asp-action="Index" asp-controller="SummaryNManualM" class="btn btn-outline-danger">Delete</a></td>*@
+                            <td><a href="Index" asp-controller=ErrorWarning asp-route-remittanceID=remittanceID class="btn btn-cyan">Select</a></td>
+                            <td><a href="~/Admin/Home" class="btn btn-outline-info">Back</a>@*|<a asp-action="Index" asp-controller="ErrorWarning" class="btn btn-outline-danger">Delete</a></td>*@
 
                     </tr>
 

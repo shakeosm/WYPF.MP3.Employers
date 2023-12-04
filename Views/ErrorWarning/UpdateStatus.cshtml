@@ -1,0 +1,26 @@
+﻿@model MCPhase3.Models.UpdateStatusVM
+@{    
+    string cssAlertType = @Model.IsSuccess ? "alert-primary" : "alert-warning";
+    string cssAlertIcon = @Model.IsSuccess ? "fas fa-thumbs-up" : "fas fa-exclamation-triangle";
+}
+
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid bg-3 text-center">
+        <div class="container">
+
+            <div class="row alert @cssAlertType">                
+                <div>
+                    <h3 class="text-danger">@Model.Header</h3><hr/><br/>
+                    <h5>@Html.Raw(Model.DisplayMessage)</h5>
+                </div>
+                
+            </div>
+            <a href="javascript:window.open('','_self').close();" class="btn btn-secondary btn-lg">Back</a>
+
+           
+        </div>
+    </div>
+    <br>
+    
+</div>
+

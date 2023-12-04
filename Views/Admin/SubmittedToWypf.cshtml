@@ -17,8 +17,8 @@
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
 
                 <a href="/Admin/Home" class="nav-link" id="nav-home-tab">Pending Files</a>
-                <a href="/Admin/SubmittedToWypf" class="nav-link" id="nav-home-tab">With WYPF</a>
-                <a class="nav-link active" id="nav-home-tab">Completed Files</a>
+                <a class="nav-link active" id="nav-home-tab">With WYPF</a>
+                <a href="/Admin/CompletedFiles" class="nav-link" id="nav-home-tab">Completed Files</a>
             </div>
         </nav>
         <div class="tab-content" id="nav-tabContent">
@@ -40,8 +40,8 @@
                         @foreach (var item in Model)
                         {
                             <tr>
-                            <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>
-                            <td>@item.RETURN_PERIOD</td>
+                                <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>
+                                <td>@item.RETURN_PERIOD</td>
                                 <td>@item.remittance_Id</td>
 
                                 <td>@item.return_Received_Date.ToString("dd/MM/yyyy")</td>

@@ -44,6 +44,9 @@
         
         public const string StatusType_EMPLOYER = "EMPLOYER";
         public const string StatusType_COMPLETE = "COMPLETE";
+        public const string StatusType_WYPF = "WYPF";
+
+        public static string MemberMatchingList = "MemberMatchingList";
 
         public static string RedisKeyList()
         {

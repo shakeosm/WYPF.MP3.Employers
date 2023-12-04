@@ -1,0 +1,124 @@
+﻿@model IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>
+@{    
+    var totalAlerts = Model.Where(a => a.CLEARED_FG == "N").Count();
+    bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
+}
+<div class="alert alert-warning row h5 mb-2">
+    <span class="col-2 text-danger">
+        @{
+            string alertCss = Model.First().ALERT_CLASS.Equals("W") ? "warning" : "danger";
+            if (Model.First().ALERT_CLASS.Equals("W"))
+            {
+                <label class="text-@alertCss"> Warning</label>
+            }
+            else if (Model.First().ALERT_CLASS.Equals("E"))
+            {
+                <label class="text-@alertCss">Error </label>
+            }
+        }
+    </span>
+    <span class="col-8">@Model.First().ALERT_DESC</span>
+    <span id="AlertSubListAlertCounter" class="col-2 text-center text-danger">@totalAlerts</span>
+</div>
+<div class="table-bordered">
+    <p>
+        Select the rows below for which you wish to acknowledge this warning.   All rows may be chosen by clicking “Select All”.
+        If you are happy for WYPF to process these records chick “Acknowledge Warnings” below the table.
+        If other errors or warnings are present on a record, these will need to be cleared before the record may be posted.
+        Individual records may be viewed by clicking view.
+    </p>
+
+    @*This is simply a form, will never get posted.. sends data via url... *@
+    @*<form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">*@
+        <table id="WarningListTable" class="table table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th>Pay Location</th>
+                    <th>First Name</th>
+                    <th>Surname</th>
+                    <th>DOB</th>
+                    <th>Ni Number</th>
+                    <th>Date Start</th>
+                    <th>Job Title</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    int i = 0;
+                    bool isCleared = (item.ALERT_COUNT.Equals("0.0") || item.CLEARED_FG.Equals("Y"));
+                    var rowStyle = isCleared ? "table-success" : "";
+
+                    <tr class="@rowStyle">
+                        <td>@item.PAYLOCATIONREF</td>
+                        <td>@item.FORENAMES</td>
+                        <td>@item.SURNAME</td>
+                        <td>@item.DOB?.ToShortDateString()</td>
+                        <td>@item.NINUMBER</td>
+                        <td>@item.DATEJOINEDSCHEME?.ToShortDateString()</td>
+                        <td>@item.JOBTITLE</td>
+
+                        <td class="error-status-td">
+                            @{
+                                var actionName = item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE") ? "MemberFolderMatching" : "UpdateSingleRecord";
+                            }
+                            @if (isCleared)
+                            {
+                                @if (item.ALERT_CLEARING_METHOD.Equals("LOOSE_MATCH_PAGE"))
+                                {
+                                    <a class="reset-record-button btn btn-sm btn-outline-danger" data-id="@item.EncryptedRowRecordID"
+                                       data-bs-toggle="tooltip" data-bs-title="Click to reset the fixes done recently" data-bs-placement="top">
+                                        <i class="fas fa-redo-alt"></i> Reset
+                                    </a>
+                                    @* a copy of the 'view' button- if the user resets the fixes- allow to see the 'Errors' page *@
+                                    <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="d-none view-button btn btn-outline-primary" target="_errorView">View</a>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-check h2 text-success ml-2"></i>
+                                }
+
+                            }
+                            else if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
+                            {
+                                <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="btn btn-outline-primary view-alert-details-button" target="_errorView">View</a>
+                            }
+                            else
+                            {
+                                <a href="" class="btn btn-outline-secondary disabled" disabled><i class="fas fa-marker fa-lg"></i> View</a>
+                            }
+
+                        </td>
+
+                        @{
+                            <input type="hidden" asp-for="@item.MC_ALERT_ID" id="alertID" />
+                            <input type="hidden" asp-for="@item.DATAROWID_RECD" />
+                        }
+
+                    </tr>
+
+                }
+            </tbody>
+        </table>
+
+
+        <div class="row mt-2">
+            @*<div class="col-6">
+                <a id="BackToErrorsAndWarningsListButton" class="btn btn-secondary btn-lg" alt="Show ErrorsAndWarnings List Table">Back</a>
+            </div>*@
+            
+            @if (showAcknowledgeAllButton)
+            {
+                <a id="acknowledgeButton" href="~/ErrorWarning/AcknowledgeAll" class="btn btn-success btn-lg offset-3 col-6"> Acknowledge All</a>
+            }            
+        </div>
+        
+    @*</form>*@
+
+
+</div>
+
+@section scripts{
+    @*<script src="~/js/warning-list-bulk-approval.js"></script>*@
+}

@@ -1,0 +1,157 @@
+﻿@model ErrorAndWarningWrapperVM
+@{
+    ViewData["Title"] = "Error and Warnings Summary";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";    
+    int countErrors = 0;
+    int rowCounter = 1;
+    string totalValueCss = "text-warning";
+}
+
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid bg-3 text-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
+                    <div class="card px-0 pt-1 pb-0 mt-1 mb-1">
+
+                        <!-- progressbar -->
+                        <ul id="progressbar">
+                            <li class="active" id="account"><strong>File Upload</strong></li>
+                            <li class="active" id="personal"><strong>Check Totals</strong></li>
+                            <li class="active" id="personal"><strong>Data Processing</strong></li>
+                            <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
+                            <li id="personal"><strong>Bulk Approval</strong></li>
+                            <li id="payment"><strong>Submit to Database</strong></li>
+                            <li id="confirm"><strong>Finish</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="container" id="divHide">
+        <div class="jumbotron">
+            @*Session expired message shows*@
+            @if (TempData["msg"] != null)
+            {
+                <div class="alert alert-dismissible alert-success">
+                    @TempData["msg"].ToString()
+                </div>
+            }
+
+            <h3 style="color:black;">Errors and Warnings Summary.</h3>
+            <p style="font-size:small;">Shows all data alerts and their count. User may returns or shows list of all records with specific alert.</p><br />
+            <div class="table table-bordered">
+                <h4>Payroll provider: <b>@Model.EmployerName</b> </h4>
+                
+                <table id="ErrorsAndWarningsListTable" class="table table-sm table table-striped">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Status</th>
+                            <th>Description</th>
+                            <th class="text-center">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ErrorsAndWarningsList)
+                        {
+                            if (item.ACTION_BY.Equals("ALL"))
+                            {
+                                countErrors++;
+                                <tr>
+                                    <td>
+                                        @{
+                                            //var newCount = item.ALERT_COUNT;
+                                            totalValueCss = item.ALERT_CLASS.Equals("W") ? "warning" : "danger";
+                                            if (item.ALERT_CLASS.Equals("W"))
+                                            {
+                                                <label class="text-@totalValueCss"> Warning</label>
+                                            }
+                                            else if (item.ALERT_CLASS.Equals("E"))
+                                            {
+                                                <label class="text-@totalValueCss">Error </label>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @item.ALERT_DESC
+                                    </td>
+                                    <td id="AlertGroupAlertCounter_@rowCounter" class="text-center h4">@item.ALERT_COUNT</td>
+                                    
+                                    @*
+                                    @Html.HiddenFor(modelItem => item.L_PAYLOC_FILE_ID)
+                                    @Html.HiddenFor(modelItem => item.ALERT_TYPE_REF)
+                                    @Html.HiddenFor(modelItem => item.remittanceID)
+                                    @{
+                                        item.remittanceID = @Model.RemittanceId;
+                                    }*@
+                                    <td class="text-center">                                        
+                                        <a href="#" data-remittance-id="@Model.RemittanceId" data-alert-type="@item.ALERT_TYPE_REF" class="btn btn-outline-primary view-alert-list-button" data-group-id="@rowCounter">View</a>                                        
+                                    </td>
+                                </tr>
+                                rowCounter++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row mt-3">
+                <div class="text-center">
+                    <a href="/Admin/Home" class="btn btn-secondary btn-lg">Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @if (countErrors == 0)
+    {
+        <script>
+            document.getElementById('divHide').style.display = 'none';
+        </script>
+        <div class="container">
+            <div class="jumbotron">
+                <div class="alert alert-success">
+
+                    @*<h2>You have removed all the error and warnings, File is with WYPF for processing.</h2>
+                <p>Click the following button to finish the process.</p>*@
+                    <h2>No record found!</h2>
+                    <p>Click the following button to return to Dashboard.</p>
+                    <a href="/Admin/Home/" class="btn btn-primary" value="Finish"> Back</a>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+<span id="ParentGroupCounterDivId" class="d-none"> @*This will store the id of the counter div of this Error group- on 'View' button click *@</span>
+
+<div id="AlertListModal" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Error warning List</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="AlertListModalContentsArea" class="modal-body">
+                @*we will dump the list of alerts here*@
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('passToWYPF').style.display = 'block';
+</script>
+
+
+@section scripts{
+    <script src="~/js/error-warning.js"></script>
+    <script src="~/js/warning-list-bulk-approval.js"></script>
+}

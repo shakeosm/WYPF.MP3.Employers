@@ -34,7 +34,7 @@
 
         $.ajax({
             type: "POST",
-            url: "/SummaryNManualM/ResetRecord",
+            url: "/ErrorWarning/ResetRecord",
             data: formData,
             processData: false,
             contentType: false,

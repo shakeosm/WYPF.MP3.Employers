@@ -44,6 +44,7 @@
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
 
                 <a class="nav-link active" id="nav-home-tab">Pending Files</a>
+                <a href="/Admin/SubmittedToWypf" class="nav-link" id="nav-home-tab">With WYPF</a>
                 <a href="/Admin/CompletedFiles" class="nav-link" id="nav-home-tab">Completed Files</a>
             </div>
         </nav>
@@ -119,7 +120,7 @@
                                     string selectButtonDisabled = item.return_Score_Emp > 99 ? "disabled" : "";
 
                                     <td>
-                                        <a href="/SummaryNManualM/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary @selectButtonDisabled"
+                                        <a href="/ErrorWarning/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary @selectButtonDisabled"
                                            data-bs-toggle="tooltip" data-bs-placement="top" title="View error and warning summary"> Select</a>
                                     </td>
                                     <td>

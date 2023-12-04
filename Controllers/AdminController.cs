@@ -98,6 +98,23 @@ namespace MCPhase3.Controllers
             return View(dashboardBO);
         }
 
+        public async Task<IActionResult> SubmittedToWypf()
+        {
+            ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
+
+            var userid = ContextGetValue(Constants.SessionKeyUserID);
+            
+            var dashboardFilter = new RemittanceSelectParamBO
+            {
+                UserId = userid,
+                StatusType = Constants.StatusType_WYPF
+            };
+
+            List<RemittanceItemVM> dashboardBO = await GetRemittanceListByStatus(dashboardFilter);
+
+            return View(dashboardBO);
+        }
+
         /// <summary>
         /// show list of score history to employers
         /// </summary>
@@ -218,7 +235,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<RemittanceItemVM>> GetRemittanceListByStatus(RemittanceSelectParamBO dashboardFilter)
         {
-            string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.Dashboard);
+            string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.DashboardRecentSubmission); //# api/DashboardRecentSubmission
             var apiResult = new List<RemittanceItemVM>();
 
             string apiResponse = await ApiPost(apiBaseUrlForDashboard, dashboardFilter);

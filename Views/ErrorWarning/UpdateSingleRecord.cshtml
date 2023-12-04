@@ -7,6 +7,9 @@
 
     var errorList = Model.ErrorAndWarningList.Select(er => er.ALERT_TYPE_REF).ToList();
     string allAlertRefs = string.Join(",", errorList);
+    bool showSwitchViewButton = (allAlertRefs.Contains("NEW_FLDR_AT_EMP") || allAlertRefs.Contains("NEW_PER_AND_FLDR")) == false; /* ### TL172: GDPR ISSUE (Switch View Button - To be disabled on Employer Portal for these two) */
+    string disableSwitchViewBtn = showSwitchViewButton ? "btn-info" : "btn-outline-secondary disabled";
+
 }
 <div class="border shadow-lg p-4 mb-4 bg-white">
     <div class="container-fluid bg-3 text-center">
@@ -18,11 +21,11 @@
                     <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
                 </div>
                 <div class="col-4">
-                    <a href="~/SummaryNManualM/NewMatchingCritera?id=@Model.DataRowEncryptedId" class="btn btn-info float-end"
-                       data-bs-toggle="tooltip" data-bs-placement="top" title="Switch between- Matching/Editing views">
+                    <a href="~/ErrorWarning/MemberFolderMatching?id=@Model.DataRowEncryptedId" class="btn @disableSwitchViewBtn float-end"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Switch between- Matching/Editing views">
                         <i class="mdi mdi-loop me-1 ms-1"></i>
                         Switch view
-                    </a>
+                    </a>                                            
                 </div>
             </div>
 
@@ -98,8 +101,7 @@
                                     @if (item.ALERT_CLASS.Contains("W") && item.CLEARED_FG.Contains("N"))
                                     {
                                         nextParms.Add("id" + x, item.MC_ALERT_ID);
-
-                                        @*<a href="/SummaryNManualM/WarningApproval?idList=@item.EncryptedRowRecordID" class="btn btn-warning"> Acknowledge</a>*@
+                                        
                                         <a class="acknowledge-alert-item btn btn-primary" data-alert-id="@item.EncryptedRowRecordID"> Acknowledge</a>
                                         <span class="acknowledged-and-clear d-none">Cleared</span> @* This will will be displayed (by Ajax) after user has Ack'd a warning *@
 
@@ -118,7 +120,7 @@
             </table>
 
             @* <table class="table table-bordered">*@
-            <form class="border p-4 mb-4 bg-white" asp-action="UpdateRecordToDataBase" method="post">
+            <form class="border p-4 mb-4 bg-white" asp-action="UpdateSingleRecord" method="post">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                 <p style="font-size:small;">Incoming Record Details</p>
@@ -360,12 +362,13 @@
 
                     <div class="row">
                         @*<div class="text-center row">
-                        <table class="table table-bordered">*@
+                        <table class="table table-bordered">*@                        
                         <div class="col-6">
-                            <a asp-action="Index" class="btn btn-primary btn-lg"> Exit</a>
+                            <a href="javascript:window.open('','_self').close();" class="btn btn-secondary btn-lg">Back</a>
+                            @*<a asp-action="Index" class="btn btn-secondary btn-lg"> Cancel</a>*@
                         </div>
                         <div class="col-6">
-                            <button type="submit" class="btn btn-primary btn-lg"> Submit</button>
+                            <button type="submit" class="btn btn-success btn-lg"> Submit</button>
                         </div>
                         @*</table>
                         </div>*@

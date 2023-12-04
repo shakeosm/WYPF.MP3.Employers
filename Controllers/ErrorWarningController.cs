@@ -1,5 +1,4 @@
 ﻿using MCPhase3.CodeRepository;
-using MCPhase3.CodeRepository.RefectorUpdateRecord;
 using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.DataProtection;
@@ -23,9 +22,9 @@ namespace MCPhase3.Controllers
 
 
 
-    public class SummaryNManualMController : BaseController
+    public class ErrorWarningController : BaseController
     {
-        private readonly ILogger<SummaryNManualMController> _logger;
+        private readonly ILogger<ErrorWarningController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
         ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
@@ -34,7 +33,7 @@ namespace MCPhase3.Controllers
         //following class I am using to consume api's
         EventDetailsBO eventDetails = new EventDetailsBO();
 
-        public SummaryNManualMController(ILogger<SummaryNManualMController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
+        public ErrorWarningController(ILogger<ErrorWarningController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints) : base(configuration, cache, Provider, ApiEndpoints)
         {
             _Configure = configuration;
             _host = host;
@@ -42,19 +41,16 @@ namespace MCPhase3.Controllers
         }
 
 
-        /// <summary>
-        /// Error and warnings summary is displayed in Index 
-        /// </summary>
+        /// <summary>Error and warnings List is displayed in Index page</summary>
         /// <returns></returns>
         public async Task<IActionResult> Index(AlertSumBO alertSumBO, int? pageNumber)
         {
+            var alertViewWrapperVM = new ErrorAndWarningWrapperVM();
             //## coming here for the first time- save in the Redis cache- and be happy .. now u can always find this record in the Cache
-            if (alertSumBO.remittanceId != null)
-            {
+            if (alertSumBO.remittanceId != null){
                 _cache.SetString(RemittanceIdKeyName(), alertSumBO.remittanceId);
             }
-            else
-            {
+            else{
                 alertSumBO.remittanceId = GetRemittanceId();
             }
 
@@ -63,7 +59,7 @@ namespace MCPhase3.Controllers
             if (alertSumBO.L_PAYLOC_FILE_ID != null)
             {
                 HttpContext.Session.SetString(Constants.SessionKeyPaylocFileID, alertSumBO.L_PAYLOC_FILE_ID.ToString());
-                ViewData["paylocID"] = alertSumBO.L_PAYLOC_FILE_ID;
+                alertViewWrapperVM.PaylocationID = alertSumBO.L_PAYLOC_FILE_ID?.ToString();
             }
 
             if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
@@ -72,13 +68,13 @@ namespace MCPhase3.Controllers
             }
 
             alertSumBO.L_USERID = CurrentUserId();
-            var model = new List<ErrorAndWarningViewModelWithRecords>();
+            var alertList = new List<ErrorAndWarningViewModelWithRecords>();
 
             int remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.remittanceId));
 
-            ViewBag.remID = EncryptUrlValue(remID.ToString());
-
-            ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
+            
+            alertViewWrapperVM.RemittanceId = EncryptUrlValue(remID.ToString());
+            alertViewWrapperVM.EmployerName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
 
             //add remittance id into session for future use.
 
@@ -87,25 +83,21 @@ namespace MCPhase3.Controllers
 
             alertSumBO.remittanceId = remID.ToString();
             var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-            model = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+            alertList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
 
-            if (model != null && model.Count > 0)
+            if (alertList != null && alertList.Count > 0)
             {
+                var alertListFiltered = alertList.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
 
-                var newModel1 = model.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
-
-                foreach (var item in newModel1)
+                foreach (var item in alertListFiltered)
                 {
                     item.EncryptedRowRecordID = alertSumBO.remittanceId;
                 }
-            }
 
-            var newModel = model.AsQueryable();
-            newModel = newModel.OrderByDescending(x => x.remittanceID);
+                alertViewWrapperVM.ErrorsAndWarningsList = alertListFiltered;
+            }            
 
-            int pageSize = Convert.ToInt32(ConfigGetValue("PaginationSize"));
-            ViewBag.MaximumPaginationItemsPerPage = pageSize;       //## to show/hide the pagination control            
-            return View(PaginatedList<ErrorAndWarningViewModelWithRecords>.CreateAsync(newModel, pageNumber ?? 1, pageSize));
+            return View(alertViewWrapperVM);
         }
 
 
@@ -192,6 +184,81 @@ namespace MCPhase3.Controllers
 
         }
 
+
+        /// <summary>This will be used via ajax</summary>
+        /// <param name="remittanceID"></param>
+        /// <param name="alertType"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> AlertListByAjax(string remittanceID, string alertType)
+        {
+            //string errorWarningSummaryKeyName = $"{CurrentUserId()}_{Constants.ErrorWarningSummaryKeyName}";
+            //following functionality is added to keep user on same warning and error page until all sorted.
+            //## if we come back here from Acknowledgement page- then the ViewModel 'summaryVM' is empty- so need to read from the Cache.. save life..
+
+            //if (summaryVM.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
+            //{
+            //    //## if Alert.count is NULL then its an Empty, but not null// (pain in the back)
+            //    summaryVM = _cache.Get<ErrorAndWarningViewModelWithRecords>(errorWarningSummaryKeyName);
+
+            //    if (summaryVM is null)
+            //    {
+            //        return RedirectToAction("Index", "Admin");  //## should not happen
+            //    }
+            //}
+            //else
+            //{
+            //    _cache.Set(errorWarningSummaryKeyName, summaryVM);
+            //}
+
+            var recordsList = new List<ErrorAndWarningViewModelWithRecords>();
+            string userName = CurrentUserId();
+
+            var alertSumBO = new AlertSumBO()
+            {
+                remittanceId = remittanceID,
+                L_USERID = userName
+            };
+
+            //show error and worning on Remittance or paylocation level.
+            string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
+            if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
+            {
+                alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
+                //recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+            }
+            else
+            {
+                //summaryVM.L_PAYLOC_FILE_ID = 0;
+
+                var errorAndWarningTo = new ErrorAndWarningToShowListViewModel()
+                {
+                    remittanceID = Convert.ToDouble(DecryptUrlValue(remittanceID)),
+                    L_USERID = userName,
+                    alertType = alertType,
+                };
+
+                var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+            }
+
+            foreach (var record in recordsList)
+            {
+                record.EncryptedRowRecordID = EncryptUrlValue(record.DATAROWID_RECD);
+                record.EncryptedAlertid = EncryptUrlValue(record.MC_ALERT_ID);
+            }
+
+            //## Lets keep the list of all Warnings in the Cache.. in case the user wants to do AcknowledgeAll operation- we can retrive the Un-encrypted list and do AckAll operation            
+            List<string> BulkApprovalRecordIdList = recordsList.Where(b => b.CLEARED_FG == "N").Select(r => r.EncryptedAlertid).ToList();
+            _cache.Set($"{Constants.BulkApprovalAlertIdList}_{CurrentUserId()}", BulkApprovalRecordIdList);
+                        
+            //ViewBag.status = summaryVM.ALERT_DESC + "";
+
+            return PartialView("_ErrorWarningList", recordsList);
+        }
+
+
         /// <summary>This is a ByPass Action- when we need to AcknowledgeAll warnings- 
         /// we can simply come here- read the list from cache- which was set from 'WarningsListforBulkApproval' Action
         /// and use the list to do AcknowledgeAll operation</summary>
@@ -204,7 +271,7 @@ namespace MCPhase3.Controllers
             if (bulkApprovalRecordIdList is null || bulkApprovalRecordIdList.Count < 1)
             {
                 TempData["Msg1"] = "No Alert data found to acknowledge. Please try again.";
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
+                return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning");
             }
 
             string decryptedRecordIdList = "";
@@ -224,7 +291,7 @@ namespace MCPhase3.Controllers
             paramList = JsonConvert.DeserializeObject<ApproveWarningsInBulkVM>(apiresult);  //## we get the ApiCall result in the same object and see what status we have got in return
 
             //## All done.. now send the user back to the 'WarningsListforBulkApproval' with success status
-            return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
+            return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning");
         }
 
         /// <summary>This is a short-circuit to go to Summary page without needing to create the URL from the Alert details child pages</summary>
@@ -246,7 +313,7 @@ namespace MCPhase3.Controllers
             if (string.IsNullOrEmpty(idList))
             {
                 TempData["Msg1"] = "No Alert data found to acknowledge. Please try again.";
-                return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
+                return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning");
             }
 
             string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.ErrorAndWarningsApproval);
@@ -288,7 +355,7 @@ namespace MCPhase3.Controllers
                 }
             }
 
-            return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM");
+            return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning");
         }
 
 
@@ -351,7 +418,7 @@ namespace MCPhase3.Controllers
                 string apiBaseUrlForErrorAndWarningsList = GetApiUrl(_apiEndpoints.UpdateRecordGetErrorWarningList);
                 string apiResponse = String.Empty;
 
-                HelpTextBO helpTextBO = new HelpTextBO();
+                QueryParamVM helpTextBO = new QueryParamVM();
                 helpTextBO.L_USERID = userName;
                 helpTextBO.L_DATAROWID_RECD = dataRowID;
 
@@ -387,17 +454,41 @@ namespace MCPhase3.Controllers
         /// follown action will update new changes into database 
         /// </summary>
         /// <returns></returns>
-        public async Task<IActionResult> UpdateRecordToDataBase(MemberUpdateRecordBO updateRecordBO)
+        [HttpPost]
+        public async Task<IActionResult> UpdateSingleRecord(MemberUpdateRecordBO updateRecordBO)
         {
-            updateRecordBO.modUser = HttpContext.Session.GetString(Constants.SessionKeyUserID);
+            updateRecordBO.modUser = CurrentUserId();
 
-            string remittanceID_Encrypted = GetRemittanceId();
+            //string remittanceID_Encrypted = GetRemittanceId();
 
             string apiLink = GetApiUrl(_apiEndpoints.UpdateRecord);
 
             string apiResponse = await ApiPost(apiLink, updateRecordBO);
+            updateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO> (apiResponse);
 
-            return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", remittanceID_Encrypted);
+            var updateStatus = new UpdateStatusVM()
+            {
+                DisplayMessage = $"<h5>Member: {updateRecordBO.forenames} {updateRecordBO.lastName}</h5>"+
+                                 $"<h5>Job title: {updateRecordBO.jobTitle}</h5>" +
+                                 $"<h5>Date of Birth: {updateRecordBO.DOB?.ToShortDateString()}</h5>" +
+                                 $"<h5>Postcode: {updateRecordBO.postCode}</h5>" +
+                                 $"<h5>NI: {updateRecordBO.NI}</h5><br/><br/><hr/><br/>" +
+                                 "<p class='h5 text-primary'>The record is successfully updated. Please click on the 'Back' button to go back to Error/Warning list.</p>",
+                Header = "Update successful",
+                IsSuccess = true
+            };
+
+            var statusCode = updateRecordBO.statusCode.GetValueOrDefault(-99);
+
+            if (statusCode != 0) {
+                updateStatus.IsSuccess = false;
+                updateStatus.DisplayMessage = updateRecordBO.statusTxt + "<p class='h4 text-primary'>Please try again later</p>";
+                updateStatus.Header = "Update failed.";
+
+            }
+
+            //return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning", remittanceID_Encrypted);
+            return View("UpdateStatus", updateStatus);
         }
 
 
@@ -408,50 +499,53 @@ namespace MCPhase3.Controllers
         /// 
         /// </summary>
         /// <returns></returns>
-        public async Task<IActionResult> NewMatchingCritera(string id)
+        public async Task<IActionResult> MemberFolderMatching(string id)
         {
-            GetMatchesBO getMatchesBO = new GetMatchesBO();
-            GetMatchesViewModel listOfMatches = new GetMatchesViewModel();
-            HelpTextBO helpTextBO = new HelpTextBO();
-
+            GetMatchesViewModel matchingPageWrapperVM = new GetMatchesViewModel();
+            
             int.TryParse(DecryptUrlValue(id), out int dataRowID);
+            
+            matchingPageWrapperVM.EmployersName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
+            
+            QueryParamVM memberRecordQuery = new QueryParamVM
+            {
+                L_DATAROWID_RECD = dataRowID,
+                L_USERID = HttpContext.Session.GetString(Constants.SessionKeyUserID)
+            };
+            
 
-            //show employer name
-            ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
-            //shows error and warnings data
             string apiBaseUrlForUpdateRecordGetValues = GetApiUrl(_apiEndpoints.UpdateRecordGetValues);
-            //shows recent data that is inserted by using posting file 
-            string apiBaseUrlForMatchingRecordsManual = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
-            //shows members matched data that was already inside UPM for matching
-            string apiBaseUrlForErrorAndWarningsList = GetApiUrl(_apiEndpoints.UpdateRecordGetErrorWarningList);
-
-            helpTextBO.L_DATAROWID_RECD = dataRowID;
-            helpTextBO.L_USERID = HttpContext.Session.GetString(Constants.SessionKeyUserID);
-            string result = string.Empty;
-
-            string apiResponse = await ApiPost(apiBaseUrlForUpdateRecordGetValues, helpTextBO);
-            MemberUpdateRecordBO memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
+            //## show Member record- from the 'Contribution data received'
+            string apiResponse = await ApiPost(apiBaseUrlForUpdateRecordGetValues, memberRecordQuery);
+            MemberUpdateRecordBO memberRecord = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
 
             //To cal all values/data of member record. that is already in UPM.
-            getMatchesBO.userId = HttpContext.Session.GetString(Constants.SessionKeyUserID);
-            getMatchesBO.dataRowId = dataRowID;
-            //method to get matching records from UPM
-            listOfMatches.Matches = await GetRecords(getMatchesBO);
-
-            if (listOfMatches.Matches.Count >= 1)
+            MatchingRecordQueryVM getMatchesBO = new ()
             {
-                memberUpdateRecordBO.dataRowID = dataRowID;
-                ViewBag.fileData = memberUpdateRecordBO;
+                userId = HttpContext.Session.GetString(Constants.SessionKeyUserID),
+                dataRowId = dataRowID
+            };
 
-                foreach (var item in listOfMatches.Matches)
+            //method to get matching records from UPM- Potential matches to compare with
+            matchingPageWrapperVM.MatchingPersonList = await GetRecords(getMatchesBO);  //## api/MatchingRecords
+
+            if (matchingPageWrapperVM.MatchingPersonList.Count >= 1)
+            {
+                memberRecord.dataRowID = dataRowID;
+                matchingPageWrapperVM.MemberRecord = memberRecord;
+
+                foreach (var item in matchingPageWrapperVM.MatchingPersonList)
                 {
                     item.dataRowId = dataRowID;
                 }
 
-                listOfMatches.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
+                matchingPageWrapperVM.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
             }
 
-            return View(listOfMatches);
+            //## save the matching list in the Cache.. so - we can process them later- on Submit() form..
+            _cache.Set($"{CurrentUserId()}_{Constants.MemberMatchingList}", matchingPageWrapperVM.MatchingPersonList);
+
+            return View(matchingPageWrapperVM);
 
         }
 
@@ -461,12 +555,12 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <param name="getMatchesBO"></param>
         /// <returns></returns>
-        private async Task<List<GetMatchesBO>> GetRecords(GetMatchesBO getMatchesBO)
+        private async Task<List<MatchingPersonVM>> GetRecords(MatchingRecordQueryVM getMatchesBO)
         {
-            string apiLink = GetApiUrl(_apiEndpoints.MatchingRecordsUPM);
+            string apiLink = GetApiUrl(_apiEndpoints.MatchingRecordsUPM);   //## api/MatchingRecords
             string apiResponse = await ApiPost(apiLink, getMatchesBO);
-            List<GetMatchesBO> bO = JsonConvert.DeserializeObject<List<GetMatchesBO>>(apiResponse);
-            return bO;
+            var apiResult = JsonConvert.DeserializeObject<List<MatchingPersonVM>>(apiResponse);
+            return apiResult;
         }
 
         /// <summary>
@@ -476,96 +570,96 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateUsingManualMatch(GetMatchesViewModel getMatchesBO)
+        public async Task<IActionResult> MemberFolderMatching(MemberFolderMatchingVM selectedMember)
         {
-            UpdateRecordModel updateRecordModel = new UpdateRecordModel();
-            string remittanceID = GetRemittanceId(returnAsEncrypted: false);
+            string selectedAction = selectedMember.ActiveProcess;
+            string action = selectedAction.Split("_")[0];
+            string personFolderId = selectedAction.Split("_")[1];   //## it can be either PersonID or a FolderID. NEWREC doesn't have a FolderId.. that's why!
 
-            int remID = Convert.ToInt32(remittanceID);
+            var matchingList = _cache.Get<List<MatchingPersonVM >> ($"{CurrentUserId()}_{Constants.MemberMatchingList}");
+            var selectedFolder = new MatchingPersonVM();
 
-            UpdateFolder obj1 = new UpdateFolder();
-            AddNewFolder obj2 = new AddNewFolder();
-            AddNewPersonAndFolder obj3 = new AddNewPersonAndFolder();
+            var updateStatus = new UpdateStatusVM();
 
 
-            GetMatchesBO bO = new GetMatchesBO();
-            //  var classToCall = getMatchesBO.activeProcess;
-            try
+            if (action == "NEWREC")
             {
-                foreach (var item in getMatchesBO.Matches)
-                {
-                    bO.dataRowId = item.dataRowId;
-                    bO.isActive = getMatchesBO.ActiveProcess;
-                    bO.folderId = item.folderId;
-                    bO.personId = item.personId;
-                    bO.folderRef = item.folderRef;
-                    string s1 = bO.isActive?.Substring(0, 12);
-                    string s2 = bO.isActive?.Remove(0, 12);
+                selectedFolder = matchingList.FirstOrDefault(m => m.personId == Convert.ToInt32(personFolderId) && m.folderRef == "NEWREC");
+            }
+            else if (action == "UpdateFolder")
+            {
+                selectedFolder = matchingList.FirstOrDefault(m => m.folderId == personFolderId);
+            }
 
-                    //string s2 = bO.;
-                    if (s1 == "UpdateFolder" && s2 == bO.folderId)
-                    {
-                        updateRecordModel = GetUpdatedUPMRecord(obj1);
-                        break;
-                    }
-                    //else if (s1 == "AddNewFolder" && s2 == bO.personId.ToString())
-                    else if (bO.folderRef == "NEWREC" && !string.IsNullOrEmpty(bO.personId.ToString()))
-                    {
-                        bO.folderId = null;
-                        bO.personId = item.personId;
-                        updateRecordModel = GetUpdatedUPMRecord(obj2);
-                        break;
+            //## Now create a 'MatchingPersonVM' to update in the DB with the values
+            var member = new MatchingPersonVM()
+            {
+                folderId = selectedFolder.folderId,
+                personId = selectedFolder.personId,
+                folderRef = selectedFolder.folderRef,
+                dataRowId = selectedFolder.dataRowId,
+                userId = CurrentUserId(),
+                note = selectedMember.Note
+            };
 
-                    }
-                    else if (bO.isActive.Equals("AddNewPersonAndFolder"))
-                    {
-                        bO.folderId = null;
-                        bO.personId = null;
-                        updateRecordModel = GetUpdatedUPMRecord(obj3);
-                        break;
-                    }
+            //## now assign some conditional values- based on selected action, ie: NewRec=> 'folderMatch = "90"'
+            if (action == "UpdateFolder")
+            {
+                member.folderMatch = "90";
+                member.personMatch = "90";
+            }
+            else if (action == "NEWREC")
+            {
+                member.folderId = null;
+                member.personId = selectedFolder.personId;
+
+                member.folderMatch = "95";
+                member.personMatch = "90";
+            }
+            else if (action == "AddNewPersonAndFolder")
+            {
+                member.folderId = null;
+                member.personId = null;
+
+                member.folderMatch = "95";
+                member.personMatch = "95";
+            }
+            else
+            {
+                throw new Exception("Unknown user action was passed. Please reload the page and try again.");
+            }
+
+            string endPoint = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
+            var apiResult = await ApiPost(endPoint, member);
+
+            if (apiResult == "")
+            { //## api call failed.. Error!
+                TempData["msg"] = "Error: Failed to update record";
+                updateStatus.Header = "Error: Failed to update record";
+                updateStatus.DisplayMessage = "Failed to update the record. Please try again later.";
+            }
+            else {
+                //## what if the user selected "AddNewPersonAndFolder"..? then there will be no Member name to display...
+                if (selectedAction.Equals("AddNewPersonAndFolder")){
+                    updateStatus.DisplayMessage = $"<h5>A new Folder record is created for that selected person.</h5>";
                 }
-            }
-            catch (System.NullReferenceException ex)
-            {
-                _logger.LogError(ex.ToString(), ex.StackTrace);
-                TempData["error"] = "Select a matching record by clicking on radio button and submit record.";
-                return RedirectToAction("NewMatchingCritera", "SummaryNManualM", new { id = bO.dataRowId });
-            }
+                else { 
+                    updateStatus.DisplayMessage = $"<h5>Member: {member.upperForeNames} {member.upperSurName}</h5>" +
+                         $"<h5>Job title: {member.jobTitle}</h5>" +
+                         $"<h5>Date of Birth: {member.DOB.ToShortDateString()}</h5>" +
+                         $"<h5>Postcode: {member.postCode}</h5>" +
+                         $"<h5>NI: {member.NINO}</h5><br/><br/><hr/><br/>" +
+                         "<p class='h5 text-primary'>The record is successfully updated. Please click on the 'Back' button to go back to Error/Warning list.</p>";
+                }
+                updateStatus.Header = "Update successful";
+                updateStatus.IsSuccess = true;
 
-            bO.personMatch = updateRecordModel.personMatch;
-            bO.folderMatch = updateRecordModel.folderMatch;
-            bO.userId = CurrentUserId();
-            bO.note = getMatchesBO.Note;
-
-            string matchingRecordsManualApi = GetApiUrl(_apiEndpoints.MatchingRecordsManual);
-            string apiResponse = await ApiPost(matchingRecordsManualApi, bO);
-            TempData["msg"] = "Record updated successfully";
-            return RedirectToAction("WarningsListforBulkApproval", "SummaryNManualM", GetRemittanceId());
+                TempData["msg"] = "Record updated successfully";
+            }
+           
+            return View("UpdateStatus", updateStatus);
         }
 
-
-        /// <summary>
-        /// Return a specific record that user selected on Loose match page.
-        /// </summary>
-        /// <param name="getMatchesBO"></param>
-        /// <returns></returns>
-        private static UpdateRecordModel GetUpdatedUPMRecord(IUpdateRecord updateRecord)
-        {
-            return updateRecord.UpdateRecord();
-        }
-
-
-        private string ConverToString(MatchCollection alertid)
-        {
-            string result = string.Empty;
-            foreach (var id in alertid)
-            {
-                result += id;
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// Ammend single record and update in database.

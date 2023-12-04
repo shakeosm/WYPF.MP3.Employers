@@ -12,6 +12,14 @@ namespace MCPhase3.Models
         public string info { get; set; }
         public string acknowledged { get; set; }
     }
+
+    public class UpdateStatusVM
+    {
+        public string Header { get; set; }
+        public string DisplayMessage { get; set; }
+        public bool IsSuccess { get; set; } = false;
+    }
+
     public class MemberUpdateRecordBO
     {
         public string DataRowEncryptedId { get; set; }

@@ -18,6 +18,15 @@ function validate() {
 $(document).ready(function () {
     validate();
     $('input').change(validate);
+
+    $(".matching-folder-radio-btn").click(function () {
+        //## first remove the class for the previously selected RadioOption- check all tables, all rows..
+        $(".person-folder-matching-table tr").removeClass("table-primary");
+
+        //$(this).nearest("tr").addClass("table-primary");
+        //## Now apply the CSS to the selected row...
+        $(this).parents('tr').addClass("table-primary");
+    });
 });
 
 function myFunction() {

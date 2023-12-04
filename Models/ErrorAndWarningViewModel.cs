@@ -35,7 +35,7 @@ namespace MCPhase3.Models
         public string remittanceID { get; set; }
         public string DATAROWID_RECD { get; set; }
         public string DATAROWID_RECD_ENC { get; set; }
-        public string ALERT_COUNT { get; set; }
+        public double? ALERT_COUNT { get; set; }
         public int? L_PAYLOC_FILE_ID { get; set; }
 
         public string empCorrectionFG { get; set; }
@@ -67,9 +67,11 @@ namespace MCPhase3.Models
         public string PAYLOCATIONNAME { get; set; }
     }
 
-    public class ErrorAndWarningViewModelLists
-    {
-        //[BindProperty]
-        public IEnumerable<ErrorAndWarningViewModelWithRecords> errorsAndWarningsList { get; set; }
+    public class ErrorAndWarningWrapperVM
+    {        
+        public List<ErrorAndWarningViewModelWithRecords> ErrorsAndWarningsList { get; set; }
+        public string EmployerName{ get; set; }
+        public string PaylocationID { get; set; }
+        public string RemittanceId { get; set; }
     }
 }
