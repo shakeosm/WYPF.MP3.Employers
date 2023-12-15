@@ -2,7 +2,7 @@
     $('#PendingSubmissionTable').DataTable({
         stateSave: true,
     });
-    
+
     $('#CompletedSubmissionTable').DataTable({
         stateSave: true,
         order: [[2, 'desc']],
@@ -70,17 +70,16 @@
 
     });
 
-    //## submit-return-button.Click()
-    //submit-return-button
-    //$(document).on('click', '.submit-return-button', function () {
-    $('.submit-return-button').on("click", function () {
-        console.log('click, .submit-return-button');
 
-        $(this).prop('disabled', true);
-        $("#overlay").fadeIn(300);  //## let this load the 'Loading-Spinner' so the user won't click on the button again- and calling the same proc - twice
+    $('.click-and-wait-button').on("click", function () {
+                
+        $(this).addClass("disabled");
+        $(this).html("<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span><span class='mr-2'>&nbsp;Processing...</span>")
+
+        
         setTimeout(() => {
-            console.log("Delayed for 1 second.");
-        }, "500");
+            console.log("Delayed for half second.");
+        }, "5000");
     });
 
 

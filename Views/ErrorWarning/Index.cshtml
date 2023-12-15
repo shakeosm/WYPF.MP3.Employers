@@ -1,7 +1,7 @@
 ﻿@model ErrorAndWarningWrapperVM
 @{
     ViewData["Title"] = "Error and Warnings Summary";
-    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";    
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     int countErrors = 0;
     int rowCounter = 1;
     string totalValueCss = "text-warning";
@@ -29,7 +29,7 @@
             </div>
         </div>
     </div>
-    <br/>
+    <br />
     <div class="container" id="divHide">
         <div class="jumbotron">
             @*Session expired message shows*@
@@ -44,7 +44,7 @@
             <p style="font-size:small;">Shows all data alerts and their count. User may returns or shows list of all records with specific alert.</p><br />
             <div class="table table-bordered">
                 <h4>Payroll provider: <b>@Model.EmployerName</b> </h4>
-                
+
                 <table id="ErrorsAndWarningsListTable" class="table table-sm table table-striped">
                     <thead class="thead-light">
                         <tr>
@@ -55,44 +55,48 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.ErrorsAndWarningsList)
+                        @if (Model.ErrorsAndWarningsList is null || Model.ErrorsAndWarningsList.Count < 1)
                         {
-                            if (item.ACTION_BY.Equals("ALL"))
+                            <tr class="bg-success h5">
+                                <td colspan="4">
+                                    <i class="fas fa-thumbs-up fa-lg mr-2"></i>
+                                    Threre is no error/warning found.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model.ErrorsAndWarningsList)
                             {
-                                countErrors++;
-                                <tr>
-                                    <td>
-                                        @{
-                                            //var newCount = item.ALERT_COUNT;
-                                            totalValueCss = item.ALERT_CLASS.Equals("W") ? "warning" : "danger";
-                                            if (item.ALERT_CLASS.Equals("W"))
-                                            {
-                                                <label class="text-@totalValueCss"> Warning</label>
+                                if (item.ACTION_BY.Equals("ALL"))
+                                {
+                                    countErrors++;
+                                    <tr>
+                                        <td>
+                                            @{
+                                                //var newCount = item.ALERT_COUNT;
+                                                totalValueCss = item.ALERT_CLASS.Equals("W") ? "warning" : "danger";
+                                                if (item.ALERT_CLASS.Equals("W"))
+                                                {
+                                                    <label class="text-@totalValueCss"> Warning</label>
+                                                }
+                                                else if (item.ALERT_CLASS.Equals("E"))
+                                                {
+                                                    <label class="text-@totalValueCss">Error </label>
+                                                }
                                             }
-                                            else if (item.ALERT_CLASS.Equals("E"))
-                                            {
-                                                <label class="text-@totalValueCss">Error </label>
-                                            }
-                                        }
-                                    </td>
-                                    <td>
-                                        @item.ALERT_DESC
-                                    </td>
-                                    <td id="AlertGroupAlertCounter_@rowCounter" class="text-center h4">@item.ALERT_COUNT</td>
-                                    
-                                    @*
-                                    @Html.HiddenFor(modelItem => item.L_PAYLOC_FILE_ID)
-                                    @Html.HiddenFor(modelItem => item.ALERT_TYPE_REF)
-                                    @Html.HiddenFor(modelItem => item.remittanceID)
-                                    @{
-                                        item.remittanceID = @Model.RemittanceId;
-                                    }*@
-                                    <td class="text-center">                                        
-                                        <a href="#" data-remittance-id="@Model.RemittanceId" data-alert-type="@item.ALERT_TYPE_REF" class="btn btn-outline-primary view-alert-list-button" data-group-id="@rowCounter">View</a>                                        
-                                    </td>
-                                </tr>
-                                rowCounter++;
+                                        </td>
+                                        <td>
+                                            @item.ALERT_DESC
+                                        </td>
+                                        <td id="AlertGroupAlertCounter_@rowCounter" class="text-center h4">@item.ALERT_COUNT</td>
+                                        <td class="text-center">
+                                            <a href="#" data-remittance-id="@Model.RemittanceId" data-alert-type="@item.ALERT_TYPE_REF" class="btn btn-outline-primary view-alert-list-button" data-group-id="@rowCounter">View</a>
+                                        </td>
+                                    </tr>
+                                    rowCounter++;
+                                }
                             }
+
                         }
                     </tbody>
                 </table>
@@ -105,7 +109,7 @@
             </div>
         </div>
     </div>
-    
+
     @if (countErrors == 0)
     {
         <script>
@@ -119,7 +123,7 @@
                 <p>Click the following button to finish the process.</p>*@
                     <h2>No record found!</h2>
                     <p>Click the following button to return to Dashboard.</p>
-                    <a href="/Admin/Home/" class="btn btn-primary" value="Finish"> Back</a>
+                    <a href="/Admin/Home/" class="btn btn-primary" value="Finish"> Dashboard</a>
                 </div>
             </div>
         </div>

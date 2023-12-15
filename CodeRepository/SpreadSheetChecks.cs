@@ -591,6 +591,7 @@ namespace MCPhase3.CodeRepository
                 CheckSpreadSheetErrorMsg += "<br /> <br />You have entered invalid date of birth 'DOB'. value should be like '30/10/2014'.<br />";
                 result = false;
             }
+            //## check minimun ad maximum date for a member record
 
             return result;
         }

@@ -1,7 +1,11 @@
 ﻿$(function () {
-    $('#ErrorsAndWarningsListTable').DataTable({
-        stateSave: true,
-    });
+
+    //## if it has 11+ Rows.. (1 TH + 10 TR)
+    if ($("#ErrorsAndWarningsListTable tr").length > 11) {
+        $('#ErrorsAndWarningsListTable').DataTable({
+            stateSave: true,
+        });
+    }
 
     //## This will collapse the current Div- (showing list of Errors in each category) and show the List of all Main Errors/Warnings
     //$(document).on('click', '#BackToErrorsAndWarningsListButton', function (event) {
@@ -66,7 +70,7 @@
     $(document).on('click', '.view-alert-details-button', function () {
         
         $(this).closest("tr").addClass("error-item-viewed");
-        $(this).remove();
+        //$(this).remove();
         
         var newTotal = $("#AlertSubListAlertCounter").text() - 1;
         $("#AlertSubListAlertCounter").text(newTotal);

@@ -327,7 +327,7 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
-                _cache.SetString(Constants.FileUploadErrorMessage, "File has an error or missing something " + ex.Message);
+                _cache.SetString(Constants.FileUploadErrorMessage, "Error transforming the excel file. Please check all column 'Names' are correct and NO empty rows in the sheet." + ex.Message);
                 return RedirectToAction("Index", "Home");
             }
 
@@ -343,7 +343,6 @@ namespace MCPhase3.Controllers
             {
                 _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
                 return RedirectToAction("Index", "Home");
-                //return RedirectToAction("Index", "Home");
             }
 
             // convert all fields in data table to string
@@ -358,7 +357,7 @@ namespace MCPhase3.Controllers
 
             var fileNameForUpload = Path.GetFileName(filePath);
             HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
-            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());//HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());            
 
             // var validYears = GetConfigValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
@@ -841,12 +840,7 @@ namespace MCPhase3.Controllers
                 newDT.Dispose();
 
 
-                if (InsertToDbSuccess)
-                {
-                    WriteToDBEventLog(Convert.ToInt32(id), "Bulk data insert into database.", 1, 4);
-                }
-                else
-                {
+                if (InsertToDbSuccess == false ) { 
                     TempData["MsgError"] = "System has failed uploading records to the database, Please contact MP3 support.";
                     WriteToDBEventLog(Convert.ToInt32(id), "FAILED to execute Bulk data insert into database.", 1, 4);
                     RedirectToAction("Admin", "Home");
@@ -856,7 +850,7 @@ namespace MCPhase3.Controllers
                 bool fileMovedToDone = CommonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));
                 if (fileMovedToDone)
                 {
-                    string logInfoText = $"Moved user uploaded file to: {destPath}";
+                    string logInfoText = $"Moved user uploaded file to: \\DONE folder";
                     _logger.LogInformation(logInfoText);
                     WriteToDBEventLog(Convert.ToInt32(id), logInfoText);
                 }
@@ -866,7 +860,7 @@ namespace MCPhase3.Controllers
             {
                 _logger.LogError($"Error at MoveFileForFTP(). Details:: {ex}");
                 TempData["MsgError"] = "System has failed uploading records to the database, Please contact MP3 support.";
-                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex.Message.Substring(0, 200)}");
+                WriteToDBEventLog(Convert.ToInt32(id), $"Error at MoveFileForFTP(). Details: {ex.Message}");
             }
 
 
@@ -882,7 +876,7 @@ namespace MCPhase3.Controllers
                 remittanceID = remitID,
                 remittanceStatus = remittanceStatus,
                 eventTypeID = eventTypeID,
-                notes = eventNotes
+                notes = eventNotes.Length > 200 ? eventNotes[..200] : eventNotes,
             };
 
             //update Event Details table File is uploaded successfully.                               
@@ -967,12 +961,6 @@ namespace MCPhase3.Controllers
                 }
 
 
-                eBO.remittanceID = remttanceId;
-                eBO.remittanceStatus = 1;
-                eBO.eventTypeID = 50;
-                eBO.notes = "Initial Processing Completed.";
-                InsertEventDetails(eBO);
-
                 //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
                 //Return Check API to call to check if the previous month file is completed ppse
                 result.p_REMITTANCE_ID = remttanceId;
@@ -1015,16 +1003,8 @@ namespace MCPhase3.Controllers
                 }
 
                 _logger.LogInformation("Bulk data insert is successfull and Auto Matching successfull");
-
-                //Update Event Details table and add Auto Match successfull.
-                eBO.remittanceID = remttanceId; //Convert.ToInt32(remittanceID);
-                eBO.remittanceStatus = 1;
-                eBO.eventTypeID = 80;
-                eBO.notes = "Auto matching done.";
-
-                InsertEventDetails(eBO);
+                
             }
-
             catch (Exception ex)
             {
 

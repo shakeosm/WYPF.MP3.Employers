@@ -18,6 +18,7 @@
         public string EmployerName { get; set; }
         public string UpdateRecordGetErrorWarningList { get; set; }
         public string GetRemittanceId { get; set; }
+        public string GetRemittanceInfo { get; set; }
         public string GetEventDetails { get; set; }
         public string InsertEventDetails { get; set; }
         public string PayrollProvider { get; set; }

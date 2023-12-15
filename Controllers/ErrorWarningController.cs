@@ -270,8 +270,8 @@ namespace MCPhase3.Controllers
 
             if (bulkApprovalRecordIdList is null || bulkApprovalRecordIdList.Count < 1)
             {
-                TempData["Msg1"] = "No Alert data found to acknowledge. Please try again.";
-                return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning");
+                TempData["msg"] = "No Alert data found to acknowledge. Please try again.";
+                return RedirectToAction("Index", "ErrorWarning");
             }
 
             string decryptedRecordIdList = "";
@@ -290,9 +290,11 @@ namespace MCPhase3.Controllers
             var apiresult = await ApiPost(apiApproveWarningsBulkList, paramList);
             paramList = JsonConvert.DeserializeObject<ApproveWarningsInBulkVM>(apiresult);  //## we get the ApiCall result in the same object and see what status we have got in return
 
-            //## All done.. now send the user back to the 'WarningsListforBulkApproval' with success status
-            return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning");
+            //## All done.. now send the user back to the 'Index' with success status
+            TempData["msg"] = "All warnings are successfully Acknowledged.";
+            return RedirectToAction("Index", "ErrorWarning");
         }
+
 
         /// <summary>This is a short-circuit to go to Summary page without needing to create the URL from the Alert details child pages</summary>
         /// <returns></returns>
@@ -581,7 +583,6 @@ namespace MCPhase3.Controllers
 
             var updateStatus = new UpdateStatusVM();
 
-
             if (action == "NEWREC")
             {
                 selectedFolder = matchingList.FirstOrDefault(m => m.personId == Convert.ToInt32(personFolderId) && m.folderRef == "NEWREC");
@@ -643,13 +644,19 @@ namespace MCPhase3.Controllers
                 if (selectedAction.Equals("AddNewPersonAndFolder")){
                     updateStatus.DisplayMessage = $"<h5>A new Folder record is created for that selected person.</h5>";
                 }
-                else { 
-                    updateStatus.DisplayMessage = $"<h5>Member: {member.upperForeNames} {member.upperSurName}</h5>" +
-                         $"<h5>Job title: {member.jobTitle}</h5>" +
-                         $"<h5>Date of Birth: {member.DOB.ToShortDateString()}</h5>" +
-                         $"<h5>Postcode: {member.postCode}</h5>" +
-                         $"<h5>NI: {member.NINO}</h5><br/><br/><hr/><br/>" +
-                         "<p class='h5 text-primary'>The record is successfully updated. Please click on the 'Back' button to go back to Error/Warning list.</p>";
+                else {
+                    if (action == "NEWREC"){
+                        updateStatus.DisplayMessage = $"<h5>A new record is created for that selected person.</h5>";
+                    }
+                    else { 
+                        updateStatus.DisplayMessage = $"<h5>Member: {member.upperForeNames} {member.upperSurName}</h5>" +
+                             $"<h5>Job title: {member.jobTitle}</h5>" +
+                             $"<h5>Date of Birth: {member.DOB.ToShortDateString()}</h5>" +
+                             $"<h5>Postcode: {member.postCode}</h5>" +
+                             $"<h5>NI: {member.NINO}</h5><br/><br/><hr/><br/>" +
+                             "<p class='h5 text-primary'>The record is successfully updated. Please click on the 'Back' button to go back to Error/Warning list.</p>";
+                    
+                    }
                 }
                 updateStatus.Header = "Update successful";
                 updateStatus.IsSuccess = true;

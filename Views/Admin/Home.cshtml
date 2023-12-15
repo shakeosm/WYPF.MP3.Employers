@@ -61,7 +61,7 @@
                             <th><b>Received</b></th>
                             <th><b>Payroll</b></th>
                             <th><b>Status</b></th>
-                            <th class="text-center"><b>Latest Score %</b></th>
+                            <th class="text-center"><b>Score %</b></th>
                             <th>@* Select *@</th>
                             <th>@* Score History *@</th>
                             <th>@* Check Return *@</th>
@@ -88,15 +88,8 @@
                                 <td class="latest-score text-center">@item.return_Score_Emp</td>@* Latest Score *@
 
                                 @{
-                                    ReturnSubmitBO alertSumBO = new ReturnSubmitBO();
-                                    alertSumBO.p_REMITTANCE_ID = item.remittance_IdEnc; //Convert.ToInt32(item.remittance_Id);
-                                                                                        //alertSumBO.P_PAYLOC_FILE_ID = Convert.ToInt32(Model.BO.pay);
-                                    alertSumBO.P_USERID = item.userId;
-                                    alertSumBO.P_STATUSCODE = Convert.ToInt32(item.return_Status_Code);
-                                }
-                                @{
-                                    var myAction = string.IsNullOrEmpty(item.action_Button_Text) ? "" : @item.action_Button_Text;
-
+                                    var buttonCaption = string.IsNullOrEmpty(item.action_Button_Text) ? "" : @item.action_Button_Text;
+                                    var queryParams = $"P_STATUSCODE={@item.return_Status_Code}&p_REMITTANCE_ID={@item.remittance_IdEnc}";
                                 }
 
                                 @if (@item.return_Status_Code == "70" || @item.return_Status_Code == "65" || @item.return_Status_Code == "60")
@@ -106,8 +99,11 @@
                                     <td>
                                         @*Score History*@
                                     </td>
-                                    <td>                                        
-                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info submit-return-button" })
+                                    <td>
+                                        <a href="/Admin/SubmitReturn?@queryParams"
+                                           class="btn btn-outline-info click-and-wait-button " alt="Update score">@buttonCaption
+                                            <div class="spinner-icon ml-2"></div>
+                                            </a>
                                     </td>
                                     
                                     <td>
@@ -119,23 +115,27 @@
                                 {
                                     string selectButtonDisabled = item.return_Score_Emp > 99 ? "disabled" : "";
 
-                                    <td>
-                                        <a href="/ErrorWarning/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary @selectButtonDisabled"
+                                    <td>                                        
+                                        <a href="/ErrorWarning/Index?remittanceID=@item.remittance_IdEnc" class="btn btn-outline-primary @selectButtonDisabled click-and-wait-button"
                                            data-bs-toggle="tooltip" data-bs-placement="top" title="View error and warning summary"> Select</a>
                                     </td>
                                     <td>
                                         <a class="btn btn-outline-info score-history-button"
-                                           data-bs-toggle="tooltip" data-bs-placement="top" title="Show Score History">Score History</a>
+                                           data-bs-toggle="tooltip" data-bs-placement="top" title="Show Score History">Score</a>
                                     </td>
-                                    <td class="text-center">
-                                        @Html.ActionLink(myAction, "SubmitReturn", "Admin", alertSumBO, new { @class = "btn btn-outline-info submit-return-button" })
+                                    <td class="text-center">                                        
+                                        <a href="/Admin/SubmitReturn?@queryParams"
+                                           class="btn btn-outline-info click-and-wait-button" alt="Update score">@buttonCaption
+                                            <div class="spinner-icon ml-2"></div>
+                                        </a>
                                     </td>
                                     <td>
-                                        <a class="btn btn-outline-danger delete-remittance-button">Delete</a>
+                                        <a class="btn btn-outline-danger delete-remittance-button" alt="Delete this remittance">
+                                            <i class="far fa-trash-alt fa-lg"></i>
+                                        </a>
                                     </td>
                                 }
                             </tr>
-                            //}
                         }
                     </tbody>
                 </table>
