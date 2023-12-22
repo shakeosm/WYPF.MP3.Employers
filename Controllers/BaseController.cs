@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -48,7 +49,7 @@ namespace MCPhase3.Controllers
         //#########################
         //## Life saving methods ##
         //#########################
-        public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKeyName);
+        public string CurrentUserId() => HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
         public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
@@ -159,5 +160,20 @@ namespace MCPhase3.Controllers
             await ApiPost(insertErrorLogApi, errorViewModel);
         }
 
+        public async Task<UserDetailsVM> GetUserDetails(string userName)
+        {
+            string cacheKey = $"{userName.ToUpper()}_{Constants.AppUserDetails}";
+            var appUser = _cache.Get<UserDetailsVM>(cacheKey);
+
+            if (appUser is null) { 
+                string insertErrorLogApi = GetApiUrl(_apiEndpoints.GetUserDetails);
+                var apiResult = await ApiGet(insertErrorLogApi + userName);
+                appUser = JsonConvert.DeserializeObject<UserDetailsVM>(apiResult);
+
+                _cache.Set(cacheKey, appUser);  //## set it, first time only.. subsequent calls will be able to read it from local cache            
+            }
+
+            return appUser;
+        }
     }
 }

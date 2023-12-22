@@ -37,8 +37,7 @@
         <div class="w-50">
             <input type="hidden" asp-for="BrowserId" />
             <input type="hidden" asp-for="WindowsId" />
-            <input type="hidden" name="UserName" id="UserName" value="@Model.UserName" />
-            <input type="hidden" name="Password" id="Password" value="@Model.Password" />
+            <input type="hidden" asp-for="UserId" />
 
             <button id="ContinueButton" type="submit" class="btn btn-primary me-2">Continue current login</button>
             <span id="DiscardButton" class="btn btn-danger" onclick="location.replace('/login/');">Close</span>

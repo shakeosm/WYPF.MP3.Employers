@@ -71,18 +71,6 @@
     });
 
 
-    $('.click-and-wait-button').on("click", function () {
-                
-        $(this).addClass("disabled");
-        $(this).html("<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span><span class='mr-2'>&nbsp;Processing...</span>")
-
-        
-        setTimeout(() => {
-            console.log("Delayed for half second.");
-        }, "5000");
-    });
-
-
     //###   This is to update the 'Score History' while already showing the current score in the Popup Modal
     $(document).on('click', '#UpdateScoreButton', function () {
 

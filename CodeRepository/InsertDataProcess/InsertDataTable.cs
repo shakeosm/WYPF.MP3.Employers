@@ -17,6 +17,16 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             dtInsert = dtCheck.AllColumnExistInExSheetCheck(newData, columnDefinations);
         }
 
+        /// <summary>
+        /// This will insert new column in the DataTable, and add values in all rows, ie: UserName, ClientId, RemittanceId, MODDATE, PostDate
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="userName"></param>
+        /// <param name="schemeName"></param>
+        /// <param name="clientID"></param>
+        /// <param name="remittanceID"></param>
+        /// <param name="newData"></param>
+        /// <param name="path"></param>
         public void PassDt(int row, string userName, string schemeName, string clientID, string remittanceID, DataTable newData, string path)
         {
             //DataTable newData;

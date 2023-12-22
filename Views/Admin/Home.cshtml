@@ -16,7 +16,6 @@
                 <div class="alert alert-success alert-dismissible">
                     @TempData["msg1"]
                 </div>
-
             }
             
             if (TempData["MsgError"] != null)
@@ -24,16 +23,16 @@
                 <div class="alert alert-danger alert-dismissible">
                     @TempData["MsgError"]
                 </div>
-
+            }
+        
+            if (TempData["msgDelete"] != null)
+            {
+                <div class="alert alert-dismissible alert-success">
+                    @TempData["msgDelete"].ToString()
+                </div>
             }
         }
 
-        @if (TempData["msgDelete"] != null)
-        {
-            <div class="alert alert-dismissible alert-success">
-                @TempData["msgDelete"].ToString()
-            </div>
-        }
         <div class="container-fluid bg-3 text-center">
             <h1 class="">Monthly posting</h1>
             <p class="">If you need to contact us phone 01274 434563 or 01274 435310</p>
@@ -61,6 +60,7 @@
                             <th><b>Received</b></th>
                             <th><b>Payroll</b></th>
                             <th><b>Status</b></th>
+                            <th><b>Records</b></th>
                             <th class="text-center"><b>Score %</b></th>
                             <th>@* Select *@</th>
                             <th>@* Score History *@</th>
@@ -85,6 +85,18 @@
                                 <td>@Convert.ToDateTime(item.return_Received_Date).ToString("dd/MM/yyyy")</td>
                                 <td>@item.paylocation_Name</td>
                                 <td>@item.return_Status_Code - @item.return_Status_Text</td> @*Status*@
+                                @{
+                                    string recordsCount = "";
+                                    if (item.return_Records >= 5000)
+                                    {
+                                        recordsCount = $"<span class='rounded-pill bg-warning text-dark p-2'>{@item.return_Records}</span>";
+                                    }
+                                    else
+                                    {
+                                        recordsCount = item.return_Records.ToString() ;
+                                    }
+                                }
+                                <td class="text-center">@Html.Raw(recordsCount)</td>@* Records *@
                                 <td class="latest-score text-center">@item.return_Score_Emp</td>@* Latest Score *@
 
                                 @{

@@ -37,95 +37,113 @@
         </div>
                 
         <div class="container" id="uploadFile">
-            <div class="jumbotron">
+            @* If loading first time or Loading with Error message- Then show the selection inputs to make selection*@
+            @*@if (string.IsNullOrEmpty(Model.ErrorMessage) || Model.ErrorMessage.StartsWith("Error")) 
+            {*@
+                <div class="jumbotron">
 
-                <div class="col-md-12 mb-5">
-                    <h4>List of Paylocations:</h4>
-                    <select class="form-select col-md-6" asp-for="PayLocationList" asp-items="payLocationSelectList"></select>
-                </div>
+                    <div class="col-md-12 mb-5">
+                        <h4>List of Paylocations:</h4>
+                        <select class="form-select col-md-6" asp-for="PayLocationList" asp-items="payLocationSelectList"></select>
+                    </div>
 
-                <h4>Step 1 - select payroll information</h4><hr />
+                    <h4>Step 1 - select payroll information</h4><hr />
 
-                <div class="col-md-12 mb-5">
-                    <div>
-                        <label class="col-12 mb-2">Select Payroll year:</label>
-                        @{
-                            foreach (var item in Model.YearList)
+                    <div class="col-md-12 mb-5">
+                        <div>
+                            <label class="col-12 mb-2">Select Payroll year:</label>
+                            @{
+                                foreach (var item in Model.YearList)
+                                {
+                                    var itemId = item.years;
+                                    <input type="radio" class="btn-check" name="SelectedYear" autocomplete="off" id="@itemId" value="@itemId">
+                                    <label class="btn btn-outline-info" for="@itemId">@itemId</label>
+                                }
+                            }
+                        </div>
+                        <span asp-validation-for="SelectedYear" class="text-danger" id="SelectedYearValidationLabel">* Payroll Year is required.</span>
+                    </div>
+
+                    <div class="col-md-12 mb-5">
+                        <div>
+                            <label class="col-12 mb-3">Select Payroll month:</label>
+                            @foreach (var item in Model.MonthList)
                             {
-                                var itemId = item.years;
-                                <input type="radio" class="btn-check" name="SelectedYear" autocomplete="off" id="@itemId" value="@itemId">
+                                var itemId = item.text;
+                                <input type="radio" class="btn-check" name="SelectedMonth" autocomplete="off" id="@itemId" value="@itemId">
                                 <label class="btn btn-outline-info" for="@itemId">@itemId</label>
                             }
-                        }
+
+                        </div>
+                        <span asp-validation-for="SelectedMonth" class="text-danger" id="SelectedMonthValidationLabel">* Payroll month is required.</span>
                     </div>
-                    <span asp-validation-for="SelectedYear" class="text-danger" id="SelectedYearValidationLabel">* Payroll Year is required.</span>
-                </div>
+                    <div class="col-md-12 mb-5">
+                        <div>
+                            <label class="col-12">Posting for:</label>
 
-                <div class="col-md-12 mb-5">
-                    <div>
-                        <label class="col-12 mb-3">Select Payroll month:</label>
-                        @foreach (var item in Model.MonthList)
-                        {
-                            var itemId = item.text;
-                            <input type="radio" class="btn-check" name="SelectedMonth" autocomplete="off" id="@itemId" value="@itemId">
-                            <label class="btn btn-outline-info" for="@itemId">@itemId</label>
-                        }
+                            <input type="radio" class="btn-check" name="SelectedPostType" id="FirstPostingRadioButton" autocomplete="off" value="1">
+                            <label class="btn btn-outline-info" for="FirstPostingRadioButton">1st posting</label>
 
+                            <input type="radio" class="btn-check" name="SelectedPostType" id="SecondPostingRadioButton" autocomplete="off" value="2">
+                            <label class="btn btn-outline-info" for="SecondPostingRadioButton">2nd posting for same month</label>
+
+                            <input type="radio" class="btn-check" name="SelectedPostType" id="PrevMonthPostingRadioButton" autocomplete="off" value="3">
+                            <label class="btn btn-outline-info" for="PrevMonthPostingRadioButton">File has previous month data</label>
+                        </div>
+                        <span asp-validation-for="SelectedPostType" class="text-danger" id="SelectedPostTypeValidationLabel">* Post type is required.</span>
                     </div>
-                    <span asp-validation-for="SelectedMonth" class="text-danger" id="SelectedMonthValidationLabel">* Payroll month is required.</span>
-                </div>
-                <div class="col-md-12 mb-5">
-                    <div>
-                        <label class="col-12">Posting for:</label>
 
-                        <input type="radio" class="btn-check" name="SelectedPostType" id="FirstPostingRadioButton" autocomplete="off" value="1">
-                        <label class="btn btn-outline-info" for="FirstPostingRadioButton">1st posting</label>
-                    
-                        <input type="radio" class="btn-check" name="SelectedPostType" id="SecondPostingRadioButton" autocomplete="off" value="2">
-                        <label class="btn btn-outline-info" for="SecondPostingRadioButton">2nd posting for same month</label>
+                    <h4>Step 2: upload monthly contribution spreadsheet</h4>
 
-                        <input type="radio" class="btn-check" name="SelectedPostType" id="PrevMonthPostingRadioButton" autocomplete="off" value="3">
-                        <label class="btn btn-outline-info" for="PrevMonthPostingRadioButton">File has previous month data</label>
+                    <p>
+                        <input type="file" name="paymentFile" id="UploadFileInput" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="form-control">
+                        <span asp-validation-for="PaymentFile" class="text-danger" id="CustomerFileValidationLabel">* Data file is required.</span>
+                    </p>
+
+                    <div class="form-group col-md-6">
+                        @*<a id="ValidateFileButton" class="btn btn-primary">Validate File</a>*@
+                        <small id="uploadHelp" class="form-text text-muted">Tips: Maxium file size 5MB. File type Excel only. </small>
+
+                        <div id="FileValidationCheckResult" class="mt-3 mb-3 validation-message-div">
+                            @*We will dump here the error result from the FileValidation function- Ajax call result*@
+                        </div>
                     </div>
-                    <span asp-validation-for="SelectedPostType" class="text-danger" id="SelectedPostTypeValidationLabel">* Post type is required.</span>
+                    @if (String.IsNullOrEmpty(Model.ErrorMessage) || Model.ErrorMessage.StartsWith("Error"))
+                    {
+                        <div>
+                        <input type="submit" id="UploadFileButton" value="Validate File" class="btn btn-primary click-and-wait-button" alt="Validate file format is correct"
+                                   data-bs-toggle="tooltip" data-bs-title="Validate file format is correct" /> @*Action => /Home/Create*@
+                        </div>
+                    }
+
                 </div>
+@*            }
+            else
+            {
+                //## otherwise shwo the success message and user selected values as Summary
+                <div class="jumbotron">
 
-                <h4>Step 2: upload monthly contribution spreadsheet</h4>
-
-                <p><input type="file" name="paymentFile" id="UploadFileInput" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="form-control">
-                    <span asp-validation-for="PaymentFile" class="text-danger" id="CustomerFileValidationLabel">* Data file is required.</span>
-                </p>
-
-                <div class="form-group col-md-6">
-                    @*<a id="ValidateFileButton" class="btn btn-primary">Validate File</a>*@
-                    <small id="uploadHelp" class="form-text text-muted">Tips: Maxium file size 5MB. File type Excel only. </small>
-
-                    <div id="FileValidationCheckResult" class="mt-3 mb-3 validation-message-div">
-                        @*We will dump here the error result from the FileValidation function- Ajax call result*@
-                    </div>
                 </div>
+            }*@
+            
 
-                <div>
-                    <input type="submit" id="UploadFileButton" value="Upload File" class="btn btn-primary" /> @*Action => /Home/Create*@
-                </div>
+            
 
-                @*<textarea asp-for="myErrorMessageText" id="myErrorMessageText"></textarea>*@
-            </div>
-
+            @* If the page has come back (after POST) due to errors in the file, ie: invalid date, amount, client id, then show the error here *@
             @if (String.IsNullOrEmpty(Model.ErrorMessage) == false)
             {
                 var alertClass = Model.ErrorMessage.ToString().Contains("success") ? "alert-success" : "alert-danger";
                 <div class="alert @alertClass border-2 mt-3 validation-message-div">
 
-                    @*Html.Raw to apply Html tags inside a string*@
-                    @*@Html.Raw(@TempData["MsgM"].ToString())*@
+                    @*Html.Raw to apply Html tags inside a string*@                    
                     @Html.Raw(@Model.ErrorMessage.ToString())
                 </div>
 
-                @if (@Model.ErrorMessage == "File is uploaded successfully")
+                //## or- if the POST back is success- file has passed all verifcation- then- show SUBMIT button
+                @if (@Model.ErrorMessage.StartsWith("Success"))
                 {
                     <div class="col-12 mt-3">
-                        <a asp-action="Remad" class="btn btn-primary">Next </a> to check all totals are correct.
+                        <a asp-action="CheckTotals" class="btn btn-primary click-and-wait-button">Next </a> to check all totals are correct.
                     </div>
                 }
             }

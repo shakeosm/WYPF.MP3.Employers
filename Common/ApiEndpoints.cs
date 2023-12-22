@@ -24,6 +24,10 @@
         public string PayrollProvider { get; set; }
         public string SubPayrollProvider { get; set; }
         public string LoginCheck { get; set; }
+        public string MFA_IsRequired { get; set; }
+        public string MFA_SendToEmployer { get; set; }
+        public string MFA_Verify { get; set; }
+
 
         public string MatchingRecordsUPM { get; set; }
         public string MatchingRecordsManual { get; set; }
@@ -41,6 +45,7 @@
         public string DeleteRemittance { get; set; }
         
         public string ErrorLogCreate { get; set; }
+        public string GetUserDetails { get; set; }
     }
 
 }

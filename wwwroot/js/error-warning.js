@@ -40,10 +40,13 @@
             data: params,
             success: function (response) {                
                 $("#AlertListModalContentsArea").html(response);    
-                
-                $('#WarningListTable').DataTable({
-                    stateSave: true,
-                });
+
+                //## Enable the DataTable feature- if only more than 11 Rows.. (1TH + 10 TR)
+                if ($('#WarningListTable tr').length > 11) {
+                    $('#WarningListTable').DataTable({
+                        stateSave: true,
+                    });
+                }
 
                 $("#AlertListModal").modal("show");
                 //$("#AlertListModalContentsWrapper").slideDown(300);         //## Child table - will show
@@ -51,7 +54,6 @@
                 //$("#AlertListModalContentsWrapper").removeClass("d-none");//## Child table
 
                 hideOverlaySpinner();
-                ScrollToPageBottom();
             },
             failure: function (response) {
                 console.log(response.responseText);
@@ -70,14 +72,15 @@
     $(document).on('click', '.view-alert-details-button', function () {
         
         $(this).closest("tr").addClass("error-item-viewed");
-        //$(this).remove();
-        
-        var newTotal = $("#AlertSubListAlertCounter").text() - 1;
-        $("#AlertSubListAlertCounter").text(newTotal);
+        var currentTotal = $("#AlertSubListAlertCounter").text();
+        if (currentTotal !== "0") {
+            var newTotal = $("#AlertSubListAlertCounter").text() - 1;
+            $("#AlertSubListAlertCounter").text(newTotal);
 
-        //## now update the parent counter div..
-        var targetParentCounterDiv = $("#ParentGroupCounterDivId").text();
-        $(targetParentCounterDiv).text(newTotal);
+            //## now update the parent counter div..
+            var targetParentCounterDiv = $("#ParentGroupCounterDivId").text();
+            $(targetParentCounterDiv).text(newTotal);
+        }
        
     });
 });

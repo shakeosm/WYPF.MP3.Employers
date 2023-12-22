@@ -24,6 +24,8 @@ namespace MCPhase3.Models
 
        // public int isStaff { get; set; }
         public int result { get; set; }
+
+        public UserDetailsVM  UserDetails { get; set; }
     }
 
 }

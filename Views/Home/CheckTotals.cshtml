@@ -37,22 +37,16 @@
     <br>
 
     @*following tempdate shows session expired message worng.*@
-    @*@if (TempData["Msg"] != null)
+    @if (TempData["MsgError"] != null)
     {
         <div class="container">
-            <div class="jumbotron">
-                <div class="alert-danger">
-                    <div class="alert alert-danger">
-
-                        @TempData["Msg"].ToString()
-                    </div>
-                </div>
-
+            <div class="alert alert-danger">
+                @TempData["MsgError"].ToString()
             </div>
         </div>
-    }*@
+    }
 
-    <form asp-action="Remad" enctype="multipart/form-data" method="post">
+    <form asp-action="CheckTotals" enctype="multipart/form-data" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="container">
             <div class="jumbotron">
@@ -166,7 +160,7 @@
 
                 <div class="alert alert-success" role="alert">
                     <h3>If you have verified steps 1 - 6 please click following button to Move to the next stage.</h3>
-                    <input type="submit" value="Next" class="btn btn-primary btn-block" />
+                    <input type="submit" value="Next" class="btn btn-primary btn-block click-and-wait-button" />
                 </div>
             </div>
         </div>

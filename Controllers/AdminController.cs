@@ -82,10 +82,10 @@ namespace MCPhase3.Controllers
 
 
         public async Task<IActionResult> CompletedFiles(int? pageNumber)
-        {
+        {            
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
 
-            var userid = ContextGetValue(Constants.SessionKeyUserID);
+            var userid = CurrentUserId();
             
             var dashboardFilter = new RemittanceSelectParamBO
             {
@@ -102,8 +102,8 @@ namespace MCPhase3.Controllers
         {
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
 
-            var userid = ContextGetValue(Constants.SessionKeyUserID);
-            
+            var userid = CurrentUserId();
+
             var dashboardFilter = new RemittanceSelectParamBO
             {
                 UserId = userid,
@@ -157,11 +157,15 @@ namespace MCPhase3.Controllers
         /// Update password for Staff and Employers
         /// </summary>
         /// <returns></returns>
-        public IActionResult UpdatePassword()
+        public async Task<IActionResult> UpdatePassword()
         {
-            LoginBO loginBO = new LoginBO() { userName = CurrentUserId() };
-            //loginBO.isStaff = 0;
-            return View(loginBO);
+            var currentUser = await GetUserDetails(CurrentUserId());
+            var login = new LoginBO() { 
+                userName = CurrentUserId(),
+                UserDetails = currentUser,
+            };
+
+            return View(login);
         }
 
         [HttpPost]
@@ -192,7 +196,7 @@ namespace MCPhase3.Controllers
             //};
 
             ViewBag.isStaff = 1;
-            loginBO.userName = ContextGetValue(Constants.SessionKeyUserID);
+            loginBO.userName = CurrentUserId();
             var result = (Password)await UpdatePasswordMethod(loginBO);
             if (result == Password.Updated)
             {
@@ -271,7 +275,7 @@ namespace MCPhase3.Controllers
 
             var paramList = new RemittanceSelectParamBO
             {
-                UserId = ContextGetValue(Constants.SessionKeyUserID),
+                UserId = CurrentUserId(),
                 StatusType = Constants.StatusType_EMPLOYER
             };
 
@@ -370,14 +374,16 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> SubmitReturn(ReturnSubmitBO rBO)
         {
             if (rBO.p_REMITTANCE_ID == null)
+
             {
-                return RedirectToAction("Logout", "Home");
+                TempData["msg1"] = "Invalid Remittance Id.";
+                return RedirectToAction("Home", "Admin");
             }
             rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
-            rBO.P_USERID = ContextGetValue(Constants.SessionKeyUserID);
+            rBO.P_USERID = CurrentUserId();
 
-            //## call the 'WebapiBaseUrlForSubmitReturn' API
             var apiResult = await SubmitReturn_UpdateScore(rBO);
+
             if (apiResult.IsSuccess)
             {
                 TempData["msg1"] = $"Score updated, Remittance: {rBO.p_REMITTANCE_ID}. Status: {apiResult.Message}";
@@ -387,6 +393,7 @@ namespace MCPhase3.Controllers
             {
                 TempData["MsgError"] = $"Failed to update WYPF database. Reason: {apiResult.Message}";
             }
+            
 
             return RedirectToAction("Home", "Admin");
         }
@@ -397,7 +404,7 @@ namespace MCPhase3.Controllers
         /// <returns>ApiCallResult View Model</returns>
         async Task<ApiCallResultVM> SubmitReturn_UpdateScore(ReturnSubmitBO rBO)
         {
-            string WebapiBaseUrlForSubmitReturn = GetApiUrl(_apiEndpoints.SubmitReturn);
+            string WebapiBaseUrlForSubmitReturn = GetApiUrl(_apiEndpoints.SubmitReturn);    //## api/SubmitReturn
             var apiResult = new ApiCallResultVM() { IsSuccess = false };
             try
             {
@@ -417,7 +424,7 @@ namespace MCPhase3.Controllers
                 {
 
                     RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-                    UserId = HttpContext.Session.GetString(Constants.UserIdKeyName),
+                    UserId = HttpContext.Session.GetString(Constants.LoggedInAsKeyName),
                     ApplicationId = Constants.EmployersPortal,
                     ErrorPath = ex.Source + ",  url: " + WebapiBaseUrlForSubmitReturn,
                     Message = ex.Message,
@@ -427,6 +434,13 @@ namespace MCPhase3.Controllers
 
                 string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
                 await ApiPost(insertErrorLogApi, errorDetails);
+                if (ex.Message.Contains("HttpClient.Timeout"))
+                {
+                    apiResult.Message = "Server timed out due to large volume of data. Please wait and refresh your page after a few minutes to see the latest score for this Remittance: " + rBO.p_REMITTANCE_ID;
+                }
+                else {
+                    apiResult.Message = "DB Server execution error!";
+                }
                 return apiResult;
             }
         }

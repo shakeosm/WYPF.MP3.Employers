@@ -44,6 +44,7 @@
     //$("#ValidateFileButton").click(function () {
     $("#UploadFileInput").change(function (e) {
 
+        $("#overlay").fadeIn(300);
         //## first clear any previous error
         $(".validation-message-div").removeClass("alert alert-danger"); //## there are 2 Error display divs.. so- clear both in one go..
         $(".validation-message-div").text("");
@@ -66,9 +67,12 @@
                     $("#FileValidationCheckResult").addClass("alert alert-danger");
                     $("#FileValidationCheckResult").html(response);
 
-                    $("#UploadFileButton").prop("disabled", true);  //## file is invalid, don't allow the user to Submit this page with invalid file..
+                    $("#UploadFileButton").addClass("disabled");    //## file is invalid, don't allow the user to Submit this page with invalid file..
+
                 } else {
-                    $("#UploadFileButton").prop("disabled", false); //## Valid file- OK to submit the page and procees to next step                    
+                    $("#UploadFileButton").removeClass("disabled"); //## Valid file- OK to submit the page and procees to next step                    
+                    
+                    $(".text-danger").hide();
                     $('#liveToast .toast-body').text("File contents are valid and ready to upload!");
                     $('#liveToast').toast('show');  //## show the user a Bootstrap Toast message about the success
                 }

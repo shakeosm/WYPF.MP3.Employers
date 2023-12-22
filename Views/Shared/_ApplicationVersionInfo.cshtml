@@ -5,11 +5,18 @@
 @{
     var _apiEndpoints = ApiEndpoints.Value;
     var _Environment = _apiEndpoints.Environment;
+    var _apiUrl = _apiEndpoints.WebApiBaseUrl;
 }
+
+@* This one is for TEST environment- to show the user this is a TEST site *@
 
 @if (_Environment.ToLower().Equals("live") == false)
 {    
     <div style="position:absolute; top:1em; right:1em;">
         <h3><span class="badge rounded-pill bg-danger">@_Environment</span></h3>
+    </div>
+
+    <div style="position:absolute;top: 85px;right:1em;">
+        <p class="text-danger form-text font-monospace">@_apiUrl</p>
     </div>
 }

@@ -23,7 +23,7 @@ namespace MCPhase3.CodeRepository
 
         public async Task InvokeAsync(HttpContext context)
         {            
-            string currentUserId = context.Session.GetString(Constants.UserIdKeyName);
+            string currentUserId = context.Session.GetString(Constants.LoggedInAsKeyName);
             string x = context.Session.GetString(Constants.SessionKeyUserID);
             
 

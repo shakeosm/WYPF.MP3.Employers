@@ -22,15 +22,15 @@
 </div>
 <div class="table-bordered">
     <p>
-        Select the rows below for which you wish to acknowledge this warning.   All rows may be chosen by clicking “Select All”.
-        If you are happy for WYPF to process these records chick “Acknowledge Warnings” below the table.
+        Select the rows below for which you wish to acknowledge this warning. All rows may be chosen by clicking “Acknowledge All”.
+        If you are happy for WYPF to process these records click on “Acknowledge All” button below the table.
         If other errors or warnings are present on a record, these will need to be cleared before the record may be posted.
         Individual records may be viewed by clicking view.
     </p>
 
     @*This is simply a form, will never get posted.. sends data via url... *@
     @*<form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">*@
-        <table id="WarningListTable" class="table table-bordered">
+        <table id="WarningListTable" class="table table-sm table-bordered">
             <thead class="thead-light">
                 <tr>
                     <th>Pay Location</th>
@@ -104,13 +104,10 @@
 
 
         <div class="row mt-2">
-            @*<div class="col-6">
-                <a id="BackToErrorsAndWarningsListButton" class="btn btn-secondary btn-lg" alt="Show ErrorsAndWarnings List Table">Back</a>
-            </div>*@
-            
+                        
             @if (showAcknowledgeAllButton)
             {
-                <a id="acknowledgeButton" href="~/ErrorWarning/AcknowledgeAll" class="btn btn-success btn-lg offset-3 col-6"> Acknowledge All</a>
+                <a id="acknowledgeButton" href="~/ErrorWarning/AcknowledgeAll" class="btn btn-success btn-lg click-and-wait-button offset-3 col-6"> Acknowledge All</a>
             }            
         </div>
         

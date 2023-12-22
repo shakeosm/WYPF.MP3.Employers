@@ -3,16 +3,16 @@
     public static class Constants
     {
         public const int EmployersPortal = 2;    //## API=1, Employers = 2; Admin = 3
-        public const string SessionKeyUserID = "_UserName";
+        public const string SessionKeyUserID = "_UserName"; //## used in the 'UserSessionCheckActionFilter' for Authentication
         //Paylocation and Employer both are same.
-        public const string SessionKeyPayLocName = "_PayLocName";
-        public const string SessionKeyPayLocId = "_Id";
+        public const string SessionKeyPayLocName = "_PayLocName";       //## used in "MCPhase3.CodeRepository.LoginCheck : ViewComponent"
+        //public const string SessionKeyPayLocId = "_Id";
         public const string SessionKeyPaylocFileID = "_PaylocFileID";
         public const string SessionKeyPassword = "_Password";
         public const string SessionKeyClientId = "_clientId";
         public const string SessionKeyClientType = "_clientType";
         public const string SessionKeyEmployerName = "_employerName";
-        public const string SessionKeyPayrollProvider = "_payrollProvider";
+        //public const string SessionKeyPayrollProvider = "_payrollProvider";
 
 
         public const string SessionKeyMonth = "_month";
@@ -27,7 +27,11 @@
         
         public const string SessionInfoKeyName = "SessionInfo";    //## for Redis use
         public const string SessionGuidKeyName = "SessionGUID";    //## for Redis cross check
-        public const string UserIdKeyName = "LoggedInAs";    
+        public const string LoggedInAsKeyName = "LoggedInAs";    
+        public const string BrowserId = "BrowserId";    
+        public const string WindowsId = "WindowsId";    
+
+
         public const string ErrorWarningSummaryKeyName = "ErrorAndWarningSummaryVM";    
         public const string BulkApprovalAlertIdList = "BulkApprovalRecordIdList";    
         
@@ -47,10 +51,12 @@
         public const string StatusType_WYPF = "WYPF";
 
         public static string MemberMatchingList = "MemberMatchingList";
+        public static string UserPayLocationInfo = "UserPayLocationInfo";
+        public static string AppUserDetails = "AppUserDetails";
 
         public static string RedisKeyList()
         {
-            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{UserIdKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey}";
+            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoggedInAsKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails}";
         }
 
         public enum PostingType

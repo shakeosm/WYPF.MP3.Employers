@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Data;
 
 namespace MCPhase3.Models
-    {
+{
     /// <summary>
     /// All the common properties that I use inside MC3 are 
     /// held here in following class.
-    /// 
+    /// ## Update: Currently used only in Fire template...; Shawkat; 12/06/2023
     /// </summary>
     public class MyModel
     {

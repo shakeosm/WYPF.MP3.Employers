@@ -3,7 +3,7 @@
     /// <summary>This will hold information regarding a user session.</summary>
     public class UserSessionInfoVM
     {
-        public string UserName { get; set; }
+        public string UserId { get; set; }
         public string Password { get; set; }
         public string BrowserId { get; set; }
         public string WindowsId { get; set; }

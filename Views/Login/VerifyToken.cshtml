@@ -1,0 +1,50 @@
+﻿@model MCPhase3.Models.TokenDataVerifyVM
+@{
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+}
+
+<div class="col-4 offset-4">
+    <div class="pt-5 text-center" >
+        <img src="~/img/Artboard4.png" alt="login img" style="width:250px; height:150px;" />
+    </div>
+
+    <div id="TokenVerificationDiv" class="card shadow p-3">
+        <div class="alert alert-primary h4 border mb-3 text-center">Two Factor Authentication</div>
+
+        <form id="TokenVerificationForm" asp-action="VerifyToken" asp-controller="Login" method="post">
+            <div class="text-muted my-2">
+                A 6-digit verification code has been sent to your email: <span class="font-weight-bold text-primary"> @Model.Email</span>. 
+                Please enter that code to verify your account and proceed to MP3 Portal.
+            </div>
+            <div class="my-3">
+                <label for="SessionToken" class="form-label">Verification code</label>
+                <input class="form-control" asp-for="SessionToken" type="text" placeholder="123456" required/>
+            </div>
+
+            @if (string.IsNullOrEmpty(Model.VerificationMessage) == false)
+            {
+                <div id="ErrorMessage" class="alert alert-danger">
+                    @Model.VerificationMessage
+                </div>               
+            
+            }
+            <div class="button-container">
+                <input id="LoginId" type="hidden" asp-for="UserId" />                
+                <button value="Submit" type="submit" class="btn btn-success col-12">Verify now</button>                
+            </div>
+
+        </form>
+        <hr />
+        <span class="text-secondary" style="font-size:85%;">
+            This code will expire in next 2 minutes. Expiry time: @DateTime.Now.AddMinutes(2).ToLongTimeString() </span>
+        <div class="mt-3 text-center">
+            <a href="" class="link-secondary" alt="request a new verification code">Request a new verification code.</a>
+        </div>
+    </div>
+</div>
+
+
+<footer class="footer text-center mt-5">
+    All Rights Reserved.<br/>
+    Copyright (2019 - @DateTime.Today.Year) - <a style="color: green;font:bold" href="https://www.wypf.org.uk/">WYPF</a>
+</footer>

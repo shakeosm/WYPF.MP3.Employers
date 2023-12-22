@@ -4,8 +4,8 @@ namespace MCPhase3.Models
 {
     public class LoginViewModel
     {
-        [Required(ErrorMessage = "Username is required")]
-        public string UserName { get; set; }
+        [Required(ErrorMessage = "User Id is required")]
+        public string UserId { get; set; }
 
         //[RegularExpression(@"/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{9,}$/", ErrorMessage = "Password doesn't match the criteria")]
         //[DataType(DataType.Password)]

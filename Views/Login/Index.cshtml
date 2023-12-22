@@ -7,57 +7,54 @@
 }
 
 <div class="">
-    <div class="">
-        <div class="wrap-login100">
-            @{
-                if (string.IsNullOrEmpty(Model.LoginErrorMessage) == false){
-                    <div class="col-12 alert alert-danger">
-                        @Model.LoginErrorMessage
-                    </div>                    
-                }
+    <div class="wrap-login100">
+        @{
+            if (string.IsNullOrEmpty(Model.LoginErrorMessage) == false){
+                <div class="col-12 alert alert-danger">
+                    @Model.LoginErrorMessage
+                </div>                    
             }
+        }
 
-            <div class="login100-pic pt-5">
-                @*<img src="https://colorlib.com/etc/lf/Login_v1/images/img-01.png" alt="IMG">*@
-                <img src="~/img/Artboard4.png" alt="login img" />
-                <div class="text-center p-t-136">
-                    <p style="color: #2FA22F; font-weight: 900 ">
-                        Please contact 01274 434900 if you have problems logging in.
-                    </p>
-                </div>
+        <div class="login100-pic pt-5">
+            @*<img src="https://colorlib.com/etc/lf/Login_v1/images/img-01.png" alt="IMG">*@
+            <img src="~/img/Artboard4.png" alt="login img" />
+            <div class="text-center p-t-136">
+                <p style="color: #2FA22F; font-weight: 900 ">
+                    Please contact 01274 434900 if you have problems logging in.
+                </p>
+            </div>
+        </div>
+
+        @*<form class="login100-form validate-form" method="post">*@
+        <form asp-action="Index" asp-controller="Login" method="post">
+            <span class="login100-form-title" style="color: #2FA22F; font-weight: 900">
+                WYPF Monthly Posting Login
+            </span>
+
+            <div class="wrap-input100 validate-input" data-validate="Valid Username is required">
+                <input class="input100" asp-for="UserId" placeholder="Username *" required />
+                <span class="focus-input100"></span>
+                <span class="symbol-input100">
+                    <i class="fa fa-envelope" aria-hidden="true"></i>
+                </span>
             </div>
 
-            @*<form class="login100-form validate-form" method="post">*@
-            <form asp-action="Index" asp-controller="Login" method="post">
-                <span class="login100-form-title" style="color: #2FA22F; font-weight: 900">
-                    WYPF Monthly Posting Login
+            <div class="wrap-input100 validate-input" data-validate="Password is required">
+                <input class="input100" asp-for="Password" type="password" placeholder="Password *" required />
+                <span class="focus-input100"></span>
+                <span class="symbol-input100">
+                    <i class="fa fa-lock" aria-hidden="true"></i>
                 </span>
 
-                <div class="wrap-input100 validate-input" data-validate="Valid Username is required">
-                    <input class="input100" asp-for="UserName" placeholder="Username *" required />
-                    <span class="focus-input100"></span>
-                    <span class="symbol-input100">
-                        <i class="fa fa-envelope" aria-hidden="true"></i>
-                    </span>
-                </div>
+            </div>
 
-                <div class="wrap-input100 validate-input" data-validate="Password is required">
-                    <input class="input100" asp-for="Password" type="password" placeholder="Password *" required />
-                    <span class="focus-input100"></span>
-                    <span class="symbol-input100">
-                        <i class="fa fa-lock" aria-hidden="true"></i>
-                    </span>
+            <input id="BrowserIdInput" type="hidden" asp-for="BrowserId"/>
+            <input id="WindowsIdInput" type="hidden" asp-for="WindowsId"/>
 
-                </div>
-
-                <input id="BrowserIdInput" type="hidden" asp-for="BrowserId"/>
-                <input id="WindowsIdInput" type="hidden" asp-for="WindowsId"/>
-
-                <div class="container-login100-form-btn">
-                    <button value="Submit" type="submit" class="login100-form-btn">Login</button>
-                </div>
-            </form>
-        </div>
+            <div class="container-login100-form-btn">
+                <button value="Submit" type="submit" class="login100-form-btn">Login</button>
+            </div>
+        </form>
     </div>
 </div>
-

@@ -1,5 +1,17 @@
 ﻿$(function () {
 
+
+    $('.click-and-wait-button').on("click", function () {
+
+        $(this).addClass("disabled");
+        $(this).html("<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span><span class='mr-2'>&nbsp;Processing...</span>")
+
+
+        setTimeout(() => {
+            console.log("Delayed for half second.");
+        }, "5000");
+    });
+
     $(document).ajaxSend(function () {
         $("#overlay").fadeIn(300);
     });    

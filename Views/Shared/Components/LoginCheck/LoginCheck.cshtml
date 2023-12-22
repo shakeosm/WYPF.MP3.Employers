@@ -1,12 +1,11 @@
 ﻿@model MCPhase3.Models.LoginViewModel
 
-@if (!string.IsNullOrEmpty(Model.UserName))
+@if (!string.IsNullOrEmpty(Model.UserId))
 {
     <a class="nav-item nav-link">Payroll provider: <b>@Model.EmployerName</b></a>   
     <a class="nav-item nav-link">
 
-        You are logged in as:
-        <b>@Model.UserName</b>
+        You are logged in as: <b>@Model.UserId</b>
     </a>
 }
 else
@@ -34,7 +33,7 @@ else
     <ul class="dropdown-menu dropdown-menu-end user-dd animated"
         aria-labelledby="navbarDropdown">
         <a class="dropdown-item" asp-controller="Admin" asp-action="UpdatePassword"><i class="mdi mdi-account me-1 ms-1"></i> My Profile</a> 
-        <div class="dropdown-divider"></div>
+        <span class="dropdown-divider"></span>
         <a class="dropdown-item" asp-controller="Login" asp-action="Logout"><i class="fa fa-power-off me-1 ms-1"></i> Logout</a>        
     </ul>
 </li>

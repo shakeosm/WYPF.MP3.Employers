@@ -143,8 +143,7 @@ namespace MCPhase3.Controllers
             string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
             if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
             {
-                alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
-                //recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
                 recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
             }
@@ -190,26 +189,7 @@ namespace MCPhase3.Controllers
         /// <param name="alertType"></param>
         /// <returns></returns>
         public async Task<IActionResult> AlertListByAjax(string remittanceID, string alertType)
-        {
-            //string errorWarningSummaryKeyName = $"{CurrentUserId()}_{Constants.ErrorWarningSummaryKeyName}";
-            //following functionality is added to keep user on same warning and error page until all sorted.
-            //## if we come back here from Acknowledgement page- then the ViewModel 'summaryVM' is empty- so need to read from the Cache.. save life..
-
-            //if (summaryVM.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
-            //{
-            //    //## if Alert.count is NULL then its an Empty, but not null// (pain in the back)
-            //    summaryVM = _cache.Get<ErrorAndWarningViewModelWithRecords>(errorWarningSummaryKeyName);
-
-            //    if (summaryVM is null)
-            //    {
-            //        return RedirectToAction("Index", "Admin");  //## should not happen
-            //    }
-            //}
-            //else
-            //{
-            //    _cache.Set(errorWarningSummaryKeyName, summaryVM);
-            //}
-
+        {            
             var recordsList = new List<ErrorAndWarningViewModelWithRecords>();
             string userName = CurrentUserId();
 
@@ -223,14 +203,12 @@ namespace MCPhase3.Controllers
             string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
             if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
             {
-                alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));
-                //recordsList = await apiClient.GetErrorAndWarningSummary(alertSumBO, apiBaseUrlForErrorAndWarnings);
+                alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
                 recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
             }
             else
             {
-                //summaryVM.L_PAYLOC_FILE_ID = 0;
 
                 var errorAndWarningTo = new ErrorAndWarningToShowListViewModel()
                 {
@@ -291,7 +269,7 @@ namespace MCPhase3.Controllers
             paramList = JsonConvert.DeserializeObject<ApproveWarningsInBulkVM>(apiresult);  //## we get the ApiCall result in the same object and see what status we have got in return
 
             //## All done.. now send the user back to the 'Index' with success status
-            TempData["msg"] = "All warnings are successfully Acknowledged.";
+            TempData["msg"] = $"All warnings ({bulkApprovalRecordIdList.Count}) are successfully Acknowledged.";
             return RedirectToAction("Index", "ErrorWarning");
         }
 
@@ -512,7 +490,7 @@ namespace MCPhase3.Controllers
             QueryParamVM memberRecordQuery = new QueryParamVM
             {
                 L_DATAROWID_RECD = dataRowID,
-                L_USERID = HttpContext.Session.GetString(Constants.SessionKeyUserID)
+                L_USERID = CurrentUserId()
             };
             
 
@@ -524,7 +502,7 @@ namespace MCPhase3.Controllers
             //To cal all values/data of member record. that is already in UPM.
             MatchingRecordQueryVM getMatchesBO = new ()
             {
-                userId = HttpContext.Session.GetString(Constants.SessionKeyUserID),
+                userId = CurrentUserId(),
                 dataRowId = dataRowID
             };
 
