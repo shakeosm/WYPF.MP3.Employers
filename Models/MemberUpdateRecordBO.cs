@@ -22,6 +22,8 @@ namespace MCPhase3.Models
 
     public class MemberUpdateRecordBO
     {
+        /// <summary>To be displayed in the View page- on top</summary>
+        public string AlertDescription { get; set; }
         public string DataRowEncryptedId { get; set; }
         public double dataRowID { get; set; }
         public string checkedAfterMatch { get; set; }

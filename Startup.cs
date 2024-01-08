@@ -1,5 +1,6 @@
 using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.ActionFilters;
+using MCPhase3.CodeRepository.InsertDataProcess;
 using MCPhase3.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -55,6 +56,10 @@ namespace MCPhase3
             });
 
             services.Configure<ApiEndpoints>(Configuration.GetSection("ApiEndpoints"));
+
+            services.AddTransient<ICommonRepo, CommonRepo>();
+            services.AddTransient<IValidateExcelFile, ValidateExcelFile>();
+            services.AddTransient<IInsertDataTable, InsertDataTable>();
 
             // Add Redis services to the container.
             services.AddSingleton<IRedisCache, RedisCache>();

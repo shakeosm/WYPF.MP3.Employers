@@ -101,7 +101,7 @@
                 <div class="row"><h4 class="col-md-10">Miscellaneous</h4><input asp-for="@Model.Miscellaneous_Rec" onkeypress="return validate(event)" id="Miscellaneous" placeholder="£0" class="col-md-2"></div>
                 @*<div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2" id="MemberContribAPCLblValue">£ @Model.MemberContribAPCSS</h4></div><hr />*@
 
-                <div class="row"><h4 class="col-md-10"><b>Total additional payments</b></h4><label class="col-md-2" id="DedifitTotalLblValue">£ @Model.DedifitTotalLblValue().ToString("N")</label></div><br>
+                <div class="row"><h4 class="col-md-10"><b>Total additional payments</b></h4><label class="col-md-2" id="DecifitTotalLblValue">£ @Model.DeficitTotalLblValue().ToString("N")</label></div><br>
 
             </div>
         </div>
@@ -139,7 +139,7 @@
                     </div>
 
                     <div class="col-3 float-right">
-                        <input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value="@DateTime.Today.ToString("yyyy-MM-dd")" placeholder="dd-MM-yyyy" 
+                        <input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" placeholder="dd-MM-yyyy" 
                                 type="date" asp-format="{0:dd-MM-yyyy}" class="mx-3 form-control float-end text-right" required 
                                 oninvalid="this.setCustomValidity('* Paid by date is required.')" 
                                 oninput="setCustomValidity('')" />
@@ -147,117 +147,16 @@
                     </div>
 
                 </div>
-          @*      <div class="radio">
-                    <label class="col-md-10">
-                        <input asp-for=@Model.PaidDirectlyWYPF value="Paid directly into WYPF's' bank account." type="radio" checked />Paid directly into relevant bank account</label>
-                        <input asp-for="@Model.PaidByChequeDate" id="ChequeDateTBox" value=@DateTime.Now placeholder="dd-MM-yyyy" type="date" asp-format="{0:dd-MM-yyyy}" class="col-md-2" required oninvalid="this.setCustomValidity('* Paid by date is required.')" oninput="setCustomValidity('')" class="col-md-2" />
-                </div>
-
-                <div class="radio">
-                    <label class="col-md-10">
-                        <input asp-for=@Model.PaidDirectlyWYPF value="Sent by cheque" type="radio" />Sent by cheque</label>
-                </div><br><br><hr />*@
-
                 <div class="alert alert-success" role="alert">
                     <h3>If you have verified steps 1 - 6 please click following button to Move to the next stage.</h3>
-                    <input type="submit" value="Next" class="btn btn-primary btn-block click-and-wait-button" />
+                    <input type="submit" id="SubmitNextButton" value="Next" class="btn btn-primary btn-block" />
                 </div>
             </div>
         </div>
-    </form>
-   
-    @*<div class="spinner">
-            <div class="center-div">
-                <div class="inner-div">
-                    <div class="loader"></div>
-                </div>
-            </div>
-        </div>*@
+    </form>   
 </div>
 
 
-
-
 @section Scripts {
-  @*  <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>*@
-    }
-
-@*<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.5.1/jquery.js">
-
-</script>*@
-
-<script>
-
-    function validate(key) {
-        //getting key code of pressed key
-        var a1, a2, a3, a4, total, gtotal, pp;
-        var keycode = (key.which) ? key.which : key.keyCode;
-        var phn = document.getElementById('Deficit');
-        var phn1 = document.getElementById('YearEndBalance');
-        var phn2 = document.getElementById('FundedBenefits');
-        var phn3 = document.getElementById('Miscellaneous');
-
-        //comparing pressed keycodes
-        if (keycode == 45 && (phn.value == "" || phn1.value == "" || phn2.value == "" || phn3.value == "")) {
-
-            return true;
-        }
-        if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
-
-            return false;
-        }
-    }
-
-
-    $(function () {
-
-        var textBox1 = $('#Deficit').keyup(foo);
-        var textBox2 = $('#YearEndBalance').keyup(foo);
-        var textBox3 = $('#FundedBenefits').keyup(foo);
-        var textBox4 = $('#Miscellaneous').keyup(foo);
-        var gtotal = $('#GrandTotalValue').text();
-
-        //var employersEmployeeTotalValue = $('#EmployersEmployeeTotalValue').val();
-
-        var employersEmployeeTotalValue = document.getElementById("EmployersEmployeeTotalValue").innerText;
-        var empVal = employersEmployeeTotalValue.replace('£', '');
-        //var employersEmployeeTotalValue_int = parseInt(empVal, 10);
-        var gt = gtotal.replace('£', '');
-
-
-        function foo() {
-            var value1 = textBox1.val();
-            var value2 = textBox2.val();
-            var value3 = textBox3.val();
-            var value4 = textBox4.val();
-            var sum = add(value1, value2, value3, value4);
-            var sum = sum.toFixed(2);
-
-            //$('input:label[id$=DedifitTotalLblValue]').val(sum);
-            $('#DedifitTotalLblValue').text('£' + sum);
-            //var myTotal = parseFloat(empVal) + parseFloat(sum) + parseFloat(gt);
-            var myTotal = parseFloat(empVal) + parseFloat(sum);
-            myTotal = myTotal.toFixed(2);
-            $('#GrandTotalValue').text('£' + myTotal);
-        }
-
-        function add() {
-            var sum = 0;
-            for (var i = 0, j = arguments.length; i < j; i++) {
-
-                if (IsNumeric(arguments[i])) {
-
-                    sum += parseFloat(arguments[i]);
-                }
-            }
-            return sum;
-        }
-
-        function IsNumeric(input) {
-
-            return (input - 0) == input && input.length > 0;
-
-        }
-    });
-</script>
+    <script src="~/js/home-check-totals.js"></script>
+}

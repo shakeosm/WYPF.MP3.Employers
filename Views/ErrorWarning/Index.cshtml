@@ -5,6 +5,8 @@
     int countErrors = 0;
     int rowCounter = 1;
     string totalValueCss = "text-warning";
+
+    bool hasRecords = Model.ErrorsAndWarningsList is not null && Model.ErrorsAndWarningsList.Any();
 }
 
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -40,8 +42,20 @@
                 </div>
             }
 
-            <h3 style="color:black;">Errors and Warnings Summary.</h3>
-            <p style="font-size:small;">Shows all data alerts and their count. User may returns or shows list of all records with specific alert.</p><br />
+            <div class="row">
+                <div class="col-10">
+                    <h3 style="color:black;">Errors and Warnings Summary.</h3>
+                    @*<p style="font-size:small;">Shows all data alerts and their count. User may return or shows list of all records with specific alert.</p><br />*@
+                </div>
+                <div class="col-2 text-right">
+                    @if (hasRecords){
+                        <a class="btn btn-lg col-12 btn-outline-primary click-and-wait-button" onclick="location.reload();">
+                            <i class="fas fa-sync mr-2"></i>&nbsp;Refresh
+                        </a>
+                    }
+                </div>
+            </div>
+            
             <div class="table table-bordered">
                 <h4>Payroll provider: <b>@Model.EmployerName</b> </h4>
 
@@ -55,7 +69,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model.ErrorsAndWarningsList is null || Model.ErrorsAndWarningsList.Count < 1)
+                        @if (!hasRecords)
                         {
                             <tr class="bg-success h5">
                                 <td colspan="4">
@@ -123,7 +137,7 @@
                 <p>Click the following button to finish the process.</p>*@
                     <h2>No record found!</h2>
                     <p>Click the following button to return to Dashboard.</p>
-                    <a href="/Admin/Home/" class="btn btn-primary" value="Finish"> Dashboard</a>
+                    <a href="/Admin/Home/" class="btn btn-primary" alt="Back to Dashboard"> Dashboard</a>
                 </div>
             </div>
         </div>
@@ -135,9 +149,9 @@
 
 <div id="AlertListModal" class="modal" tabindex="-1">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content">
+        <div class="modal-content" style="min-width:950px;">
             <div class="modal-header">
-                <h5 class="modal-title">Error warning List</h5>
+                <h5 class="modal-title">Error / warning List</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div id="AlertListModalContentsArea" class="modal-body">
@@ -150,12 +164,8 @@
     </div>
 </div>
 
-<script>
-    document.getElementById('passToWYPF').style.display = 'block';
-</script>
-
-
 @section scripts{
     <script src="~/js/error-warning.js"></script>
     <script src="~/js/warning-list-bulk-approval.js"></script>
+    <script src="~/js/site.js"></script>
 }

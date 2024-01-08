@@ -9,29 +9,14 @@
     string allAlertRefs = string.Join(",", errorList);
     bool showSwitchViewButton = (allAlertRefs.Contains("NEW_FLDR_AT_EMP") || allAlertRefs.Contains("NEW_PER_AND_FLDR")) == false; /* ### TL172: GDPR ISSUE (Switch View Button - To be disabled on Employer Portal for these two) */
     string disableSwitchViewBtn = showSwitchViewButton ? "btn-info" : "btn-outline-secondary disabled";
-
 }
-<div class="border shadow-lg p-4 mb-4 bg-white">
-    <div class="container-fluid bg-3 text-center">
-        <div class="container">
 
-            <div class="row alert alert-primary">
-                <div class="col-8">
-                    <h3>Error and Warnings</h3>
-                    <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
-                </div>
-                <div class="col-4">
-                    <a href="~/ErrorWarning/MemberFolderMatching?id=@Model.DataRowEncryptedId" class="btn @disableSwitchViewBtn float-end"
-                        data-bs-toggle="tooltip" data-bs-placement="top" title="Switch between- Matching/Editing views">
-                        <i class="mdi mdi-loop me-1 ms-1"></i>
-                        Switch view
-                    </a>                                            
-                </div>
-            </div>
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container">
 
             <div class="row justify-content-center">
-                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
-                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+                <div class="col-12 text-center p-0 my-2">
+                    <div class="card p-0">
 
                         <!-- progressbar -->
                         <ul id="progressbar">
@@ -46,20 +31,32 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <br>
 
+        <br />
+            <div id="PageHeaderDiv" class="row alert alert-primary">
+                <div class="col-8">
+                    <h3>Error and Warnings</h3>
+                    <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
+                </div>
+                <div class="col-4">
+                    <a href="~/ErrorWarning/MemberFolderMatching?id=@Model.DataRowEncryptedId" class="btn @disableSwitchViewBtn float-end"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Switch between- Matching/Editing views">
+                        <i class="mdi mdi-loop me-1 ms-1"></i>
+                        Switch view
+                    </a>
+                </div>
+            </div>
+
+            
+        </div>
+    
     <div class="container">
         <div class="jumbotron">
-            <h3>Error and Warnings</h3>
-            <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
-            <div class=table-bordered>
-                <h4> Errors and Warnings Processing for payroll provider: <b>@ViewBag.empName </b></h4>
-                @*<p style="font-size:small;">Amend data above to correct any errors displayed below.</p>*@
-                <p style="font-size:small;">
-                    Once complete, click submit button.
-                </p>
+            
+            <p style="font-size:small;">Amend data in the form below to clear error/warning requirements.</p>
+            <p style="font-size:small;">Error/ warning message displays where the problem is with the associated data box highlighted in red. Please amend if necessary and press Submit.  If the original data entry is correct press Acknowledge next to the Warning</p>
+            <div class="table-bordered mt-3">
+                <h4>Payroll provider: <b>@ViewBag.empName </b></h4>
             </div>
 
 

@@ -4,9 +4,14 @@ using System.Data;
 
 namespace MCPhase3.CodeRepository
 {
-    public class CheckSpreadsheetValuesSample
+    public class ValidateExcelFile : IValidateExcelFile
     {
-        CommonRepo repo = new CommonRepo();
+        private readonly ICommonRepo _commonRepo;
+        
+        public ValidateExcelFile(ICommonRepo CommonRepo)
+        {
+            _commonRepo = CommonRepo;
+        }
 
         /// <summary>This is the actual Field/Data validation on the Excel file- which is now in a DataSet.
         /// This will generate respective error message based on the defined validation rules on each field.</summary>
@@ -19,7 +24,7 @@ namespace MCPhase3.CodeRepository
         /// <param name="invalidSigns"></param>
         /// <param name="CheckSpreadSheetErrorMsg"></param>
         /// <returns></returns>
-        public string CheckSpreadsheetValues(DataTable dt,string month,string posting, string validPayrollYr, List<PayrollProvidersBO> validPayLocations,string[] validTitles,string[] invalidSigns, ref string CheckSpreadSheetErrorMsg)
+        public string ValidateValues(DataTable dt,string month,string posting, string validPayrollYr, List<PayrollProvidersBO> validPayLocations,string[] validTitles,string[] invalidSigns, ref string CheckSpreadSheetErrorMsg)
         {
             //bool result = true;
             string result = string.Empty;
@@ -320,7 +325,7 @@ namespace MCPhase3.CodeRepository
             CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckPayrollPeriod(ref dt, month, posting, ref payrollPeriodErrorMsg);
             CheckPayrollPeriodStatus = CodeRepository.SpreadSheetChecks.CheckSpeechMark(dt, invalidSigns, ref speechMarkErrorMsg);
             CheckPayrollYearStatus = CodeRepository.SpreadSheetChecks.CheckPayrollYear(ref dt,posting, validPayrollYr, ref payrollYearErrorMsg);
-            CheckEmployerLocCodeStatus = repo.CheckEmployerLocCode(dt, ref employerLocCodeErrorMsg);
+            CheckEmployerLocCodeStatus = _commonRepo.CheckEmployerLocCode(dt, ref employerLocCodeErrorMsg);
             
             CheckEmployerName = CodeRepository.SpreadSheetChecks.CheckTitle(ref dt,validTitles, ref employerNameErrorMsg);
             CheckMemberTitleStatus = CodeRepository.SpreadSheetChecks.CheckEmployerName(ref dt, ref memberTitleErrorMsg);
@@ -469,5 +474,12 @@ namespace MCPhase3.CodeRepository
 
         }
 
+    }
+
+    public interface IValidateExcelFile
+    {
+        string ValidateValues(DataTable dt, string month, string posting, string validPayrollYr, List<PayrollProvidersBO> validPayLocations, string[] validTitles, string[] invalidSigns, ref string CheckSpreadSheetErrorMsg);
+
+        string CheckSpreadsheetValuesFire(DataTable dt, string month, string posting, string validPayrollYr, string[] validTitles, string[] invalidSigns, ref string CheckSpreadSheetErrorMsg);
     }
 }

@@ -19,6 +19,11 @@
     <EmbeddedResource Remove="CodeRepository\RefectorUpdateRecord\**" />
     <None Remove="CodeRepository\RefectorUpdateRecord\**" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Models\AppUserInfoVM.cs" />
+    <Compile Remove="Models\NameOfMonths.cs" />
+    <Compile Remove="Models\YearsBO.cs" />
+  </ItemGroup>
   
 
   <ItemGroup>

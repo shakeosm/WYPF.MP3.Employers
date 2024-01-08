@@ -5,15 +5,19 @@
     $("#PayLocationList").removeAttr("multiple");
     $(".text-danger").hide();  //## hides all validation tags no page load
 
-    //$("#UploadFileInput").change(function (e) {
-    //    const filess = e.target.files;
-    //    $("#UploadFileButton").prop('disabled', filess.length < 1);
-    //});
+           
+    var previousSelectedPostType = $("#PreviousSelectedPostType").val();
+    if (previousSelectedPostType !== '') {
+        $("input[name=SelectedPostType][value=" + previousSelectedPostType + "]").attr('checked', 'checked');
 
-        
-    
+        //## scroll the page to the bottom area.. if there is a success message- user can quickly click on the "next" button, or can see the list of Errors without scrolling..
+        $('html, body').animate({
+            scrollTop: $("#UploadFileInput").offset().top
+        }, 500);
+    }
 
     $("#UploadFileButton").click(function () {
+
         var isFormValid = true;
         $(".text-danger").hide();  //## hides all before applying validation.. and show them as required...
 
@@ -37,6 +41,7 @@
             isFormValid = false;
         }
 
+        ShowOverlaySpinner();
         return isFormValid;
     });
 
@@ -73,7 +78,7 @@
                     $("#UploadFileButton").removeClass("disabled"); //## Valid file- OK to submit the page and procees to next step                    
                     
                     $(".text-danger").hide();
-                    $('#liveToast .toast-body').text("File contents are valid and ready to upload!");
+                    $('#liveToast .toast-body').text("File check is complete and ready to upload now!");
                     $('#liveToast').toast('show');  //## show the user a Bootstrap Toast message about the success
                 }
 

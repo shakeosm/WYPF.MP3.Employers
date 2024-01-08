@@ -175,5 +175,12 @@ namespace MCPhase3.Controllers
 
             return appUser;
         }
+
+        public void LogInfo(string message)
+        {
+            #if DEBUG
+                Console.WriteLine($"{DateTime.Now.ToLongTimeString()}> {CurrentUserId()} > {message}");
+            #endif
+        }
     }
 }

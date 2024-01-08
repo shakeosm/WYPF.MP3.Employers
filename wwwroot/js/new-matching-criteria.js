@@ -27,6 +27,13 @@ $(document).ready(function () {
         //## Now apply the CSS to the selected row...
         $(this).parents('tr').addClass("table-primary");
     });
+
+    if ($("#MemberFolderMatchingForm").length) {
+        //## scroll the page directly to the Form.. so the user can see from 'Contributions Data Received' area
+        $('html, body').animate({
+            scrollTop: $("#PageHeaderDiv").offset().top
+        }, 500);
+    }
 });
 
 function myFunction() {

@@ -9,14 +9,15 @@
         public string AlertDetailsPLNextSteps { get; set; }
         public string ErrorAndWarnings { get; set; }
         public string TotalRecordsInserted { get; set; }
+        public string InsertRemitanceDetails { get; set; }
         public string AutoMatch { get; set; }
 
         public string ErrorAndWarningsApproval { get; set; }
         public string ApproveWarningsBulkList { get; set; }
-        public string UpdateRecordGetValues { get; set; }
+        public string GetAlertDetailsInfo { get; set; }
         public string UpdateRecord { get; set; }
         public string EmployerName { get; set; }
-        public string UpdateRecordGetErrorWarningList { get; set; }
+        public string GetErrorWarningList { get; set; }
         public string GetRemittanceId { get; set; }
         public string GetRemittanceInfo { get; set; }
         public string GetEventDetails { get; set; }

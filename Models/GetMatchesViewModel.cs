@@ -5,6 +5,7 @@ namespace MCPhase3.Models
     public class GetMatchesViewModel
     {
         public string EmployersName { get; set; }
+        public string CurrentAlertDescription { get; set; }
         public string Note { get; set; }
         public string ActiveProcess { get; set; }
         public string DataRowEncryptedId { get; set; }

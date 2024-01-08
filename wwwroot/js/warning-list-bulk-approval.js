@@ -4,7 +4,7 @@
         stateSave: true
     });
 
-    $(".reset-record-button").click(function () {
+    $(document).on('click', '.reset-record-button', function () {
 
         Swal.fire({
             title: 'Are you sure?',

@@ -1,9 +1,11 @@
 ﻿$(function () {
+    document.getElementById('passToWYPF').style.display = 'block';
 
     //## if it has 11+ Rows.. (1 TH + 10 TR)
     if ($("#ErrorsAndWarningsListTable tr").length > 11) {
         $('#ErrorsAndWarningsListTable').DataTable({
             stateSave: true,
+            "ordering": false
         });
     }
 

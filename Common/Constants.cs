@@ -53,10 +53,15 @@
         public static string MemberMatchingList = "MemberMatchingList";
         public static string UserPayLocationInfo = "UserPayLocationInfo";
         public static string AppUserDetails = "AppUserDetails";
+        
+        public static string ExcelDataAsString = "ExcelDataAsString";
+        public static string CurrentAlertDescription = "CurrentAlertDescription";
+        public static string Excel_DataTableToInsert = "Excel_DataTableToInsert";        
+        //public static string Excel_XML_ConfigPath = "Excel_XML_ConfigPath";
 
         public static string RedisKeyList()
         {
-            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoggedInAsKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails}";
+            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoggedInAsKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{Excel_DataTableToInsert},{Excel_DataTableToInsert}";
         }
 
         public enum PostingType

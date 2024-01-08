@@ -200,7 +200,7 @@ namespace MCPhase3.Controllers
             };
 
             //show error and worning on Remittance or paylocation level.
-            string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
+            string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);    //## api/AlertDetailsForPayLocNextStep
             if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
             {
                 alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
@@ -210,14 +210,14 @@ namespace MCPhase3.Controllers
             else
             {
 
-                var errorAndWarningTo = new ErrorAndWarningToShowListViewModel()
+                var alertListQueryParams = new ErrorAndWarningToShowListViewModel()
                 {
                     remittanceID = Convert.ToDouble(DecryptUrlValue(remittanceID)),
                     L_USERID = userName,
                     alertType = alertType,
                 };
 
-                var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
+                var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertListQueryParams);
                 recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
             }
 
@@ -230,8 +230,10 @@ namespace MCPhase3.Controllers
             //## Lets keep the list of all Warnings in the Cache.. in case the user wants to do AcknowledgeAll operation- we can retrive the Un-encrypted list and do AckAll operation            
             List<string> BulkApprovalRecordIdList = recordsList.Where(b => b.CLEARED_FG == "N").Select(r => r.EncryptedAlertid).ToList();
             _cache.Set($"{Constants.BulkApprovalAlertIdList}_{CurrentUserId()}", BulkApprovalRecordIdList);
-                        
+
             //ViewBag.status = summaryVM.ALERT_DESC + "";
+            //## Set the 'CurrentAlertDescription' in the Session- so that we can show it later in the Child pages, ie: 'ErrorWarning/MemberFolderMatching'
+            ContextSetValue(Constants.CurrentAlertDescription, $"{recordsList.First().ALERT_CLASS};{recordsList.First().ALERT_DESC}");
 
             return PartialView("_ErrorWarningList", recordsList);
         }
@@ -391,11 +393,10 @@ namespace MCPhase3.Controllers
                 //show employer name
                 ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 string userName = CurrentUserId();
-                MemberUpdateRecordBO memberUpdateRecordBO = new();
+                
+                string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.GetAlertDetailsInfo);  //## api/GetIndvidualRecords
 
-                string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.UpdateRecordGetValues);
-
-                string apiBaseUrlForErrorAndWarningsList = GetApiUrl(_apiEndpoints.UpdateRecordGetErrorWarningList);
+                string apiBaseUrlForErrorAndWarningsList = GetApiUrl(_apiEndpoints.GetErrorWarningList);    //## api/UpdateIndvidualRecordErrorWarningList
                 string apiResponse = String.Empty;
 
                 QueryParamVM helpTextBO = new QueryParamVM();
@@ -414,12 +415,17 @@ namespace MCPhase3.Controllers
                 string result = string.Empty;
 
                 apiResponse = await ApiPost(apiBaseUrlForErrorAndWarningsApproval, helpTextBO);
+
+                MemberUpdateRecordBO memberUpdateRecordBO = new();
                 memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
 
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 memberUpdateRecordBO.ErrorAndWarningList = recordsList;
 
                 memberUpdateRecordBO.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
+
+                memberUpdateRecordBO.AlertDescription = ContextGetValue(Constants.CurrentAlertDescription);
+
                 return View(memberUpdateRecordBO);
             }
             catch (Exception ex)
@@ -480,12 +486,13 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <returns></returns>
         public async Task<IActionResult> MemberFolderMatching(string id)
-        {
-            GetMatchesViewModel matchingPageWrapperVM = new GetMatchesViewModel();
-            
+        {            
             int.TryParse(DecryptUrlValue(id), out int dataRowID);
-            
-            matchingPageWrapperVM.EmployersName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
+
+            GetMatchesViewModel matchingPageWrapperVM = new GetMatchesViewModel() { 
+                EmployersName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName),
+                CurrentAlertDescription = ContextGetValue(Constants.CurrentAlertDescription),         
+            };
             
             QueryParamVM memberRecordQuery = new QueryParamVM
             {
@@ -494,7 +501,7 @@ namespace MCPhase3.Controllers
             };
             
 
-            string apiBaseUrlForUpdateRecordGetValues = GetApiUrl(_apiEndpoints.UpdateRecordGetValues);
+            string apiBaseUrlForUpdateRecordGetValues = GetApiUrl(_apiEndpoints.GetAlertDetailsInfo);
             //## show Member record- from the 'Contribution data received'
             string apiResponse = await ApiPost(apiBaseUrlForUpdateRecordGetValues, memberRecordQuery);
             MemberUpdateRecordBO memberRecord = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
@@ -570,16 +577,9 @@ namespace MCPhase3.Controllers
                 selectedFolder = matchingList.FirstOrDefault(m => m.folderId == personFolderId);
             }
 
-            //## Now create a 'MatchingPersonVM' to update in the DB with the values
-            var member = new MatchingPersonVM()
-            {
-                folderId = selectedFolder.folderId,
-                personId = selectedFolder.personId,
-                folderRef = selectedFolder.folderRef,
-                dataRowId = selectedFolder.dataRowId,
-                userId = CurrentUserId(),
-                note = selectedMember.Note
-            };
+            //## Now create a 'MatchingPersonVM' to update in the DB with the values            
+            var member = selectedFolder;
+            member.userId = CurrentUserId();
 
             //## now assign some conditional values- based on selected action, ie: NewRec=> 'folderMatch = "90"'
             if (action == "UpdateFolder")

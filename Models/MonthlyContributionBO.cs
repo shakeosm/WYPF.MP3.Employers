@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MCPhase3.Models
-{    
+{
     public class MonthlyContributionBO
     {
         public string UserLoginID { get; set; }
@@ -55,11 +52,11 @@ namespace MCPhase3.Models
         public double EmployersTotalSS { get; set; }
 
         public string UploadedFileName { get; set; }
-        public string payRollYear { get; set; }
+        public string payrollYear { get; set; }
 
         public double EmployeeTotal () => MemberContribSS + MemberContrib5050SS + MemberContribAPCSS + MemberContribPOESSS + MemberContribARCSS;
         public double EmployersEmployeeTotalValue() => EmployeeTotal() + EmployersTotalSS;
-        public double DedifitTotalLblValue() => DeficitRec + YearEndBalanceRec + FundedBenefitsRec + Miscellaneous_Rec;
-        public double GrandTotalValue() => DedifitTotalLblValue() + EmployersEmployeeTotalValue();
+        public double DeficitTotalLblValue() => DeficitRec + YearEndBalanceRec + FundedBenefitsRec + Miscellaneous_Rec;
+        public double GrandTotalValue() => DeficitTotalLblValue() + EmployersEmployeeTotalValue();
     }
 }

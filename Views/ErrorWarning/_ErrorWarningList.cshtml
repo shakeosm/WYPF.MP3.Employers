@@ -21,12 +21,14 @@
     <span id="AlertSubListAlertCounter" class="col-2 text-center text-danger">@totalAlerts</span>
 </div>
 <div class="table-bordered">
-    <p>
-        Select the rows below for which you wish to acknowledge this warning. All rows may be chosen by clicking “Acknowledge All”.
-        If you are happy for WYPF to process these records click on “Acknowledge All” button below the table.
-        If other errors or warnings are present on a record, these will need to be cleared before the record may be posted.
-        Individual records may be viewed by clicking view.
-    </p>
+    @if (Model.First().ALERT_CLASS.Equals("W"))    {
+        <p>
+            Select the rows below for which you wish to acknowledge this warning. All rows may be chosen by clicking “Acknowledge All”.
+            If you are happy for WYPF to process these records click on “Acknowledge All” button below the table.
+            If other errors or warnings are present on a record, these will need to be cleared before the record may be posted.
+            Individual records may be viewed by clicking view.
+        </p>        
+    }
 
     @*This is simply a form, will never get posted.. sends data via url... *@
     @*<form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">*@
@@ -34,6 +36,7 @@
             <thead class="thead-light">
                 <tr>
                     <th>Pay Location</th>
+                    <th>Period</th>
                     <th>First Name</th>
                     <th>Surname</th>
                     <th>DOB</th>
@@ -52,12 +55,13 @@
 
                     <tr class="@rowStyle">
                         <td>@item.PAYLOCATIONREF</td>
+                        <td>@item.PayrollPeriod</td>
                         <td>@item.FORENAMES</td>
                         <td>@item.SURNAME</td>
                         <td>@item.DOB?.ToShortDateString()</td>
                         <td>@item.NINUMBER</td>
                         <td>@item.DATEJOINEDSCHEME?.ToShortDateString()</td>
-                        <td>@item.JOBTITLE</td>
+                        <td style="text-transform: capitalize">@item.JOBTITLE?.ToLower()</td>
 
                         <td class="error-status-td">
                             @{

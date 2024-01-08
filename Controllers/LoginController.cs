@@ -53,10 +53,7 @@ namespace MCPhase3.Controllers
 
             //## Yes, the user is valid, but we haven't Logged the user in yet. need to see if there is another session running anywhere
             if (loginResult == (int)LoginStatus.Valid)
-            {
-                var is_MfaEnabled = Convert.ToBoolean(_configuration["VerifyMFA"].ToString());
-                var mfaOverrideEmails = _configuration["MFA_Email_Override"];
-
+            {                
                 //## Get the User Details..
                 var currentUser = await base.GetUserDetails(loginVM.UserId);
                 await AddPayrollProviderInfo(currentUser);
@@ -67,20 +64,21 @@ namespace MCPhase3.Controllers
                 ContextSetValue(Constants.WindowsId, loginVM.WindowsId);
 
                 //## Check in the Config- whether we should do MFA verification  or not.. we can sometimes disable it- for various reasons..
-                if (is_MfaEnabled)
+                if (await is_MfaEnabled())
                 {
                     //### check whether this user needs a Multi-Factor Vreification today again... if yes, then send email with MFA Code and then ask to verify it
-                    string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:MFA_IsRequired"]);
+                    string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:MFA_IsRequiredForUser"]);
 
                     var apiResult = await ApiGet(mfa_Requirement_Check_Url + loginVM.UserId);
 
-                    var isMFA_Required = Convert.ToBoolean(apiResult);
+                    Boolean.TryParse(apiResult, out bool isMFA_Required);
+
                     if (isMFA_Required)
                     {
                         string mfa_SendVerificationCodeUrl = GetApiUrl(_configuration["ApiEndpoints:MFA_SendToEmployer"]);
                         var mailData = new MailDataVM() {
                             UserId = loginVM.UserId,
-                            EmailTo = mfaOverrideEmails == "" ? currentUser.Email : mfaOverrideEmails,
+                            EmailTo = currentUser.Email,
                             FullName = currentUser.FullName,
                             /* EmailBody, Subject- will be generated in the API,*/
                         };
@@ -94,22 +92,20 @@ namespace MCPhase3.Controllers
                         return RedirectToAction("VerifyToken");
                     }
                 }
-                else {
-                    //## All good.. no MFA required.. so just continue .. check whether multiple session exist ...
-                    var sessionInfo = GetUserSessionInfo();
 
-                    //## we need to confirm their is only one login session for this user.. 
-                    if (sessionInfo.HasExistingSession)
-                    {
-                        //## Notify the user - whether they wanna kill the existing one and continue here...?
-                        sessionInfo.Password = ""; //## don't take the password back to the UI
-                        return View("MultipleSessionPrompt", sessionInfo);
+                //## All good.. no MFA required.. so just continue .. check whether multiple session exist ...
+                var sessionInfo = GetUserSessionInfo();
 
-                    }
-                    //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
-                    return await ProceedToLogIn(loginVM.UserId);
+                //## we need to confirm their is only one login session for this user.. 
+                if (sessionInfo.HasExistingSession)
+                {
+                    //## Notify the user - whether they wanna kill the existing one and continue here...?
+                    sessionInfo.Password = ""; //## don't take the password back to the UI
+                    return View("MultipleSessionPrompt", sessionInfo);
+
                 }
-
+                //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
+                return await ProceedToLogIn(loginVM.UserId);                
 
             }
             else if (loginResult == (int)LoginStatus.Locked)
@@ -130,9 +126,17 @@ namespace MCPhase3.Controllers
 
         }
 
+        private async Task<bool> is_MfaEnabled()
+        {
+            string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:Is_MfaEnabled"]);
+            var apiResult = await ApiGet(mfa_Requirement_Check_Url);
+            bool mfaEnabled = bool.Parse(apiResult);
+            return mfaEnabled;            
+        }
+
         private async Task AddPayrollProviderInfo(UserDetailsVM currentUser)
         {
-            payrollBO = await CallPayrollProviderService(currentUser.UserId);
+            payrollBO = await GetPayrollProviderInfo(currentUser.UserId);
 
             currentUser.Pay_Location_Ref = payrollBO.paylocation_ref;
             currentUser.Pay_Location_ID = payrollBO.pay_location_ID;
@@ -301,9 +305,9 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <param name="userName"></param>
         /// <returns></returns>
-        private async Task<PayrollProvidersBO> CallPayrollProviderService(string userName)
+        private async Task<PayrollProvidersBO> GetPayrollProviderInfo(string userName)
         {
-            string apiBaseUrlForPayrollProvider = GetApiUrl(_apiEndpoints.PayrollProvider);
+            string apiBaseUrlForPayrollProvider = GetApiUrl(_apiEndpoints.PayrollProvider);     //## api/GetPayrollProviders
             using (var httpClient = new HttpClient())
             {
                 using var response = await httpClient.GetAsync(apiBaseUrlForPayrollProvider + userName);
@@ -316,6 +320,8 @@ namespace MCPhase3.Controllers
 
             return payrollBO;
         }
+
+
         /// <summary>
         /// Check if username and password correct
         /// </summary>

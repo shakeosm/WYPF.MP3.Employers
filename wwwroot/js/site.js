@@ -90,3 +90,10 @@ function hideOverlaySpinner() {
         $("#overlay").fadeOut(300);
     }, 500);
 }
+
+                
+
+function ShowOverlaySpinner() {
+    $("#overlay").fadeIn(300);
+}
+

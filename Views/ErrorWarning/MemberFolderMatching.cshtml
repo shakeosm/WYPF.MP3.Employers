@@ -3,18 +3,34 @@
     ViewData["Title"] = "Loose Match Records";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     bool niAvailable = false;
-    
+
     //## We need to display options for each matching person. So- there can be 1+ matching person and each can have 1+ folders.
     //## So- first make a GroupBy of PersonId- then display them in each group of PersonId
     var groupByPersonId = Model.MatchingPersonList.GroupBy(m => m.personId);
     string radioButtonId = "";
+    var alertInfo = Model.CurrentAlertDescription.Split(";");
+    string alertDescription = alertInfo[1];
+    string alertClass = alertInfo[0].ToLower() == "w" ? "Warning" : "Error";
 }
 
 <div class="border shadow-lg p-4 mb-4 bg-white">
-    <div class="container-fluid bg-3 text-center">
-        <div class="container">
+    <div class="container bg-3 text-center">
+        <div class="col-12 text-center p-0">
+                <div class="card p-0">
+                    <!-- progressbar -->
+                    <ul id="progressbar">
+                        <li class="active" id="account"><strong>File Upload</strong></li>
+                        <li class="active" id="personal"><strong>Check Totals</strong></li>
+                        <li class="active" id="personal"><strong>Data Processing</strong></li>
+                        <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
+                        <li class="active" id="personal"><strong>Loose Matches</strong></li>
+                        <li id="payment"><strong>Submit to Database</strong></li>
+                        <li id="confirm"><strong>Finish</strong></li>
+                    </ul>
+                </div>
+            </div>       
 
-            <div class="row alert alert-primary">
+        <div id="PageHeaderDiv" class="row alert alert-primary">
                 <div class="col-8">
                     <h3>Error and Warnings</h3>
                     <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
@@ -28,24 +44,6 @@
                 </div>
             </div>
 
-            <div class="row justify-content-center">
-                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
-                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
-
-                        <!-- progressbar -->
-                        <ul id="progressbar">
-                            <li class="active" id="account"><strong>File Upload</strong></li>
-                            <li class="active" id="personal"><strong>Check Totals</strong></li>
-                            <li class="active" id="personal"><strong>Data Processing</strong></li>
-                            <li class="active" id="personal"><strong>Error and Warning Summary</strong></li>
-                            <li class="active" id="personal"><strong>Loose Matches</strong></li>
-                            <li id="payment"><strong>Submit to Database</strong></li>
-                            <li id="confirm"><strong>Finish</strong></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     @if (TempData["error"] != null)
@@ -60,18 +58,20 @@
         </div>
     }
 
-    <label>Employer: <b>@Model.EmployersName</b></label>
     <style>
-        .TextBoxAsLabel {
-            border: none;
-            background-color: #fff;
-            background: transparent;
+        table th{
+            font-weight:bold !important;
+            color: #068b49c4 !important;
         }
     </style>
 
-    <form asp-action="MemberFolderMatching" id="myForm" method="post">
+    @*<h3 id="EmployerNameHeader">Employer: @Model.EmployersName</h3>*@
+    <br/>
+    <h3 id="AlertDescriptionHeader" class="text-danger my-3">@alertClass: @alertDescription</h3>
+    
+    <form asp-action="MemberFolderMatching" id="MemberFolderMatchingForm" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <h3>Contributions Data Received</h3>
+        <h4>Contributions Data Received</h4>
         <div class="form-group">
 
             <table class="table table-bordered">
@@ -127,7 +127,7 @@
 
             <br />
 
-            <h3>Potential Matches</h3>
+            <h4>Potential Matches</h4>
             <p>Select one option</p>
             @* ## Loop through the Matching list..
             First loop is by PersonId...
@@ -222,8 +222,7 @@
 
             <!-- Notes section for user -->
             <div class="mt-2 p-2 border">
-                Choose a UPM record to match to from the above list. 
-                If WYPF’s person data differs we will update it to match the contributions.
+                Choose a UPM record to match to from above list. If WYPF's personal data differs you need to send Record Maintenance form.
             </div>
 
             <div class="mt-2 p-2">

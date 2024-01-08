@@ -1,4 +1,5 @@
-﻿using NPOI.HSSF.UserModel;
+﻿using MCPhase3.Common;
+using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
@@ -6,18 +7,20 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
 using System.IO;
+
 namespace MCPhase3.CodeRepository
 {
-    public class CommonRepo
+    public class CommonRepo : ICommonRepo
     {
-        //const string SessionKeyMonth = "_month";
-        //const string SessionKeyFileName = "_fileName";
+        private readonly IRedisCache _cache;
 
-        public static DataTable valuePassDT;
-        public static DataTable nameOfMonthDT = new DataTable();
+        public CommonRepo(IRedisCache Cache)
+        {
+            _cache = Cache;
+        }
 
         //copy file to another folder
-        public static bool CopyFileToFolder(string sourceFile, string destinationFile, string fileName)
+        public bool CopyFileToFolder(string sourceFile, string destinationFile, string fileName)
         {
             bool result = true;
             try
@@ -40,7 +43,7 @@ namespace MCPhase3.CodeRepository
         /// <param name="fileName">Excel file name to Convert</param>
         /// <param name="errorMessage">Output ErrorMessage to display the user</param>
         /// <returns>A DataTable object</returns>
-        public static DataTable ConvertExcelToDataTable(string fileName, out string errorMessage)
+        public DataTable ConvertExcelToDataTable(string fileName, out string errorMessage)
         {
             OleDbConnection con = null;
             DataTable retData;
@@ -120,7 +123,7 @@ namespace MCPhase3.CodeRepository
                             {
                                 switch (cell.CellType)
                                 {
-                                    case CellType.Blank:
+                                    case NPOI.SS.UserModel.CellType.Blank:
                                         try
                                         {
                                             dataRow[j] = "";
@@ -130,7 +133,7 @@ namespace MCPhase3.CodeRepository
                                             dataRow[j] = DBNull.Value;
                                         }
                                         break;
-                                    case CellType.Numeric:
+                                    case NPOI.SS.UserModel.CellType.Numeric:
                                         short format = cell.CellStyle.DataFormat;
                                         //Processing time format (2015.12.5, 2015/12/5, 2015-12-5, etc.)
                                         // if (format == 14 || format == 31 || format == 57 || format == 58)
@@ -142,7 +145,7 @@ namespace MCPhase3.CodeRepository
                                         else
                                             dataRow[j] = cell.NumericCellValue;
                                         break;
-                                    case CellType.String:
+                                    case NPOI.SS.UserModel.CellType.String:
                                         dataRow[j] = cell.StringCellValue;
                                         break;
                                 }
@@ -175,7 +178,7 @@ namespace MCPhase3.CodeRepository
         /// <param name="dt"></param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
-        public static bool ChangeColumnHeadings(DataTable dt, out string errorMessage)
+        public bool ChangeColumnHeadings(DataTable dt, out string errorMessage)
         {
             errorMessage = string.Empty;
 
@@ -200,7 +203,7 @@ namespace MCPhase3.CodeRepository
         }
 
 
-        public static bool ChangeColumnHeadingsFire(DataTable dt, out string errorMessage)
+        public bool ChangeColumnHeadingsFire(DataTable dt, out string errorMessage)
         {
             errorMessage = string.Empty;
 
@@ -226,7 +229,7 @@ namespace MCPhase3.CodeRepository
         }
 
 
-        public static DataTable ConvertAllFieldsToString(DataTable dt)
+        public DataTable ConvertAllFieldsToString(DataTable dt, string userId)
         {
             //nameOfMonthDt I am using to save values that I want to use on different views.            
 
@@ -270,14 +273,18 @@ namespace MCPhase3.CodeRepository
 
             }
 
-            valuePassDT = dtClone.Copy();
+            var valuePassDT = dtClone.Copy();
+            string cacheKey = $"{userId}_{Constants.ExcelDataAsString}";
+            _cache.Set(cacheKey, valuePassDT);
+
             return dtClone;
         }
 
-        public static DataTable PassDataTableToViews()
+        public DataTable GetExcelDataAsString(string userId)
         {
-
-            return valuePassDT;
+            string cacheKey = $"{userId}_{Constants.ExcelDataAsString}";             
+            var cachedValue = _cache.Get<DataTable>(cacheKey);
+            return cachedValue;
         }
 
 
@@ -300,7 +307,7 @@ namespace MCPhase3.CodeRepository
                 if (payLocID.Equals(string.Empty))
                 {
 
-                    CheckSpreadSheetErrorMsg += "<BR />'Employer Location Code' can not be empty in spreadsheet at row number:" + inc + ".<BR />And if there is any empty row, please delete that row.";
+                    CheckSpreadSheetErrorMsg += "<br />'Employer Location Code' can not be empty in spreadsheet at row:" + inc + ".<br />And if there is any empty row, please delete that row.";
                     result = false;
                 }
             }
@@ -336,18 +343,45 @@ namespace MCPhase3.CodeRepository
                 //Q - added condition to check if pay loc is not empty as well
                 if (!validPalocInSpreadsheet && !payLocID.Equals(string.Empty))
                 {
-                    CheckSpreadSheetErrorMsg += "<BR />You have entered invalid 'Employer Location Code:<B>"
-                            + payLocID + "</B> in spreadsheet at row number: " + inc + ".<BR />Valid 'Employer Location Code' shown above in 'Payroll Provider' drop down list.";
+                    CheckSpreadSheetErrorMsg += "<br/>You have entered invalid 'Employer Location Code:<b>"
+                                                + payLocID + "</b> in spreadsheet at row: " + inc;
                     result = false;  break;
                 }
 
             }
+
+            CheckSpreadSheetErrorMsg += ".<BR />Valid 'Employer Location Code' shown above in 'Payroll Provider' drop down list.";
 
             return result;
 
         }
     }
 
+    public interface ICommonRepo
+    {
+        bool CopyFileToFolder(string sourceFile, string destinationFile, string fileName);
+
+        /// <summary>This will Convert the Excel sheet to a System.Data.DataTable to make it convenient to validate fields</summary>
+        /// <param name="fileName">Excel file name to Convert</param>
+        /// <param name="errorMessage">Output ErrorMessage to display the user</param>
+        /// <returns>A DataTable object</returns>
+        DataTable ConvertExcelToDataTable(string fileName, out string errorMessage);
+
+        /// <summary>
+        /// Function is seperated below this function for Fire becaurse Fire has more column headings.
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
+        bool ChangeColumnHeadings(DataTable dt, out string errorMessage);
+
+        bool ChangeColumnHeadingsFire(DataTable dt, out string errorMessage);
+
+        DataTable ConvertAllFieldsToString(DataTable dt, string userId);
+
+        DataTable GetExcelDataAsString(string userId);
 
 
+        bool CheckEmployerLocCode(DataTable dt, ref string CheckSpreadSheetErrorMsg);
+    }
 }
