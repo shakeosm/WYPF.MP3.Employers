@@ -8,4 +8,15 @@
 
         public string L_USERID { get; set; }
     }
+
+    public class AlertQueryVM
+    {
+        public string RemittanceId { get; set; }
+        public string L_USERID { get; set; }
+        public string AlertType { get; set; }
+        public string EmployerCode { get; set; }
+        public string Status { get; set; }
+        public string Total { get; set; }
+
+    }
 }

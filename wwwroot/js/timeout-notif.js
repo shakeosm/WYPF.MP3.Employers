@@ -6,9 +6,9 @@
         }, 30 * 1000);
 
     //## due to no activity for last 3 mins- log out the user..
-    setTimeout(function () {
-        window.location = "/Login/SessionExpired";
-    }, 120 * 1000);
+    //setTimeout(function () {
+    //    window.location = "/Login/SessionExpired";
+    //}, 120 * 1000);
 
 
     function ShowExpireyAlert() {

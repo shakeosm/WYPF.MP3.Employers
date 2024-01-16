@@ -9,6 +9,10 @@
     string allAlertRefs = string.Join(",", errorList);
     bool showSwitchViewButton = (allAlertRefs.Contains("NEW_FLDR_AT_EMP") || allAlertRefs.Contains("NEW_PER_AND_FLDR")) == false; /* ### TL172: GDPR ISSUE (Switch View Button - To be disabled on Employer Portal for these two) */
     string disableSwitchViewBtn = showSwitchViewButton ? "btn-info" : "btn-outline-secondary disabled";
+
+    var alertInfo = Model.AlertDescription.Split(";");
+    string alertDescription = alertInfo[1];
+    string alertClass = alertInfo[0].ToLower() == "w" ? "Warning" : "Error";
 }
 
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -36,7 +40,7 @@
             <div id="PageHeaderDiv" class="row alert alert-primary">
                 <div class="col-8">
                     <h3>Error and Warnings</h3>
-                    <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
+                    <h4 class="text-danger">@alertClass: @alertDescription</h4>
                 </div>
                 <div class="col-4">
                     <a href="~/ErrorWarning/MemberFolderMatching?id=@Model.DataRowEncryptedId" class="btn @disableSwitchViewBtn float-end"
@@ -56,7 +60,7 @@
             <p style="font-size:small;">Amend data in the form below to clear error/warning requirements.</p>
             <p style="font-size:small;">Error/ warning message displays where the problem is with the associated data box highlighted in red. Please amend if necessary and press Submit.  If the original data entry is correct press Acknowledge next to the Warning</p>
             <div class="table-bordered mt-3">
-                <h4>Payroll provider: <b>@ViewBag.empName </b></h4>
+                <h4>Payroll provider: <b>@Model.employerName </b></h4>                
             </div>
 
 
@@ -120,7 +124,7 @@
             <form class="border p-4 mb-4 bg-white" asp-action="UpdateSingleRecord" method="post">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                <p style="font-size:small;">Incoming Record Details</p>
+                <h4>Incoming Record Details</h4>
                 <div class="container">
 
 
@@ -361,8 +365,8 @@
                         @*<div class="text-center row">
                         <table class="table table-bordered">*@                        
                         <div class="col-6">
-                            <a href="javascript:window.open('','_self').close();" class="btn btn-secondary btn-lg">Back</a>
-                            @*<a asp-action="Index" class="btn btn-secondary btn-lg"> Cancel</a>*@
+                            @*<a href="javascript:window.open('','_self').close();" class="btn btn-secondary btn-lg">Back</a>*@
+                            <a href="/ErrorWarning/WarningsListforBulkApproval" class="btn btn-secondary btn-lg"> Back</a>
                         </div>
                         <div class="col-6">
                             <button type="submit" class="btn btn-success btn-lg"> Submit</button>

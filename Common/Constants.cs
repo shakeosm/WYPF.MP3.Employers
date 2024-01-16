@@ -3,7 +3,7 @@
     public static class Constants
     {
         public const int EmployersPortal = 2;    //## API=1, Employers = 2; Admin = 3
-        public const string SessionKeyUserID = "_UserName"; //## used in the 'UserSessionCheckActionFilter' for Authentication
+        //public const string SessionKeyUserID = "_UserName"; //## used in the 'UserSessionCheckActionFilter' for Authentication
         //Paylocation and Employer both are same.
         public const string SessionKeyPayLocName = "_PayLocName";       //## used in "MCPhase3.CodeRepository.LoginCheck : ViewComponent"
         //public const string SessionKeyPayLocId = "_Id";
@@ -23,11 +23,13 @@
         public const string SessionSchemeNameValue = "LGPS";
 
         public const string SessionKeyTotalRecords = "_totalRecords";
+        public const string SessionKeyTotalRecordsInDB = "_totalRecordsInDB";
         public const string SessionKeyRemittanceID = "remittanceID";
         
         public const string SessionInfoKeyName = "SessionInfo";    //## for Redis use
         public const string SessionGuidKeyName = "SessionGUID";    //## for Redis cross check
         public const string LoggedInAsKeyName = "LoggedInAs";    
+        public const string LoggedInUserEmailKeyName = "UserEmail";    
         public const string BrowserId = "BrowserId";    
         public const string WindowsId = "WindowsId";    
 
@@ -57,6 +59,10 @@
         public static string ExcelDataAsString = "ExcelDataAsString";
         public static string CurrentAlertDescription = "CurrentAlertDescription";
         public static string Excel_DataTableToInsert = "Excel_DataTableToInsert";        
+        public static string ReturnInitialiseCurrentStep = "ReturnInitialiseCurrentStep";        
+        public static string EmployerProcessedCount = "EmployerProcessedCount";        
+        
+        public static string ApiCallParamObjectKeyName = "_ApiCallParamObjects";        
         //public static string Excel_XML_ConfigPath = "Excel_XML_ConfigPath";
 
         public static string RedisKeyList()

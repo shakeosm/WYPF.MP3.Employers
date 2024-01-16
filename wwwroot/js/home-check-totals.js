@@ -68,7 +68,20 @@
 
     }
 
-    $("#SubmitNextButton").click(function () {
+    $("#SubmitNextButton").click(function (e) {
+        if ($("#ChequeDateTBox").val() === '') {
+            
+            $("#ChequeDateTBox").parent().addClass("alert alert-danger");
+
+            Swal.fire({
+                icon: "error",
+                title: "Date missing!",
+                text: "You must select a date for Cheque payment.",
+            });
+
+            return false;
+        }
+
         ShowOverlaySpinner();
     });
 });

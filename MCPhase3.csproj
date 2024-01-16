@@ -779,29 +779,23 @@
   <None Include="wwwroot\dist\js\sidebarmenu.js" />
   <None Include="wwwroot\dist\js\waves.js" />
   <PackageReference Include="CsvHelper" Version="30.0.1" />
-    <PackageReference Include="DocumentFormat.OpenXml" Version="2.13.0" />
-    <PackageReference Include="Effortless.Net.Core.Encryption" Version="1.3.1" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.32.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="7.0.5" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.1" />
     <!--<PackageReference Include="HtmlAgilityPack" Version="1.11.37" />-->
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Client" Version="3.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.5" />
-    <PackageReference Include="Microsoft.Extensions.Logging.EventSource" Version="7.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.6" ExcludeAssets="All" />
-	<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="NPOI" Version="2.5.3" />
-    <PackageReference Include="Spire.XLS" Version="13.5.6" />
-    <PackageReference Include="System.Data.OleDb" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.EventSource" Version="8.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.11" ExcludeAssets="All" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	<PackageReference Include="NPOI" Version="2.6.2" />
+    <PackageReference Include="Spire.XLS" Version="14.1.0" />
+    <PackageReference Include="System.Data.OleDb" Version="8.0.0" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
     <!--<PackageReference Include="System.ServiceModel.Duplex" Version="4.8.1" />-->
-    <PackageReference Include="System.ServiceModel.Http" Version="4.8.1" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.8.1" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
-    <PackageReference Include="System.ServiceModel.Security" Version="4.8.1" />
+    <PackageReference Include="System.ServiceModel.Http" Version="6.2.0" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="6.2.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="6.2.0" />
+    <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>

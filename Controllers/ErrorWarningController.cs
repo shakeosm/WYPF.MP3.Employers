@@ -53,7 +53,7 @@ namespace MCPhase3.Controllers
             else{
                 alertSumBO.remittanceId = GetRemittanceId();
             }
-
+            
             //When select to work with error and warnings on payloction level then I have to keep PaylocFile in sesssion so 
             //when come back to this page after 1st process/during process I can get that from session.
             if (alertSumBO.L_PAYLOC_FILE_ID != null)
@@ -71,8 +71,8 @@ namespace MCPhase3.Controllers
             var alertList = new List<ErrorAndWarningViewModelWithRecords>();
 
             int remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.remittanceId));
+            LogInfo($"ErrorWarning/Index, remittanceId: {remID}", true);
 
-            
             alertViewWrapperVM.RemittanceId = EncryptUrlValue(remID.ToString());
             alertViewWrapperVM.EmployerName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
 
@@ -80,6 +80,7 @@ namespace MCPhase3.Controllers
 
             //work on remittance level if null else Paylocation level
             string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.ErrorAndWarnings);   //## api: /AlertSummaryRecordsPayLoc
+            LogInfo($"ErrorAndWarningsApi: {apiBaseUrlForErrorAndWarnings}");
 
             alertSumBO.remittanceId = remID.ToString();
             var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
@@ -95,7 +96,9 @@ namespace MCPhase3.Controllers
                 }
 
                 alertViewWrapperVM.ErrorsAndWarningsList = alertListFiltered;
-            }            
+            }
+
+            LogInfo($"Finished ErrorWarning/Index");
 
             return View(alertViewWrapperVM);
         }
@@ -108,17 +111,17 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <returns></returns>
         // public async Task<IActionResult> WarningsListforBulkApproval(ErrorAndWarningToShowListViewModel errorAndWarningTo)
-
-        public async Task<IActionResult> WarningsListforBulkApproval(ErrorAndWarningViewModelWithRecords summaryVM)
+        public async Task<IActionResult> WarningsListforBulkApproval(AlertQueryVM summaryVM)
         {
             string errorWarningSummaryKeyName = $"{CurrentUserId()}_{Constants.ErrorWarningSummaryKeyName}";
+
             //following functionality is added to keep user on same warning and error page until all sorted.
             //## if we come back here from Acknowledgement page- then the ViewModel 'summaryVM' is empty- so need to read from the Cache.. save life..
 
-            if (summaryVM.ALERT_COUNT is null) //## means empty... came here from another page not Dashboard
+            if (summaryVM.Total is null) //## means empty... came here from another page not Dashboard
             {
                 //## if Alert.count is NULL then its an Empty, but not null// (pain in the back)
-                summaryVM = _cache.Get<ErrorAndWarningViewModelWithRecords>(errorWarningSummaryKeyName);
+                summaryVM = _cache.Get<AlertQueryVM>(errorWarningSummaryKeyName);
 
                 if (summaryVM is null)
                 {
@@ -135,12 +138,14 @@ namespace MCPhase3.Controllers
 
             var alertSumBO = new AlertSumBO()
             {
-                remittanceId = summaryVM.remittanceID,
+                remittanceId = summaryVM.RemittanceId,
                 L_USERID = userName
             };
 
+            LogInfo($"ErrorWarning/WarningsListforBulkApproval, remittanceId: { DecryptUrlValue(alertSumBO.remittanceId)}", true);
+
             //show error and worning on Remittance or paylocation level.
-            string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);
+            string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);    //## api/AlertDetailsForPayLocNextStep
             if (HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID) != null)
             {
                 alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
@@ -149,13 +154,13 @@ namespace MCPhase3.Controllers
             }
             else
             {
-                summaryVM.L_PAYLOC_FILE_ID = 0;
+                //summaryVM.L_PAYLOC_FILE_ID = 0;
 
                 var errorAndWarningTo = new ErrorAndWarningToShowListViewModel()
                 {
-                    remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.remittanceID)),
+                    remittanceID = Convert.ToDouble(DecryptUrlValue(summaryVM.RemittanceId)),
                     L_USERID = userName,
-                    alertType = summaryVM.ALERT_TYPE_REF,
+                    alertType = summaryVM.AlertType,
                 };
 
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
@@ -174,10 +179,13 @@ namespace MCPhase3.Controllers
             List<string> BulkApprovalRecordIdList = recordsList.Where(b => b.CLEARED_FG == "N").Select(r => r.EncryptedAlertid).ToList();
             _cache.Set($"{Constants.BulkApprovalAlertIdList}_{CurrentUserId()}", BulkApprovalRecordIdList);
 
-            ViewBag.alertClass = (summaryVM.ALERT_CLASS.Equals("W")) ? "Warning" : "Error";
+            string alertClass = (summaryVM.AlertType.Equals("W")) ? "Warning" : "Error";
             ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
-            ViewBag.status = summaryVM.ALERT_DESC + "";
+            ViewBag.status = summaryVM.Status + "";
+            ViewBag.UpdateStatus = TempData["UpdateStatus"];
 
+            ContextSetValue(Constants.CurrentAlertDescription, $"{recordsList.First().ALERT_CLASS};{recordsList.First().ALERT_DESC}");
+           
             return View(recordsList);
 
 
@@ -391,7 +399,7 @@ namespace MCPhase3.Controllers
 
                 int.TryParse(DecryptUrlValue(id, forceDecode: false), out int dataRowID);
                 //show employer name
-                ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
+                //ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 string userName = CurrentUserId();
                 
                 string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.GetAlertDetailsInfo);  //## api/GetIndvidualRecords
@@ -421,7 +429,7 @@ namespace MCPhase3.Controllers
 
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 memberUpdateRecordBO.ErrorAndWarningList = recordsList;
-
+                memberUpdateRecordBO.employerName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 memberUpdateRecordBO.DataRowEncryptedId = id;  //## we are sending the Encrypted Id back to the UI- to allow 'Switch View'
 
                 memberUpdateRecordBO.AlertDescription = ContextGetValue(Constants.CurrentAlertDescription);
@@ -452,29 +460,16 @@ namespace MCPhase3.Controllers
             string apiResponse = await ApiPost(apiLink, updateRecordBO);
             updateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO> (apiResponse);
 
-            var updateStatus = new UpdateStatusVM()
-            {
-                DisplayMessage = $"<h5>Member: {updateRecordBO.forenames} {updateRecordBO.lastName}</h5>"+
-                                 $"<h5>Job title: {updateRecordBO.jobTitle}</h5>" +
-                                 $"<h5>Date of Birth: {updateRecordBO.DOB?.ToShortDateString()}</h5>" +
-                                 $"<h5>Postcode: {updateRecordBO.postCode}</h5>" +
-                                 $"<h5>NI: {updateRecordBO.NI}</h5><br/><br/><hr/><br/>" +
-                                 "<p class='h5 text-primary'>The record is successfully updated. Please click on the 'Back' button to go back to Error/Warning list.</p>",
-                Header = "Update successful",
-                IsSuccess = true
-            };
+            TempData["UpdateStatus"] = $"Success: The record is successfully updated. Member: {updateRecordBO.forenames} {updateRecordBO.lastName}, NI: {updateRecordBO.NI}";            
 
             var statusCode = updateRecordBO.statusCode.GetValueOrDefault(-99);
 
             if (statusCode != 0) {
-                updateStatus.IsSuccess = false;
-                updateStatus.DisplayMessage = updateRecordBO.statusTxt + "<p class='h4 text-primary'>Please try again later</p>";
-                updateStatus.Header = "Update failed.";
-
+                TempData["UpdateStatus"] = "Error: " + updateRecordBO.statusTxt + ". Please try again later.";
             }
 
-            //return RedirectToAction("WarningsListforBulkApproval", "ErrorWarning", remittanceID_Encrypted);
-            return View("UpdateStatus", updateStatus);
+            return RedirectToAction("WarningsListforBulkApproval");
+
         }
 
 
@@ -566,8 +561,6 @@ namespace MCPhase3.Controllers
             var matchingList = _cache.Get<List<MatchingPersonVM >> ($"{CurrentUserId()}_{Constants.MemberMatchingList}");
             var selectedFolder = new MatchingPersonVM();
 
-            var updateStatus = new UpdateStatusVM();
-
             if (action == "NEWREC")
             {
                 selectedFolder = matchingList.FirstOrDefault(m => m.personId == Convert.ToInt32(personFolderId) && m.folderRef == "NEWREC");
@@ -613,36 +606,26 @@ namespace MCPhase3.Controllers
 
             if (apiResult == "")
             { //## api call failed.. Error!
-                TempData["msg"] = "Error: Failed to update record";
-                updateStatus.Header = "Error: Failed to update record";
-                updateStatus.DisplayMessage = "Failed to update the record. Please try again later.";
+                TempData["UpdateStatus"] = "Error: Failed to update record";
             }
             else {
                 //## what if the user selected "AddNewPersonAndFolder"..? then there will be no Member name to display...
                 if (selectedAction.Equals("AddNewPersonAndFolder")){
-                    updateStatus.DisplayMessage = $"<h5>A new Folder record is created for that selected person.</h5>";
+                    TempData["UpdateStatus"] = $"Success: A new Folder record is created for that selected person.";
                 }
                 else {
                     if (action == "NEWREC"){
-                        updateStatus.DisplayMessage = $"<h5>A new record is created for that selected person.</h5>";
+                        TempData["UpdateStatus"] = $"Success: A new record is created for that selected person";
                     }
-                    else { 
-                        updateStatus.DisplayMessage = $"<h5>Member: {member.upperForeNames} {member.upperSurName}</h5>" +
-                             $"<h5>Job title: {member.jobTitle}</h5>" +
-                             $"<h5>Date of Birth: {member.DOB.ToShortDateString()}</h5>" +
-                             $"<h5>Postcode: {member.postCode}</h5>" +
-                             $"<h5>NI: {member.NINO}</h5><br/><br/><hr/><br/>" +
-                             "<p class='h5 text-primary'>The record is successfully updated. Please click on the 'Back' button to go back to Error/Warning list.</p>";
-                    
+                    else {
+                        TempData["UpdateStatus"] = $"Success: The record is successfully updated. Member: {member.upperForeNames} {member.upperSurName}, NI: {member.NINO}";
                     }
                 }
-                updateStatus.Header = "Update successful";
-                updateStatus.IsSuccess = true;
 
-                TempData["msg"] = "Record updated successfully";
             }
            
-            return View("UpdateStatus", updateStatus);
+            return RedirectToAction("WarningsListforBulkApproval");
+            //return View("UpdateStatus", updateStatus);
         }
 
 

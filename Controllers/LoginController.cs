@@ -44,24 +44,26 @@ namespace MCPhase3.Controllers
         }
 
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(LoginViewModel loginVM)
         {
+            //## lets store the UserId  in the Browser session, as we will be using this at very early stage. if Login isn't successful- they will be overridden later..
+            ContextSetValue(Constants.LoggedInAsKeyName, loginVM.UserId);
+            
             //check username and password
             var loginResult = await LoginCheckMethod(loginVM.UserId, loginVM.Password);
 
             //## Yes, the user is valid, but we haven't Logged the user in yet. need to see if there is another session running anywhere
             if (loginResult == (int)LoginStatus.Valid)
-            {                
+            {
                 //## Get the User Details..
                 var currentUser = await base.GetUserDetails(loginVM.UserId);
                 await AddPayrollProviderInfo(currentUser);
 
-                //## store the current UserId BrowserId and WindowsId in the session to be used later..
-                ContextSetValue(Constants.LoggedInAsKeyName, loginVM.UserId);
+                //## store the current UserId BrowserId and WindowsId in the session to be used later..                
+                ContextSetValue(Constants.LoggedInUserEmailKeyName, currentUser.Email);
                 ContextSetValue(Constants.BrowserId, loginVM.BrowserId);
-                ContextSetValue(Constants.WindowsId, loginVM.WindowsId);
+                ContextSetValue(Constants.WindowsId, loginVM.WindowsId);                
 
                 //## Check in the Config- whether we should do MFA verification  or not.. we can sometimes disable it- for various reasons..
                 if (await is_MfaEnabled())
@@ -76,19 +78,24 @@ namespace MCPhase3.Controllers
                     if (isMFA_Required)
                     {
                         string mfa_SendVerificationCodeUrl = GetApiUrl(_configuration["ApiEndpoints:MFA_SendToEmployer"]);
-                        var mailData = new MailDataVM() {
+                        var mailData = new MailDataVM()
+                        {
                             UserId = loginVM.UserId,
                             EmailTo = currentUser.Email,
                             FullName = currentUser.FullName,
                             /* EmailBody, Subject- will be generated in the API,*/
                         };
                         apiResult = await ApiPost(mfa_SendVerificationCodeUrl, mailData);
-                        
-                        if (string.IsNullOrEmpty(apiResult))
-                        {                            
-                            TempData["ErrorMessage"] = "Server error: Failed to send verification code. Please try again.";                            
+
+                        if (IsEmpty(apiResult))
+                        {
+                            LogInfo("API error: Failed to send verification code. apiResult  =  NULL");
+
+                            loginVM.LoginErrorMessage = "Server error: Failed to send verification code. Please try again.";
+                            return View(loginVM);
                         }
 
+                        //## its all good.. MFA code has been sent out.. now prompt the user to enter the verification code within next 2 mins..
                         return RedirectToAction("VerifyToken");
                     }
                 }
@@ -105,18 +112,18 @@ namespace MCPhase3.Controllers
 
                 }
                 //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
-                return await ProceedToLogIn(loginVM.UserId);                
+                return await ProceedToLogIn(loginVM.UserId);
 
             }
             else if (loginResult == (int)LoginStatus.Locked)
             {
-                TempData["Msg1"] = AccountLockedMessage;
+                //TempData["Msg1"] = AccountLockedMessage;
                 loginVM.LoginErrorMessage = AccountLockedMessage;
                 return View(loginVM);
             }
             else if (loginResult == (int)LoginStatus.Failed)
             {
-                TempData["Msg1"] = AccountFailedLoginMessage;
+                //TempData["Msg1"] = AccountFailedLoginMessage;
                 loginVM.LoginErrorMessage = AccountFailedLoginMessage;
                 return View(loginVM);
             }
@@ -131,7 +138,7 @@ namespace MCPhase3.Controllers
             string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:Is_MfaEnabled"]);
             var apiResult = await ApiGet(mfa_Requirement_Check_Url);
             bool mfaEnabled = bool.Parse(apiResult);
-            return mfaEnabled;            
+            return mfaEnabled;
         }
 
         private async Task AddPayrollProviderInfo(UserDetailsVM currentUser)
@@ -144,34 +151,45 @@ namespace MCPhase3.Controllers
             currentUser.Client_Id = payrollBO.client_Id;
 
             //## now set this newly built object in the cache- so we can re-use it faster..
-            string cacheKey = $"{currentUser.UserId.ToUpper()}_{Constants.AppUserDetails}";
+            string cacheKey = GetKeyName(Constants.AppUserDetails);
             _cache.Set(cacheKey, currentUser);
         }
 
 
         [HttpGet]
-        public async Task<IActionResult> VerifyToken()
+        public IActionResult VerifyToken()
         {
-            string userId = CurrentUserId();
-            var currentUser = await base.GetUserDetails(userId);
-            var userEmail = currentUser.Email;
+            string userId = base.CurrentUserId();            
+            string emailId = ContextGetValue(Constants.LoggedInUserEmailKeyName);
 
+            if (IsEmpty(emailId)) {
+                throw new Exception("EmailId not found in the Redis Session");
+            }
             var tokenDetails = new TokenDataVerifyVM()
             {
                 UserId = userId,
-                Email = MaskedEmail(userEmail),
+                Email = MaskedEmail(emailId),
                 VerificationMessage = TempData["ErrorMessage"]?.ToString(),
             };
+            TempData["ErrorMessage"] = "";
 
             return View(tokenDetails);
+
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyToken(TokenDataVerifyVM tokenDetails)
         {
-            if (!ModelState.IsValid) {
-                TempData["ErrorMessage"] = "You must enter a valid Token";                
+            LogInfo($"VerifyToken() [HttpPost] => {tokenDetails.UserId}: {tokenDetails.SessionToken}");
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Select(x => x.Value.Errors)
+                           .Where(y => y.Count > 0)
+                           .ToList();
+
+                LogInfo("VerifyToken() => Invalid Model state. Sending back to VerifyToken(), " + string.Concat(errors));
+                TempData["ErrorMessage"] = "You must enter a valid Token";
                 return RedirectToAction("VerifyToken");
             }
 
@@ -180,8 +198,16 @@ namespace MCPhase3.Controllers
             var apiResult = await ApiPost(tokenVerificationUrl, tokenDetails);
             var verification = JsonConvert.DeserializeObject<TaskResults>(apiResult);
 
-            if (!verification.IsSuccess) {
+            if (IsEmpty(apiResult)) {
+                LogInfo($"api: {tokenVerificationUrl}, returned NULL");
+                var loginVM = new LoginViewModel() { LoginErrorMessage = "Server Error: Token verificaton failed. Please contact support." };
+                return RedirectToAction("Index", loginVM);
+            }
+
+            if (!verification.IsSuccess)
+            {
                 TempData["ErrorMessage"] = "This verification code is invalid or expired.";
+                LogInfo("verification.IsSuccess= FALSE");
                 return RedirectToAction("VerifyToken");
             }
 
@@ -196,6 +222,7 @@ namespace MCPhase3.Controllers
                 return View("MultipleSessionPrompt", sessionInfo);
 
             }
+
             //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
             return await ProceedToLogIn(tokenDetails.UserId);
 
@@ -229,6 +256,12 @@ namespace MCPhase3.Controllers
         private async Task<IActionResult> ProceedToLogIn(string userId)
         {
             var currentUser = await base.GetUserDetails(userId);
+            if (string.IsNullOrEmpty(currentUser.Client_Id))
+            {
+                await AddPayrollProviderInfo(currentUser);
+            }
+
+            LogInfo($"ProceedToLogIn() => {userId} -> {currentUser.Email}");
 
             var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId")
                                                .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -237,7 +270,7 @@ namespace MCPhase3.Controllers
 
             //check user login details            
             HttpContext.Session.SetString(Constants.SessionKeyClientId, currentUser.Client_Id);
-            HttpContext.Session.SetString(Constants.SessionKeyUserID, userId);      //## used in the 'UserSessionCheckActionFilter' for Authentication  
+            HttpContext.Session.SetString(Constants.LoggedInAsKeyName, userId);      //## used in the 'UserSessionCheckActionFilter' for Authentication  
             //HttpContext.Session.SetString(Constants.LoggedInAsKeyName, vm.UserId);
             HttpContext.Session.SetString(Constants.SessionKeyPayLocName, currentUser.Pay_Location_Name);
             //HttpContext.Session.SetString(Constants.SessionKeyPayLocId, payrollBO.pay_location_ID.ToString());
@@ -257,6 +290,11 @@ namespace MCPhase3.Controllers
                 HttpContext.Session.SetString(SessionKeyClientType, "LG");
             }
 
+            LogInfo("######################################################################");
+            LogInfo("######################### Employers Portal ###########################");
+            LogInfo("######################################################################");
+            LogInfo("ProceedToLogIn()");
+
             return RedirectToAction("Index", "Admin");
 
         }
@@ -274,7 +312,7 @@ namespace MCPhase3.Controllers
             {
                 var currentBrowserSessionId = Guid.NewGuid().ToString();
                 ContextSetValue(Constants.SessionGuidKeyName, currentBrowserSessionId); //## will use this on page navigation- to see whether user has started another session and requested to kill this session            
-                
+
                 //## No user session info in the Cache..  so create an entry to stop any further login attempt from another browser                
                 sessionInfo = new UserSessionInfoVM()
                 {
@@ -355,17 +393,13 @@ namespace MCPhase3.Controllers
             };
 
             string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);
-            using (var httpClient = new HttpClient())
-            {
-                var content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
-
-                using var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content);
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string result = await response.Content.ReadAsStringAsync();
-                    loginBO.result = JsonConvert.DeserializeObject<int>(result);
-                }
+            var apiResult = await ApiPost(apiBaseUrlForLoginCheck, loginBO);
+            if (IsEmpty(apiResult)) {
+                return (int)LoginStatus.Failed;
             }
+
+            loginBO.result = JsonConvert.DeserializeObject<int>(apiResult);
+
             return loginBO.result;
         }
 
@@ -397,20 +431,17 @@ namespace MCPhase3.Controllers
             //## Scenario: user logged in from Browser 2 and wanna kick out Browser1 session.
             //##  When logged in using Browser2- they already have cleared session for Browser_1. So- don't just delete a Redis session if that session doesn't belong to current Browser session Id            
 
-            string currentUserId = CurrentUserId();
-
             var currentBrowserSessionId = ContextGetValue(SessionGuidKeyName);
-            var sessionKeyName = $"{currentUserId}_{SessionInfoKeyName}";
-            var sessionInfo = _cache.Get<UserSessionInfoVM>(sessionKeyName);
+            var sessionInfo = _cache.Get<UserSessionInfoVM>(SessionInfoKeyName());
 
-            _cache.DeleteUserSession(currentUserId);    //## Deletes the User session in Redis Cache..
+            _cache.DeleteUserSession(CurrentUserId());    //## Deletes the User session in Redis Cache..
 
             //## Browser Session Id and Redis SessionId-> are they same..?
             if (sessionInfo != null)
             {
                 if (currentBrowserSessionId == sessionInfo.SessionId)
                 {
-                    _cache.Delete(sessionKeyName);
+                    _cache.Delete(SessionInfoKeyName());
                     _cache.Delete(currentBrowserSessionId);
                 }
             }
@@ -436,7 +467,8 @@ namespace MCPhase3.Controllers
             ClearTempData();
             ClearSessionValues();
 
-            var loginVM = new LoginViewModel() { 
+            var loginVM = new LoginViewModel()
+            {
                 LoginErrorMessage = SessionExpiredMessage
             };
 
@@ -445,7 +477,7 @@ namespace MCPhase3.Controllers
         }
 
         private void ClearTempData()
-        {            
+        {
             TempData["Msg"] = null;
             TempData["Msg1"] = null;
             TempData["MsgM"] = null;
@@ -505,10 +537,15 @@ namespace MCPhase3.Controllers
 
         private string MaskedEmail(string userEmail)
         {
+            LogInfo($"MaskedEmail() => userEmail: {userEmail}");
+
             var emailParts = userEmail.Split("@");
             string userId = emailParts[0];
             var maskedUserId = userId[..4] + "****";
             var maskedEmail = maskedUserId + "@" + emailParts[1];
+
+            LogInfo($"maskedEmail: {maskedEmail}");
+
             return maskedEmail;
         }
     }

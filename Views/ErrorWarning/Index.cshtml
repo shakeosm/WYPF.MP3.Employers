@@ -43,17 +43,9 @@
             }
 
             <div class="row">
-                <div class="col-10">
-                    <h3 style="color:black;">Errors and Warnings Summary.</h3>
-                    @*<p style="font-size:small;">Shows all data alerts and their count. User may return or shows list of all records with specific alert.</p><br />*@
-                </div>
-                <div class="col-2 text-right">
-                    @if (hasRecords){
-                        <a class="btn btn-lg col-12 btn-outline-primary click-and-wait-button" onclick="location.reload();">
-                            <i class="fas fa-sync mr-2"></i>&nbsp;Refresh
-                        </a>
-                    }
-                </div>
+                <h3 style="color:black;">Errors and Warnings Summary.</h3>
+                @*<p style="font-size:small;">Shows all data alerts and their count. User may return or shows list of all records with specific alert.</p><br />*@
+
             </div>
             
             <div class="table table-bordered">
@@ -81,6 +73,15 @@
                         {
                             @foreach (var item in Model.ErrorsAndWarningsList)
                             {
+                                //## The following object will be passed on to the Action with list of required Params only.
+                                var paramList = new AlertQueryVM() {
+                                    RemittanceId = Model.RemittanceId,
+                                    EmployerCode = item.PAYLOCATIONREF,
+                                    AlertType = item.ALERT_TYPE_REF,
+                                    Status = item.ALERT_DESC,
+                                    Total = item.ALERT_COUNT?.ToString().Replace(".0", ""),
+                                };
+
                                 if (item.ACTION_BY.Equals("ALL"))
                                 {
                                     countErrors++;
@@ -104,7 +105,8 @@
                                         </td>
                                         <td id="AlertGroupAlertCounter_@rowCounter" class="text-center h4">@item.ALERT_COUNT</td>
                                         <td class="text-center">
-                                            <a href="#" data-remittance-id="@Model.RemittanceId" data-alert-type="@item.ALERT_TYPE_REF" class="btn btn-outline-primary view-alert-list-button" data-group-id="@rowCounter">View</a>
+                                            @*<a href="#" data-remittance-id="@Model.RemittanceId" data-alert-type="@item.ALERT_TYPE_REF" class="btn btn-outline-primary view-alert-list-button" data-group-id="@rowCounter">View</a>*@
+                                            @Html.ActionLink("View", "WarningsListforBulkApproval", "ErrorWarning", paramList, new { @class = "btn btn-outline-primary btn-sm click-and-wait-button" })
                                         </td>
                                     </tr>
                                     rowCounter++;

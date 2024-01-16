@@ -24,8 +24,12 @@ namespace MCPhase3.CodeRepository
         public async Task InvokeAsync(HttpContext context)
         {            
             string currentUserId = context.Session.GetString(Constants.LoggedInAsKeyName);
-            string x = context.Session.GetString(Constants.SessionKeyUserID);
-            
+            //string x = context.Session.GetString(Constants.LoggedInAsKeyName);
+
+            //using StreamWriter sw = System.IO.File.AppendText("C:\\MP3\\CustomerUploads\\UserSessionHandlerMiddleWare.txt");
+            //sw.WriteLine($"{DateTime.Now.ToLongTimeString()} {currentUserId} > UserSessionHandlerMiddleWare()");
+            //sw.Flush();
+            //sw.Close();
 
             if (!string.IsNullOrEmpty(currentUserId)) {
                 //## Get the session info from Redis cache

@@ -14,12 +14,15 @@ namespace MCPhase3.Models
 
     public class TokenDataVerifyVM
     {
+        [Required]
         public string UserId { get; set; }
 
-        [Required(ErrorMessage = "You must enter the Session Token to verify login")]
+        [Required(ErrorMessage = "SessionToken is required")]
         [StringLength(20, MinimumLength = 6)]
         public string SessionToken { get; set; }
+
         public string Email { get; set; }
+
         public string VerificationMessage { get; set; }
 
     }

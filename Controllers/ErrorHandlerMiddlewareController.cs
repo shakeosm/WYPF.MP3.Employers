@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace MCPhase3.Controllers
@@ -9,6 +10,12 @@ namespace MCPhase3.Controllers
         [Route("ErrorHandlerMiddleware/HttpStatusCodeHandler/{statusCode}")]
         public IActionResult HttpStatusCodeHandler(int statusCode)
         {
+            //var currentUser = HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
+            //using StreamWriter sw = System.IO.File.AppendText("C:\\MP3\\CustomerUploads\\ErrorHandlerMiddlewareController.txt");
+            //sw.WriteLine($"{DateTime.Now.ToLongTimeString()} {currentUser} > ErrorHandlerMiddlewareController({statusCode})");
+            //sw.Flush();
+            //sw.Close();
+
             switch (statusCode)
             {
                 case 400:

@@ -32,7 +32,7 @@ namespace MCPhase3.Models
     {
         public string MC_ALERT_ID { get; set; }
         public string EncryptedAlertid { get; set; }
-        public string remittanceID { get; set; }
+        public string RemittanceID { get; set; }
         public string PayrollPeriod { get; set; }
         public string DATAROWID_RECD { get; set; }
         public string DATAROWID_RECD_ENC { get; set; }

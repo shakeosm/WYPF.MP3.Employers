@@ -4,6 +4,13 @@
         stateSave: true
     });
 
+    if ($("#UpdateStatusAlertDiv").length) {
+        setTimeout(function () {
+            $("#UpdateStatusAlertDiv").slideUp(500).remove();
+        }, 4000);
+
+    }
+
     $(document).on('click', '.reset-record-button', function () {
 
         Swal.fire({

@@ -5,15 +5,35 @@
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 
     var totalAlerts = Model.Where(a => a.CLEARED_FG == "N").Count();
+    string alertType = Model.FirstOrDefault().ALERT_CLASS == "W" ? "Warning" : "Error";
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
 
 }
 <div class="border shadow-lg p-4 mb-4 bg-white">
+    <div id="ShowUpdateStatusDiv">
+        @{
+            var updateStatus = ViewBag.UpdateStatus;
+            if (updateStatus != null)
+            {
+                bool isSuccessAlert = updateStatus.ToString().StartsWith("Success");
+                string alertClass = isSuccessAlert ? "alert-success" : "alert-danger";
+                string alertIcon = isSuccessAlert ? "fa-check-circle" : "fa-exclamation-circle";
+
+                <div id="UpdateStatusAlertDiv" class="alert @alertClass d-flex align-items-center" role="alert">
+                    <i class="fas @alertIcon h2 mx-2"></i>
+                    <div>
+                        @updateStatus.ToString()
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
     <div class="container-fluid bg-3 text-center">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
-                    <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+                <div class="col-12 text-center p-0 mb-2">
+                    <div class="card px-0 pt-4 pb-0 mb-3">
 
                         <!-- progressbar -->
                         <ul id="progressbar">
@@ -25,20 +45,19 @@
                             <li id="payment"><strong>Submit to Database</strong></li>
                             <li id="confirm"><strong>Finish</strong></li>
                         </ul>
-
-
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="container">
         <div class="jumbotron">
-            <h3>Warnings List</h3>
-            <table class="table table-bordered">
+            <h3>Error / Warnings List</h3>
+            <table class="table table-bordered table-warning">
                 <thead class="thead-light">
                     <tr>
-                        <td>@ViewBag.alertClass</td>
+                        <td>@alertType</td>
                         <td><b>@ViewBag.status</b></td>
                         <td class="text-center h3"><span id="TotalErrorCountSpan" class="badge bg-danger rounded-pill">@totalAlerts</span></td>                        
                     </tr>
@@ -46,14 +65,17 @@
             </table>
             @*<p style="font-size:small;">The user may approve all records, a selection of records or return to the previous page.</p><br />*@
             <div class="table-bordered">
-                <h4> Errors and Warnings Processing for payroll provider :<b> @ViewBag.empName </b></h4>
+                <h4>Payroll provider :<b> @ViewBag.empName </b></h4>
                 @*<p style="font-size:small;">No persons have been found within our database that match the incoming records.   Once approved, person and folder records will be created, assuming no further errors are found.</p>*@
-                <p style="font-size:small;">
-                    Select the rows below for which you wish to acknowledge this warning. All rows (<i>Type: Warning</i>) may be chosen by clicking “Acknowledge All”.
-                    If you are happy for WYPF to process these records click on “Acknowledge All” button below the table.
-                    If other errors or warnings are present on a record, these will need to be cleared before the record may be posted.
-                    Individual records may be viewed by clicking view.
-                </p>
+                @if (Model.First().ALERT_CLASS.Equals("W"))
+                {
+                    <p>
+                        Select the rows below for which you wish to acknowledge this warning. All rows may be chosen by clicking “Acknowledge All”.
+                        If you are happy for WYPF to process these records click on “Acknowledge All” button below the table.
+                        If other errors or warnings are present on a record, these will need to be cleared before the record may be posted.
+                        Individual records may be viewed by clicking view.
+                    </p>
+                }   
 
                 @*This is simply a form, will never get posted.. sends data via url... *@
                 <form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">
@@ -61,6 +83,7 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>Pay Location</th>
+                                <th>Period</th>
                                 <th>First Name</th>
                                 <th>Surname</th>
                                 <th>DOB</th>
@@ -80,6 +103,7 @@
 
                                 <tr class="@rowStyle">                             
                                     <td>@item.PAYLOCATIONREF</td>
+                                    <td>@item.PayrollPeriod</td>
                                     <td>@item.FORENAMES</td>
                                     <td>@item.SURNAME</td>
                                     <td>@item.DOB?.ToShortDateString()</td>
@@ -102,7 +126,7 @@
                                                     <i class="fas fa-redo-alt"></i> Reset
                                                 </a>
                                                 @* a copy of the 'view' button- if the user resets the fixes- allow to see the 'Errors' page *@
-                                                <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="d-none view-button btn btn-outline-primary">View</a>
+                                                <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="d-none view-button btn btn-outline-primary click-and-wait-button">View</a>
                                             }else{
                                                 <i class="fas fa-check h2 text-success ml-2"></i>
                                             }
@@ -111,7 +135,7 @@
                                         else if (!string.IsNullOrEmpty(@item.ALERT_CLEARING_METHOD) && !item.ALERT_COUNT.Equals("0.0") && i == 0)
                                         {
                                             @*alertIdList.Append(item.EncryptedAlertid + ",");*@
-                                                    <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="btn btn-outline-primary">View</a>
+                                            <a asp-action="@actionName" asp-route-Id="@item.EncryptedRowRecordID" class="btn btn-outline-primary click-and-wait-button">View</a>
                                         }
                                         else
                                         {
@@ -134,14 +158,15 @@
 
                     <div class="row">
                         <div class="col-6">
+                            <a asp-action="GoToSummaryPage" class="btn btn-secondary btn-lg"> Back</a>
+                            
+                        </div>
+
+                        <div class="col-6">
                             @if (showAcknowledgeAllButton)
                             {
                                 <a id="acknowledgeButton" href="~/ErrorWarning/AcknowledgeAll" class="btn btn-primary btn-lg"> Acknowledge All</a>
                             }
-                        </div>
-
-                        <div class="col-6">
-                            <a asp-action="GoToSummaryPage" class="btn btn-primary btn-lg"> Back</a>
                         </div>
                     </div>
                 </form>

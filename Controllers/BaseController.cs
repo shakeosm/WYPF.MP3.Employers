@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -46,6 +46,12 @@ namespace MCPhase3.Controllers
             HttpContext.Session.SetString($"{keyName}", value);
         }
 
+        public void ContextRemoveValue(string keyName)
+        {
+            HttpContext.Session.SetString(keyName, "");
+            HttpContext.Session.Remove(keyName);
+        }
+
         //#########################
         //## Life saving methods ##
         //#########################
@@ -76,7 +82,7 @@ namespace MCPhase3.Controllers
         /// <summary>Only to be used to Decrypt a Query string value, which usually comes in Encoded format</summary>
         public string DecryptUrlValue(string value, bool forceDecode = true)
         {
-            if (string.IsNullOrEmpty(value)) {
+            if (IsEmpty(value)) {
                 throw new ArgumentException("Parameter cannot be null", "Url parameter");
             }
             return _protector.Unprotect(value);
@@ -85,7 +91,7 @@ namespace MCPhase3.Controllers
         /// <summary>Only to be used to Encrypt a value to prepare to use in a Query string, which usually requires to be in Encoded format</summary>
         public string EncryptUrlValue(string value)
         {
-            if (string.IsNullOrEmpty(value)){
+            if (IsEmpty(value)){
                 throw new ArgumentException("Parameter cannot be null", "Url parameter");
             }
             return _protector.Protect(value);
@@ -134,6 +140,7 @@ namespace MCPhase3.Controllers
 
         public async Task<string> ApiPost(string apiUrl, object paramList)
         {
+            string strJson = Newtonsoft.Json.JsonConvert.SerializeObject(paramList);
             using var httpClient = new HttpClient();
             var content = new StringContent(JsonConvert.SerializeObject(paramList), Encoding.UTF8, "application/json");
 
@@ -143,12 +150,31 @@ namespace MCPhase3.Controllers
                 string result = await response.Content.ReadAsStringAsync();
                 return result;
             }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound || response.StatusCode == System.Net.HttpStatusCode.BadRequest)
             {
+
+                var errorDetails = new ErrorViewModel()
+                {
+                    RequestId = "0",
+                    UserId = HttpContext.Session.GetString(Constants.LoggedInAsKeyName),
+                    ApplicationId = Constants.EmployersPortal,
+                    ErrorPath = $"ApiPost()-> {apiUrl}",
+                    Message = $"Failed API call with status: {response.StatusCode}",
+                    StackTrace = "The api call is failed with the following parameters: <br/>" + strJson
+                };
+
+                string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
+                await ApiPost(insertErrorLogApi, errorDetails);
+
+                LogInfo($"API-> {apiUrl}, failed, status: {response.StatusCode}, Parameters: {strJson}");
+
                 return null;
             }
             else
             {
+                LogInfo($"ERROR >>>>> API-> {apiUrl}, Unhandled exception- status: {response.StatusCode}, Parameters: {strJson}");                
+                ContextSetValue(Constants.ApiCallParamObjectKeyName, strJson);
+
                 throw new Exception($"Failed to connect to: {apiUrl}, Status: {response.StatusCode}");
                 
             }
@@ -162,7 +188,7 @@ namespace MCPhase3.Controllers
 
         public async Task<UserDetailsVM> GetUserDetails(string userName)
         {
-            string cacheKey = $"{userName.ToUpper()}_{Constants.AppUserDetails}";
+            string cacheKey = GetKeyName(Constants.AppUserDetails);
             var appUser = _cache.Get<UserDetailsVM>(cacheKey);
 
             if (appUser is null) { 
@@ -176,11 +202,62 @@ namespace MCPhase3.Controllers
             return appUser;
         }
 
-        public void LogInfo(string message)
+        /// <summary>This will create a key name Prefixed with userName() to make it conistant accross all Read/write or Get/Set- whether using Redis or Browser Session.</summary>
+        /// <param name="keyName">Key name to create</param>
+        /// <returns></returns>
+        public string GetKeyName(string keyName)         
         {
+            return $"{CurrentUserId()}_{keyName}";
+        }
+
+        public bool IsEmpty(string value) 
+        {
+            return string.IsNullOrEmpty(value);
+        }
+
+        public void LogInfo(string message, bool addNewLine = false)
+        {
+            var logMessageText = $"{DateTime.Now.ToLongTimeString()}> {CurrentUserId()} > {message}";
+
             #if DEBUG
-                Console.WriteLine($"{DateTime.Now.ToLongTimeString()}> {CurrentUserId()} > {message}");
+                if (addNewLine) {
+                    Console.WriteLine("");
+                }
+                Console.WriteLine(logMessageText);
             #endif
+            
+            if (_configuration["LogDebugInfo"].ToString().ToLower() == "yes")
+            {
+                var line = Environment.NewLine + Environment.NewLine;
+                logMessageText = $"{DateTime.Now.ToLongTimeString()}> {message}";
+                try
+                {
+                    string filepath = _configuration["LogDebugInfoFilePath"].ToString();
+
+                    if (!Directory.Exists(filepath))
+                    {
+                        Directory.CreateDirectory(filepath);
+                    }
+
+                    filepath = filepath + CurrentUserId() + "-" + DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    if (!System.IO.File.Exists(filepath))
+                    {
+                        System.IO.File.Create(filepath).Dispose();
+                    }
+
+                    using StreamWriter sw = System.IO.File.AppendText(filepath);
+                    //sw.WriteLine(line);
+                    sw.WriteLine(logMessageText);
+                    //sw.WriteLine(line);
+                    sw.Flush();
+                    sw.Close();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error at: public void LogInfo => " + e.ToString());
+                }
+            }
         }
     }
+
 }

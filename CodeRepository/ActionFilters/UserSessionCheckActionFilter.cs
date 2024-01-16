@@ -23,7 +23,7 @@ namespace MCPhase3.CodeRepository.ActionFilters
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {            
-            string currentUserId = filterContext.HttpContext.Session.GetString(Constants.SessionKeyUserID);
+            string currentUserId = filterContext.HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
             string urlPath = filterContext.HttpContext.Request.Path.ToString().ToLower();
 
 
@@ -31,7 +31,7 @@ namespace MCPhase3.CodeRepository.ActionFilters
             {
                 //## do no check....//## VIP pass for these paths 
             }            
-            else if (filterContext.HttpContext.Session.GetString(Constants.SessionKeyUserID) is null)
+            else if (filterContext.HttpContext.Session.GetString(Constants.LoggedInAsKeyName) is null)
             {
                 //## session expired
                 filterContext.Result = RedirectResult("Login", "SessionExpired");

@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static MCPhase3.Common.Constants;
 
@@ -36,7 +37,6 @@ namespace MCPhase3.Controllers
         EventDetailsBO eBO = new EventDetailsBO();
 
         DataTable excelDt;
-        DataTable excelDt1;
         MyModel modelDT = new MyModel();
 
         public ICommonRepo _commonRepo;
@@ -66,7 +66,7 @@ namespace MCPhase3.Controllers
             string userName = CurrentUserId();
 
             //client type is null or empty goto login page again
-            if (string.IsNullOrEmpty(clientType))
+            if (IsEmpty(clientType))
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -129,6 +129,7 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> Error()
         {
             var exDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            var paramList = ContextGetValue(Constants.ApiCallParamObjectKeyName);
 
             var errorDetails = new ErrorViewModel()
             {
@@ -151,8 +152,10 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> ErrorCustom()
         {
             //### we keep the Error view model in cache.. not to pass it via URL- query string...
+            //string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
             string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
             var errorDetails = _cache.Get<ErrorViewModel>(cacheKey);
+
             if (errorDetails == null)
             {
                 return RedirectToAction("Index", "Home");
@@ -322,7 +325,7 @@ namespace MCPhase3.Controllers
 
             var fileNameForUpload = Path.GetFileName(filePath);
             HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
-            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, (numberOfRows - 1).ToString());
+            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, numberOfRows.ToString());
 
             //## store the user selection in the cache- so we can set the as Seleted once the user goes back to the page
             TempData["SelectedYear"] = vm.SelectedYear;  //## TempData[] is to transfer data between Actions in a controller- while on the same call..
@@ -400,7 +403,7 @@ namespace MCPhase3.Controllers
                 result.Message += "<br/> Invalid file type";
             }
 
-            result.IsSuccess = string.IsNullOrEmpty(result.Message);
+            result.IsSuccess = IsEmpty(result.Message);
 
 
             return result;
@@ -640,7 +643,7 @@ namespace MCPhase3.Controllers
             MonthlyContributionBO contributionBO = new MonthlyContributionBO();
 
             //remove the browser response issue of pen testing
-            if (string.IsNullOrEmpty(ContextGetValue("_UserName")))
+            if (IsEmpty(ContextGetValue("_UserName")))
             {
                 contributionBO = null;
 
@@ -732,8 +735,8 @@ namespace MCPhase3.Controllers
             //## Pass the RemittanceId via Session cache- to make the Url less Ugly with the Encrypted RemittanceId
             ContextSetValue(Constants.SessionKeyRemittanceID, remittanceID);
 
-            LogInfo("Exiting Home/CheckTotals page..\r\n");
-            return RedirectToAction("InitialiseProcess");
+            LogInfo("Exiting Home/CheckTotals page..");
+            return RedirectToAction("InitialiseProcessWithSteps");
 
         }
 
@@ -842,7 +845,7 @@ namespace MCPhase3.Controllers
             LogInfo($"calling-> {bulkDataInsertApi}. Total records in excelData: {excelData.Rows.Count}");
             apiResult = await ApiPost(bulkDataInsertApi, excelData);
 
-            if (string.IsNullOrEmpty(apiResult)) {
+            if (IsEmpty(apiResult)) {
                 LogInfo($"ERROR: Failed to insert Bulk data: remittanceId: {remittanceId}");
                 ErrorViewModel errorViewModel = new() {
                     ApplicationId = Constants.EmployersPortal,
@@ -859,6 +862,9 @@ namespace MCPhase3.Controllers
                 return false;
             }
 
+            //## store the value in Sesion for InitialistProcess() to pick it up later
+            ContextSetValue(Constants.SessionKeyTotalRecordsInDB, excelData.Rows.Count.ToString());
+            
             bool InsertToDbSuccess = JsonConvert.DeserializeObject<bool>(apiResult);
 
             excelData.Dispose();
@@ -893,187 +899,354 @@ namespace MCPhase3.Controllers
             int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
             string userID = CurrentUserId();
 
-            //url to get total number of records in database
-            string getTotalRecordsApi = GetApiUrl(_apiEndpoints.TotalRecordsInserted);
-            string initialiseProcApi = GetApiUrl(_apiEndpoints.InitialiseProc);
-            apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch);
+            var initialiseProcessResultVM = new InitialiseProcessResultVM()
+            {
+                EncryptedRemittanceId = encryptedRemittanceId,
+                EmployeeName = ContextGetValue(Constants.SessionKeyEmployerName)
+            };
 
+            
             LogInfo($"\r\nLoading Home/InitialiseProcess page.. RemittanceId: {remttanceId}");
 
+            //## Make sure all records are inserted in the DB.Table- before trying to run the Initialise Process.
+            bool isSuccess = await CheckAllRecordsAreInsertedInDB(remttanceId);
+
+            //## if there are 7k+ records- add 2 seconds delay in each DB calls... so things will go in block by block- not all at once and clog the App and DB Server
+            int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
+            bool shouldAddDelay = totalRecordsInFile >= 7000;
+            
+            //## ReturnInitialise() call.. a big piece of Task- initialising the entire journey, setting values, generating error/warnings, fixing issues and many things... 
+            var initialiseProcessResult = await Execute_ReturnInitialiseProcess(userID, remttanceId);
+
+            if(initialiseProcessResult.P_STATUSCODE != 0 ) {
+                //## value '0' means all good ('Records updated').. returned by PackageProcedure in DB
+                LogInfo($"ReturnInitialise returned P_STATUSCODE={initialiseProcessResult.P_STATUSCODE}, will be showing error to the User.");
+                return RedirectToAction("ErrorCustom", "Home");
+            }
+
+            //## Return Check API to call to check if the previous month file is completed.
+            isSuccess = await CheckPreviousMonthFileIsSubmitted(remttanceId);
+
+
+            //## Automatch api call
+            var autoMatchBO = await Execute_AutoMatchProcess(remttanceId);
+            if (autoMatchBO.L_STATUS_CODE == 3)
+            {
+                TempData["MsgError"] = "Previous month file is still in process by WYPF";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var totalRecordsInDatabase = int.Parse(TempData["totalRecordsInDatabase"].ToString());
+            LogInfo($"totalRecordsInFile: {totalRecordsInFile}, totalRecordsInDatabase: {totalRecordsInDatabase}");
+            if (Convert.ToInt32(totalRecordsInFile) < totalRecordsInDatabase || Convert.ToInt32(totalRecordsInFile) > 10000)
+            {
+                totalRecordsInFile = totalRecordsInDatabase;
+            }
+
+            initialiseProcessResultVM.ShowProcessedInfo = "Total records in uploaded file are <b>: " + totalRecordsInFile + "</b><br />"
+                              + " Total number of records inserted successfully into database are: <b>" + totalRecordsInDatabase + "</b><br />"
+                              + " Employers processed:  <b>" + initialiseProcessResult.P_EMPLOYERS_PROCESSED + "</b><br />";
+
+            initialiseProcessResultVM.ShowMatchingResult = "Total records in uploaded file are <b>: " + totalRecordsInFile + "</b><br />"
+                                + " Total number of records inserted successfully into database are: <b>" + totalRecordsInDatabase + "</b><br />"
+                                + "Persons Matched : " + autoMatchBO.personMatchCount + "<br />"
+                                + "Folders Matched : " + autoMatchBO.folderMatchCount + "<br />";
+
+
+            LogInfo("Exiting Home/InitialiseProcess() Method.");
+            LogInfo("#####################################################\r\n");           
+
+            return View(initialiseProcessResultVM);
+        }
+
+
+
+        /// <summary>
+        /// This is an alternative page for InitialiseProcess()- which has a big workload- all at once..
+        /// This new page will prompt the user to initiate the tasks one by one, therefore will have a smooth journey end-to-end
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public IActionResult InitialiseProcessWithSteps()
+        {
+            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
+            int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+            int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
+            var totalRecordsInDatabase = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecordsInDB));
+            string errorMessage = TempData["InitialiseProcessError"]?.ToString();
+
+            LogInfo($"Loading Home/InitialiseProcessWithSteps() .. RemittanceId: {remttanceId}");
+            LogInfo($"TotalRecordsInFile: {totalRecordsInFile}, totalRecordsInDatabase: {totalRecordsInDatabase}");
+
+            var initialiseProcessResultVM = new InitialiseProcessResultVM()
+            {
+                EncryptedRemittanceId = encryptedRemittanceId,
+                EmployeeName = ContextGetValue(Constants.SessionKeyEmployerName),
+                ErrorMessage = errorMessage,
+            };
+
+            var employerProcessedCount = ContextGetValue(Constants.EmployerProcessedCount);
+            if (IsEmpty(employerProcessedCount)) {
+                employerProcessedCount = "PENDING";
+            }
+            var returnInitialiseCurrentStep = ContextGetValue(Constants.ReturnInitialiseCurrentStep);
+            if (IsEmpty(returnInitialiseCurrentStep))
+            {
+                returnInitialiseCurrentStep = "ReturnInitialise";
+            }
+
+            initialiseProcessResultVM.TotalRecordsInFile = totalRecordsInFile.ToString();
+            initialiseProcessResultVM.TotalRecordsInDatabase = totalRecordsInDatabase.ToString();
+            initialiseProcessResultVM.EmployersProcessedRecords = employerProcessedCount;
+
+            initialiseProcessResultVM.CurrentStep = returnInitialiseCurrentStep;
+
+            return View(initialiseProcessResultVM);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> InitialiseProcessWithSteps(string remittanceId)
+        {
+            string userID = CurrentUserId();
+            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
+            int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+
+            LogInfo($"Post -> Home/InitialiseProcessWithSteps()");
+
+            //## ReturnInitialise() call.. a big piece of Task- initialising the entire journey, setting values, generating error/warnings, fixing issues and many things... 
+            var initialiseProcessResult = await Execute_ReturnInitialiseProcess(userID, remttanceId);
+
+            if (initialiseProcessResult.P_STATUSCODE == 9)
+            {
+                //## value '0' means all good ('Records updated').. returned by PackageProcedure in DB
+                LogInfo($"ReturnInitialise returned P_STATUSCODE={initialiseProcessResult.P_STATUSCODE}, File maybe corrupted! Terminate the process now.");
+                return RedirectToAction("ErrorCustom", "Home");
+
+            }
+            else if (initialiseProcessResult.P_STATUSCODE != 0)
+            {
+                //## value '0' means all good ('Records updated').. returned by PackageProcedure in DB
+                LogInfo($"ReturnInitialise returned P_STATUSCODE={initialiseProcessResult.P_STATUSCODE}, will be showing error to the User.");
+                TempData["InitialiseProcessError"] = $"Error: Status = {initialiseProcessResult.P_STATUSCODE}-{initialiseProcessResult.P_STATUSTEXT}. Remttance: {remttanceId}. Please contact IT Support with a screenshot of this page.";
+                return RedirectToAction("InitialiseProcessWithSteps");
+
+            }
+
+            //## this will update the score- from 50->60 and then 60->70. AUTO_MATCH will update the score later to 80.
+            var isReturnChecked = await Execute_Return_Check_Process(remttanceId, userID);  
+
+            ContextSetValue(Constants.EmployerProcessedCount, initialiseProcessResult.P_RECORDS_PROCESSED.ToString());
+            ContextSetValue(Constants.ReturnInitialiseCurrentStep, "Auto_Match");
+
+            return RedirectToAction("InitialiseProcessWithSteps");
+        }
+
+        [HttpGet,HttpPost]
+        public async Task<ActionResult> InitialiseAutoMatchProcessByAjax()
+        {
+            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
+            int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+
+            var autoMatchResult = await Execute_AutoMatchProcess(remttanceId);
+            var taskResult = new TaskResults() { 
+                IsSuccess = autoMatchResult.L_STATUS_CODE != 3,
+                Message =  $"<i class='fas fa-users mx-2 mx-2'></i> Persons Matched: {autoMatchResult.personMatchCount}<br />" 
+                    + $"<i class='fas fa-folder-open mx-2'></i> Folders Matched: {autoMatchResult.folderMatchCount}<br />"
+            };
+
+            if (autoMatchResult.L_STATUS_CODE == 3) {
+                taskResult.Message = autoMatchResult.L_STATUS_TEXT;
+            }
+
+            return Json(taskResult);
+        }
+
+        private async Task<AutoMatchBO> Execute_AutoMatchProcess(int remittanceId)
+        {
+            apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch);    //## api/AutoMatchRecords
+
+            ContextRemoveValue(Constants.ReturnInitialiseCurrentStep); //## Remove the value.. so system will reset to original value- whaever it was before..
+            ContextRemoveValue(Constants.EmployerProcessedCount);
+            ContextRemoveValue(Constants.SessionKeyTotalRecords);
+            ContextRemoveValue(Constants.SessionKeyTotalRecordsInDB);
+
+            LogInfo($"Calling Automatch api: {apiBaseUrlForAutoMatch}.");
+            AutoMatchBO autoMatchBO = new();
+            
+            string apiResult = "";
+            //## even though 'initialiseProcessResult' is successful- we have seen on various ocassions that a Remittance still have status < 70, due to an on-going process.
+            //## we need to wait for at least 5 seconds before allowing the user to initiate Auto_Match process.. otherwise- that will fail for a Remittance status < 70.
+            for (int i = 0; i < 10; i++)
+            {
+                apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remittanceId}");
+                autoMatchBO = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
+                
+                LogInfo($"Automatch executed. autoMatchBO.L_STATUS_CODE: {autoMatchBO.L_STATUS_CODE} - {autoMatchBO.L_STATUS_TEXT}.");
+
+                if (autoMatchBO.L_STATUS_CODE == 2)
+                {
+                    LogInfo($"Attempt {i + 1}: Automatch failed. autoMatchBO.L_STATUS_CODE: {autoMatchBO.L_STATUS_CODE}. Try again after 7 seconds.");
+                    Thread.Sleep(7000);
+                }
+                else {
+                    LogInfo($"Attempt {i + 1}: Automatch Success");
+                    break;
+                }
+            }
+            
+            LogInfo($"Automatch success. autoMatchBO.L_STATUS_CODE: {autoMatchBO.L_STATUS_CODE} - {autoMatchBO.L_STATUS_TEXT}.");
+
+            return autoMatchBO;
+
+        }
+
+        /// <summary>This updates the Remittance score respectively and checks if we have a submission of the previous month.
+        /// For the Statuses- 50-70 -> it runs 'RETURN_CHECK_INITIAL_STAGE' and updates the score to a higher one..</summary>
+        /// <param name="remttanceId"></param>
+        /// <returns></returns>
+        private async Task<bool> Execute_Return_Check_Process(int remttanceId, string userID)
+        {
+            //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
+            //Return Check API to call to check if the previous month file is completed ppse
+            ReturnCheckBO result = new()
+            {
+                p_REMITTANCE_ID = remttanceId,
+                P_USERID = userID,
+                P_PAYLOC_FILE_ID = 0
+            };
+
+            string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc);      //## Get 'status of a file'
+            LogInfo($"\r\nExecute_Return_Check_Process()-> apiBaseUrlForCheckReturn - {apiBaseUrlForCheckReturn} -> remttanceId {remttanceId}");
+
+
+            var apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
+            result = JsonConvert.DeserializeObject<ReturnCheckBO>(apiResult);   //## we get StatusCode and StatusText back, ie: 1 = Record Not Found.. 
+
+            LogInfo($"Execute_Return_Check_Process() Finished, status: {result.L_STATUSTEXT}");
+            return true;
+        }
+
+
+        /// <summary>Return Check API to call to check if the previous month file is completed.</summary>
+        /// <param name="remttanceId"></param>
+        /// <returns></returns>
+        private async Task<bool> CheckPreviousMonthFileIsSubmitted(int remttanceId)
+        {
+            LogInfo($"Skipping  'Task<bool> CheckPreviousMonthFileIsSubmitted', as this have no followup action, means- this check is useless. remttanceId {remttanceId}");
+            return true;
+
+            ReturnCheckBO result = new()
+            {
+                p_REMITTANCE_ID = remttanceId,
+                P_USERID = CurrentUserId(),
+                P_PAYLOC_FILE_ID = 0
+            };
+
+            LogInfo($"apiBaseUrlForCheckReturn - remttanceId {remttanceId}");
+
+            string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc);      //## Get 'status of a file'
+            string apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
+            result = JsonConvert.DeserializeObject<ReturnCheckBO>(apiResult);   //## we get StatusCode and StatusText back, ie: 1 = Record Not Found.. 
+
+            LogInfo($"apiBaseUrlForCheckReturn Finished, status: {result.L_STATUSTEXT}");
+
+            return true;
+            //Add functionality here to restrict file if the previous month file is still pending.
+        }
+
+
+        /// <summary>Initialising the entire journey, setting values, fixing issues and many things
+        /// </summary>
+        /// <param name="userID">User Id</param>
+        /// <param name="remttanceId">Remittance ID</param>
+        /// <returns>True/False on success</returns>
+        private async Task<InitialiseProcBO> Execute_ReturnInitialiseProcess(string userID, int remttanceId)
+        {
+            //######################################
+            //## Actual ReturnInitialise() Process
+            //######################################
             var initialiseProcBO = new InitialiseProcBO
             {
                 P_REMITTANCE_ID = remttanceId,
                 P_USERID = userID
             };
 
-            //## if there are 7k+ records- add 2 seconds delay in each DB calls... so things will go in block by block- not all at once and clog the App and DB Server
-            int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
-            bool shouldAddDelay = totalRecordsInFile >= 7000;
+            LogInfo($"ReturnInitialise: initialising the journey, Error/warning generation and other tasks to set the Status, Scores, etc");
 
-            try
+            //## Following is a big piece of Task- initialising the journey, setting values, fixing issues and many things... 
+            string initialiseProcApi = GetApiUrl(_apiEndpoints.InitialiseProc);     //## api/InitialiseProc
+            string apiResult = await ApiPost(initialiseProcApi, initialiseProcBO);
+            initialiseProcBO = JsonConvert.DeserializeObject<InitialiseProcBO>(apiResult);
+            LogInfo($"ReturnInitialise: Finished. initialiseProcBO.P_STATUSCODE: {initialiseProcBO.P_STATUSCODE}.");
+
+            //## need to add a check to see what is the outcome of 'apiBaseUrlForInitialiseProc' API call..
+            if (initialiseProcBO.P_STATUSCODE == 9)
             {
-                var apiResult = await ApiGet($"{getTotalRecordsApi}{remttanceId}");
-
-                int total = JsonConvert.DeserializeObject<int>(apiResult);
-                string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
-                LogInfo($"TotalRecordsInserted: {total}, and totalRecordsInFile: {totalRecordsInF}");
-
-                //### following loop will attempt 10 times to find records in the table. //Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
-                int maxRetry = 10; int attempCount = 1;
-                while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
-                {
-                    if (attempCount >= maxRetry) { //## need to give up after 10 attempts.. means 30 seconds.. enough to assume system was crashed while doing BulkInsert()
-                        attempCount = maxRetry; 
-                    }
-                    LogInfo("\r\nInside ReturnInitialise().. but Database hasn't finished inserting all records yet. adding a 3 Seconds. Ateempt: " + attempCount);
-                    System.Threading.Thread.Sleep(3000);
-                    apiResult = await ApiGet($"{getTotalRecordsApi}{remttanceId}");
-                    total = JsonConvert.DeserializeObject<int>(apiResult);
-
-                    attempCount++;
-                }
-
-
-                LogInfo($"ReturnInitialise: initialising the journey, Error/warning generation and other tasks to set the Status, Scores, etc");
-                if (shouldAddDelay)
-                {
-                    LogInfo($"Important: Adding a 2-seconds delay before initialiseProcApi()");
-                    System.Threading.Thread.Sleep(2000);
-                    LogInfo("Sleep(2000) --> Finished");
-                }
-
-                //## Following is a big piece of Task- initialising the entire journey, setting values, fixing issues and many things... 
-                apiResult = await ApiPost(initialiseProcApi, initialiseProcBO);
-                initialiseProcBO = JsonConvert.DeserializeObject<InitialiseProcBO>(apiResult);
-                LogInfo($"ReturnInitialise: Finished. initialiseProcBO.P_STATUSCODE: {initialiseProcBO.P_STATUSCODE}.");
-
-                //## need to add a check to see what is the outcome of 'apiBaseUrlForInitialiseProc' API call..
-                if (initialiseProcBO.P_STATUSCODE == 9)
-                {
-                    //## abort mission... corrupted data found..
-                    var errorViewModel = new ErrorViewModel()
-                    {
-                        ApplicationId = Constants.EmployersPortal,
-                        ErrorPath = $"/Home/InitialiseProcess/{remttanceId}",
-                        Message = "Return Initialise failed with StatusCode 9.",
-                        RemittanceInfo = remttanceId.ToString(),
-                        RequestId = "0",
-                        Source = initialiseProcApi,
-                        UserId = CurrentUserId(),
-                        DisplayMessage = "The supplied file seems to have corrupt data therefore Insert operation failed. Please try to upload a file with simplified data."
-                    };
-                    string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
-                    _cache.Set(cacheKey, errorViewModel);
-
-                    eBO.remittanceID = remttanceId;
-                    eBO.remittanceStatus = 1;
-                    eBO.eventTypeID = 4;
-                    eBO.notes = errorViewModel.Message;
-                    InsertEventDetails(eBO);
-
-                    return RedirectToAction("ErrorCustom", "Home");
-                }
-
-
-                //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
-                //Return Check API to call to check if the previous month file is completed ppse
-                ReturnCheckBO result = new()
-                {
-                    p_REMITTANCE_ID = remttanceId,
-                    P_USERID = userID,
-                    P_PAYLOC_FILE_ID = 0
-                };
-
-                LogInfo($"apiBaseUrlForCheckReturn - remttanceId {remttanceId}");
-                if (shouldAddDelay)
-                {
-                    LogInfo($"Important: Adding a 2-seconds delay before ReturnCheckProc()");
-                    System.Threading.Thread.Sleep(2000);
-                    LogInfo("Sleep(2000) --> Finished");
-                }
-
-                string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc);      //## Get 'status of a file'
-                apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
-                result = JsonConvert.DeserializeObject<ReturnCheckBO>(apiResult);   //## we get StatusCode and StatusText back, ie: 1 = Record Not Found.. 
-                
-                LogInfo($"apiBaseUrlForCheckReturn Finished, status: {result.L_STATUSTEXT}");
-
-                //Add functionality here to restrict file if the previous month file is still pending.
-
-                LogInfo($"following is call to Automatch api: {apiBaseUrlForAutoMatch}.");
-                AutoMatchBO autoMatchBO = new();
-                //following is call to Automatch api
-                if (shouldAddDelay)
-                {
-                    LogInfo($"Important: Adding a 2-seconds delay before AutoMatchProcess()");
-                    System.Threading.Thread.Sleep(2000);
-                    LogInfo("Sleep(2000) --> Finished");
-                }
-                apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remttanceId}");
-                autoMatchBO = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
-
-                LogInfo($"Automatch finished. autoMatchBO.L_STATUS_CODE: {autoMatchBO.L_STATUS_CODE} - {autoMatchBO.L_STATUS_TEXT}.");
-
-
-                if (Convert.ToInt32(totalRecordsInF) < total || Convert.ToInt32(totalRecordsInF) > 10000)
-                {
-                    totalRecordsInF = total.ToString();
-                }
-
-                TempData["showOnlyTotals"] = "Total records in uploaded file are <b>: " + totalRecordsInF + "</b><br />"
-                                  + " Total number of records inserted successfully into database are: <b>" + total + "</b><br />"
-                                  + " Employers processed:  <b>" + initialiseProcBO.P_EMPLOYERS_PROCESSED + "</b><br />";
-
-                TempData["msgExtra"] = "Total records in uploaded file are <b>: " + totalRecordsInF + "</b><br />"
-                                    + " Total number of records inserted successfully into database are: <b>" + total + "</b><br />"
-                                    + "Persons Matched : " + autoMatchBO.personMatchCount + "<br />"
-                                    + "Folders Matched : " + autoMatchBO.folderMatchCount + "<br />"
-                                   //+ "Records ready to post : " + GetIntValueFromString(totalMatched) + "<br />"
-                                   ;
-
-                //check if AutoMatch successfull then proceed otherwise skip and take file to Dashboard.
-                if (autoMatchBO.L_STATUS_CODE == 3)
-                {
-                    TempData["MsgError"] = "Previous month file is still in process by WYPF";
-                    return RedirectToAction("Index", "Home");
-                }                
-                
-            }
-            catch (Exception ex)
-            {
-
-                //_logger.LogError($"Bulk Data or AutoMatch is failed, it is implemented in Home controller. Detail: {ex.StackTrace}");
-                LogInfo($"Bulk Data or AutoMatch is failed, it is implemented in Home controller. Detail: {ex.StackTrace}");
-
-                TempData["MsgError"] = "Please refresh your page in couple of minutes.";
-
-                var vm = new ErrorViewModel()
+                //## abort mission... corrupted data found..
+                var errorViewModel = new ErrorViewModel()
                 {
                     ApplicationId = Constants.EmployersPortal,
-                    Message = ex.Message,
-                    Source = getTotalRecordsApi,
-                    ErrorPath = $"Home->InitialiseProcess(int {remttanceId})",
+                    ErrorPath = $"/Home/InitialiseProcessWithSteps/{remttanceId}",
+                    Message = "Return Initialise failed with StatusCode 9.",
                     RemittanceInfo = remttanceId.ToString(),
-                    StackTrace = ex.StackTrace,
-                    UserId = CurrentUserId()
+                    RequestId = "0",
+                    Source = initialiseProcApi,
+                    UserId = CurrentUserId(),
+                    DisplayMessage = "The supplied file seems to have corrupt data therefore Insert operation failed. Please try to upload a file with simplified data."
                 };
 
-                await ErrorLog_Insert(vm);
+                string cacheKey = $"{CurrentUserId()}_{Constants.CustomErrorDetails}";
+                _cache.Set(cacheKey, errorViewModel);
+
+                eBO.remittanceID = remttanceId;
+                eBO.remittanceStatus = 1;
+                eBO.eventTypeID = 4;
+                eBO.notes = errorViewModel.Message;
+                InsertEventDetails(eBO);                
             }
 
-            var errorAndWarningViewModelWithRecords = new ErrorAndWarningViewModelWithRecords
-            {
-                ALERT_TYPE_REF = "ALL",
-                ALERT_CLASS = "Error and Warnings",
-                remittanceID = encryptedRemittanceId,
-                ALERT_DESC = "All the Errors and Warnings in file"
-            };
-
-            LogInfo("Exiting Home/InitialiseProcess() Method.");
-            LogInfo("#####################################################\r\n");           
-
-            return View(errorAndWarningViewModelWithRecords);
+            //return initialiseProcBO.P_STATUSCODE == 0;  //## value '0' means all good ('Records updated').. returned by Packagerocedure in DB
+            return initialiseProcBO;
         }
+
+
+        /// <summary>Make sure all records are inserted in the DB.Table- before trying to run the Initialise Process.
+        /// </summary>
+        /// <param name="remttanceId"></param>
+        /// <returns></returns>
+        private async Task<bool> CheckAllRecordsAreInsertedInDB(int remttanceId)
+        {
+            string getTotalRecordsApi = GetApiUrl(_apiEndpoints.TotalRecordsInserted);
+            var apiResult = await ApiGet($"{getTotalRecordsApi}{remttanceId}");
+
+            int total = JsonConvert.DeserializeObject<int>(apiResult);
+            string totalRecordsInF = ContextGetValue(Constants.SessionKeyTotalRecords);
+            LogInfo($"TotalRecordsInserted: {total}, and totalRecordsInFile: {totalRecordsInF}");
+
+            //### following loop will attempt 5 times to find records in the table. //Windows bulk insertion service submits only 10000 records at time so I Need to keep check until all the records inserted.
+            int maxRetry = 5; int attempCount = 1;
+            while (total == 0 || Convert.ToInt32(totalRecordsInF) > total)
+            {
+                if (attempCount >= maxRetry)
+                { //## need to give up after 5 attempts.. means 15 seconds.. enough to assume system was crashed while doing BulkInsert()
+                    attempCount = maxRetry;
+                }
+                LogInfo("\r\nInside ReturnInitialise().. but Database hasn't finished inserting all records yet. adding a 3 Seconds. Ateempt: " + attempCount);
+                System.Threading.Thread.Sleep(3000);
+                apiResult = await ApiGet($"{getTotalRecordsApi}{remttanceId}");
+                total = JsonConvert.DeserializeObject<int>(apiResult);
+
+                attempCount++;
+            }
+            //## these are the temporary data transfer variables between Action/Controllers...
+            //TempData["totalRecordsInFile"] = totalRecordsInF;
+            TempData["totalRecordsInDatabase"] = total;
+
+            //## by now all 5 attempts are made and we should have all records in the DB... same as Excel-DB Table should have same number of rows
+            return total >= int.Parse(totalRecordsInF);
+        }
+
         /// <summary>
         /// following action is not in use
         /// </summary>
@@ -1226,7 +1399,7 @@ namespace MCPhase3.Controllers
 
             System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. delete it once processed
 
-            result.IsSuccess = string.IsNullOrEmpty(result.Message);
+            result.IsSuccess = IsEmpty(result.Message);
             return result;  //## success! All good!
         }
 

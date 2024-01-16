@@ -14,10 +14,6 @@ $(function () {
 
     }); //## End: 'acknowledge-alert-item").click()
 
-    $("#closeBrowserTab").click(function () {
-        
-    });
-    
 
     function ApproveWarning(caller, alertId) {
         var formData = new FormData();

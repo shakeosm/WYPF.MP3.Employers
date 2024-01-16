@@ -33,7 +33,7 @@
         <div id="PageHeaderDiv" class="row alert alert-primary">
                 <div class="col-8">
                     <h3>Error and Warnings</h3>
-                    <p style="font-size:small;">Amend data below in form to correct any errors displayed below.</p><br />
+                    <h4 id="AlertDescriptionHeader" class="text-danger my-3">@alertClass: @alertDescription</h4>
                 </div>
                 <div class="col-4">
                     <a href="~/ErrorWarning/UpdateSingleRecord?id=@Model.DataRowEncryptedId" class="btn btn-info float-end"
@@ -66,8 +66,7 @@
     </style>
 
     @*<h3 id="EmployerNameHeader">Employer: @Model.EmployersName</h3>*@
-    <br/>
-    <h3 id="AlertDescriptionHeader" class="text-danger my-3">@alertClass: @alertDescription</h3>
+    <br/>    
     
     <form asp-action="MemberFolderMatching" id="MemberFolderMatchingForm" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -235,7 +234,8 @@
 
             <div class="row p-4">
                 <div class="offset-3 col-3">
-                    <a href="javascript:window.open('','_self').close();" class="btn btn-secondary btn-lg">Back</a>                    
+                    @*<a href="javascript:window.open('','_self').close();" class="btn btn-secondary btn-lg">Back</a>*@
+                    <a href="/ErrorWarning/WarningsListforBulkApproval" class="btn btn-secondary btn-lg"> Back</a>
                 </div>
                 <div class="col-3">
                     <button class="btn btn-success form-control col-6" type="submit" id="btnSubmit">Submit</button>

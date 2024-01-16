@@ -50,9 +50,11 @@ namespace MCPhase3.Controllers
         /// <summary>This will only be used to pass to WYPF by Emp for processing</summary>
         /// <returns></returns>
         public IActionResult SubmitForProcessingAjax()
-        {
+        {            
             var taskResult = new TaskResults();
             var currentRemittance = Convert.ToInt32(GetRemittanceId(returnAsEncrypted: false)); // we can put variable name with variable value when calling a function to make it more readable                    
+            
+            LogInfo($"Loading SubmitForProcessingAjax(), remittanceId: {currentRemittance}", true);
 
             EventDetailsBO eBO = new()
             {
@@ -67,6 +69,9 @@ namespace MCPhase3.Controllers
 
             taskResult.IsSuccess = true;
             taskResult.Message = $"The remittance: {currentRemittance} is successfully passed to WYPF for further processing.";
+
+            LogInfo($"Finished SubmitForProcessingAjax()");
+
             return Json(taskResult);
         }
 
@@ -134,9 +139,13 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> GetScoreHistoryPartialView(string remittanceId)
         {
+            LogInfo($"Loading GetScoreHistoryPartialView(), remittanceId: {remittanceId}", true);
+
             int remID = Convert.ToInt32(DecryptUrlValue(remittanceId));
             List<DashboardHistScoreBO> dashboardScoreHistBO = await getDashboardScoreHist(remID);
             ViewBag.EmployerName = ContextGetValue(Constants.SessionKeyEmployerName);
+
+            LogInfo($"Finished GetScoreHistoryPartialView()");
 
             return PartialView("_ScoreHistory", dashboardScoreHistBO);
         }
@@ -267,6 +276,7 @@ namespace MCPhase3.Controllers
 
         public async Task<IActionResult> Home()
         {
+            LogInfo("Loading Admin/Home", true);
             //check of PaylocID session has value then empty it.
             if (ContextGetValue(Constants.SessionKeyPaylocFileID) != null)
             {
@@ -283,6 +293,8 @@ namespace MCPhase3.Controllers
             {
                 RemittanceList = await GetRemittanceListByStatus(paramList)
             };
+
+            LogInfo("Admin/Home Loaded..");
 
             return View(viewModel);
            
@@ -327,6 +339,8 @@ namespace MCPhase3.Controllers
         private async Task<List<GetRemittanceStatusByUserBO>> getDashboardValuesForEmployers(string userid, string status)
         {
             string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.DashboardEmployers);
+            
+            LogInfo($"getDashboardValuesForEmployers()-> api: {apiBaseUrlForDashboard}{userid}");
 
             string apiResponse = await ApiGet(apiBaseUrlForDashboard + userid);
             var listBO = JsonConvert.DeserializeObject<List<GetRemittanceStatusByUserBO>>(apiResponse);
@@ -349,7 +363,10 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<DashboardHistScoreBO>> getDashboardScoreHist(int remittanceId)
         {
+            LogInfo($"Loading GetDashboardScoreHist(), remittanceId: {remittanceId}", true);
             string apiBaseUrlForDashboardScoreHist = GetApiUrl(_apiEndpoints.DashboardScoreHist);
+
+            LogInfo($"apiBaseUrlForDashboardScoreHist()-> api: {apiBaseUrlForDashboardScoreHist}");
 
             string apiResponse = await ApiGet(apiBaseUrlForDashboardScoreHist + remittanceId);
             var listBO = JsonConvert.DeserializeObject<List<DashboardHistScoreBO>>(apiResponse);
@@ -362,6 +379,8 @@ namespace MCPhase3.Controllers
                     item.remittanceId_Encrypted = EncryptUrlValue(item.remittance_Id.ToString());
                 }
             }
+
+            LogInfo($"Finished GetDashboardScoreHist()");
 
             return listBO;
         }
@@ -379,8 +398,11 @@ namespace MCPhase3.Controllers
                 TempData["msg1"] = "Invalid Remittance Id.";
                 return RedirectToAction("Home", "Admin");
             }
+
             rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
             rBO.P_USERID = CurrentUserId();
+
+            LogInfo($"Initiating SubmitReturn(), RemittanceID: {rBO.p_REMITTANCE_ID}", true);
 
             var apiResult = await SubmitReturn_UpdateScore(rBO);
 
@@ -393,8 +415,8 @@ namespace MCPhase3.Controllers
             {
                 TempData["MsgError"] = $"Failed to update WYPF database. Reason: {apiResult.Message}";
             }
-            
 
+            LogInfo($"Finished SubmitReturn()");
             return RedirectToAction("Home", "Admin");
         }
 
@@ -404,6 +426,8 @@ namespace MCPhase3.Controllers
         /// <returns>ApiCallResult View Model</returns>
         async Task<ApiCallResultVM> SubmitReturn_UpdateScore(ReturnSubmitBO rBO)
         {
+            LogInfo($"Initiating SubmitReturn_UpdateScore(), RemittanceID: {rBO.p_REMITTANCE_ID}", true);
+
             string WebapiBaseUrlForSubmitReturn = GetApiUrl(_apiEndpoints.SubmitReturn);    //## api/SubmitReturn
             var apiResult = new ApiCallResultVM() { IsSuccess = false };
             try
@@ -415,6 +439,8 @@ namespace MCPhase3.Controllers
 
                 apiResult.IsSuccess = rBO.Success;
                 apiResult.Message = rBO.Message;
+
+                LogInfo($"Finished SubmitReturn_UpdateScore(), RemittanceID: {rBO.p_REMITTANCE_ID}, apiResult.IsSuccess: {apiResult.IsSuccess}, apiResult.Message: {apiResult.Message}");
 
                 return apiResult;
             }
@@ -441,6 +467,9 @@ namespace MCPhase3.Controllers
                 else {
                     apiResult.Message = "DB Server execution error!";
                 }
+
+                LogInfo($"ERROR SubmitReturn_UpdateScore(), RemittanceID: {rBO.p_REMITTANCE_ID}, ErrorPath: {errorDetails.ErrorPath}, Message: {errorDetails.Message}");
+
                 return apiResult;
             }
         }
@@ -457,6 +486,8 @@ namespace MCPhase3.Controllers
             string apiCallDeleteRemittance = GetApiUrl(_apiEndpoints.DeleteRemittance);
             string userId = CurrentUserId();
 
+            LogInfo($"apiCallDeleteRemittance()-> api: {apiCallDeleteRemittance}");
+
             string apiResponse = await ApiGet($"{apiCallDeleteRemittance}{remID}/{userId}");
             string result = JsonConvert.DeserializeObject<string>(apiResponse);
 
@@ -470,6 +501,8 @@ namespace MCPhase3.Controllers
             int remID = Convert.ToInt32(DecryptUrlValue(id));
             string userId = CurrentUserId();
             string apiDeleteRemittanceUrl = GetApiUrl(_apiEndpoints.DeleteRemittance);
+            
+            LogInfo($"DeleteRemittanceAjax() -> apiDeleteRemittanceUrl()-> api: {apiDeleteRemittanceUrl}");
 
             string apiResponse = await ApiGet($"{apiDeleteRemittanceUrl}{remID}/{userId}");
             string result = JsonConvert.DeserializeObject<string>(apiResponse);

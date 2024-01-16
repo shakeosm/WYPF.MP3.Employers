@@ -14,6 +14,7 @@ namespace MCPhase3.ViewModels
         public string ErrorPath { get; set; }
         public string Message { get; set; }
         public string StackTrace { get; set; }
+        public string Parameter_List { get; set; }
         [JsonIgnore]
         public string Source { get; set; }
         public string RemittanceInfo { get; set; }

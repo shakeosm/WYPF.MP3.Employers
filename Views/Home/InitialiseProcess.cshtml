@@ -1,4 +1,4 @@
-﻿@model MCPhase3.Models.ErrorAndWarningViewModelWithRecords
+﻿@model MCPhase3.Models.InitialiseProcessResultVM
 @{
     ViewData["Title"] = "Summary";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
@@ -32,14 +32,14 @@
         <!--Folloing container will show total records inserted into Database and number of records in file-->
         <div class="container" id="myDiv1">
             <div class="jumbotron">
-                @if (TempData["MsgError"] == null)
+            @if (string.IsNullOrEmpty(Model.ErrorMessage))
                 {
                     <div class="table-bordered">
                         <div class="alert alert-success">
-                            <h3>@ViewBag.empName</h3><br />
+                            <h3>@Model.EmployeeName</h3><br />
                             <h3>File Loaded to WYPF Database successfully</h3><br />
                             <p style="font-size:small;">Now records ready for matching.</p>
-                            @Html.Raw(@TempData["showOnlyTotals"].ToString())
+                            @Html.Raw(Model.ShowProcessedInfo)
                         </div>
                     </div>
                 }
@@ -47,7 +47,7 @@
                 {
                     <div class="table-bordered">
                         <div class="alert alert-danger">
-                            @Html.Raw(@TempData["MsgError"].ToString())
+                            @Html.Raw(Model.ErrorMessage))
                         </div>
                     </div>
                 }
@@ -63,20 +63,19 @@
         <div class="jumbotron">
             <h3>Data Summary</h3>
             <p style="font-size:small;">Page displayed after financial totals have been accepted</p><br />
-            @if (TempData["MsgError"] == null)
+            @if (string.IsNullOrEmpty(Model.ErrorMessage))
             {
                 <div class="table-bordered">
                     <div class="alert alert-primary">
                         <h3>@ViewBag.empName</h3><br />
                         <h3>File Loaded and Checked</h3><br />
-                        @Html.Raw(@TempData["msgExtra"].ToString())
+                        @Html.Raw(Model.ShowMatchingResult)
                     </div>
                     <div class="alert alert-info">
                         <h3>Error and Warnings</h3>
                         <p style="font-size:small;">Shows all data alerts and their count.   User may return or show list of all records with specific alert.</p><br />
                     </div>
-                    <a href="/ErrorWarning/index?remittanceID=@Model.remittanceID" class="btn btn-primary mr-2">View errors and warnings summary</a>
-                    @*<a href="/ErrorWarning" class="btn btn-primary mr-2">View errors and warnings summary</a>*@
+                    <a href="/ErrorWarning/index?remittanceID=@Model.EncryptedRemittanceId" class="btn btn-primary mr-2">View errors and warnings summary</a>
                     
                     <a href="/Admin/Home" class="btn btn-danger">Dashboard</a>
                 </div>
@@ -86,7 +85,7 @@
             {
                 <div class="table-bordered">
                     <div class="alert alert-danger">
-                        @Html.Raw(@TempData["MsgError"].ToString())
+                        @Html.Raw(Model.ErrorMessage)
                     </div>
                 </div>
             }

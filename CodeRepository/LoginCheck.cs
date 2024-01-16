@@ -13,9 +13,9 @@ namespace MCPhase3.CodeRepository
         {
             var dLogin = new LoginViewModel();
 
-            if (HttpContext.Session.GetString(Constants.SessionKeyUserID) != null)
+            if (HttpContext.Session.GetString(Constants.LoggedInAsKeyName) != null)
             {
-                dLogin.UserId = HttpContext.Session.GetString(Constants.SessionKeyUserID);
+                dLogin.UserId = HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
                 dLogin.EmployerName = HttpContext.Session.GetString(Constants.SessionKeyPayLocName);
             }
             else

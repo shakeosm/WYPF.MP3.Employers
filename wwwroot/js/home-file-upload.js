@@ -40,8 +40,9 @@
             $("#CustomerFileValidationLabel").show();
             isFormValid = false;
         }
-
-        ShowOverlaySpinner();
+        if (isFormValid) {
+            ShowOverlaySpinner();
+        }
         return isFormValid;
     });
 

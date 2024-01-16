@@ -3004,7 +3004,7 @@
 /*//////////////////////////////////////////////////////////////////
 [ FONT ]*/
 
-@font-face {
+/*@font-face {
   font-family: Poppins-Regular;
   src: url('../fonts/poppins/Poppins-Regular.ttf'); 
 }
@@ -3022,7 +3022,7 @@
 @font-face {
   font-family: Montserrat-Bold;
   src: url('../fonts/montserrat/Montserrat-Bold.ttf'); 
-}
+}*/
 
 /*//////////////////////////////////////////////////////////////////
 [ RESTYLE TAG ]*/
@@ -3231,7 +3231,7 @@ iframe {
 }
 
 .input100 {
-  font-family: Poppins-Medium;
+  /*font-family: Poppins-Medium;*/
   font-size: 15px;
   line-height: 1.5;
   color: #666666;
@@ -3419,7 +3419,7 @@ iframe {
   right: 8px;
   pointer-events: none;
 
-  font-family: Poppins-Medium;
+  /*font-family: Poppins-Medium;*/
   color: #c80000;
   font-size: 13px;
   line-height: 1.4;

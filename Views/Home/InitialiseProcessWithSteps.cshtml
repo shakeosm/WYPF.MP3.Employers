@@ -1,0 +1,136 @@
+﻿@model MCPhase3.Models.InitialiseProcessResultVM
+@{
+    ViewData["Title"] = "Summary";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 text-center p-0">
+                <div class="card px-0 m-0">
+
+                    <!-- progressbar -->
+                    <ul id="progressbar">
+                        <li class="active" id="account"><strong>File Upload</strong></li>
+                        <li class="active" id="personal"><strong>Check Totals</strong></li>
+                        <li class="active" id="personal"><strong>Data Processing</strong></li>
+                        <li id="personal"><strong>Error and Warning Summary</strong></li>
+                        <li id="personal"><strong>Bulk Approval</strong></li>
+                        <li id="payment"><strong>Submit to Database</strong></li>
+                        <li id="confirm"><strong>Finish</strong></li>
+                    </ul>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Folloing container will show total records inserted into Database and number of records in file-->
+    <div class="container" id="myDiv1">
+        <div class="jumbotron">
+            @if (string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="table-bordered">
+                    <div class="alert alert-success">
+                        <h3>Employer: @Model.EmployeeName</h3><br />
+                        <h4>Status: File Loaded to WYPF Database successfully.</h4><br />
+                        
+                        <div id="ShowProcessedInfoDiv">
+                            <i class="fas fa-check-circle mx-2"></i> Total records in uploaded file are: <b>@Model.TotalRecordsInFile</b><br />
+                            <i class="fas fa-check-circle mx-2"></i> Total number of records inserted successfully into database are: <b>@Model.TotalRecordsInDatabase</b><br />
+                            @if (Model.EmployersProcessedRecords != "PENDING")
+                            {
+                                <i id="EmployersProcessedSuccessIcon" class="fas fa-check-circle mx-2"></i>
+                            }
+                            else{
+                                <i class="fas fa-exclamation-circle mx-2 text-danger"></i>
+                            }
+
+                                Members records processed: <span class="text-danger"><b>@Model.EmployersProcessedRecords</b></span><br />
+                        </div>
+                    </div>
+
+                </div>
+                <div id="ProcessRunDiv">
+                    <h4 class="text-primary">Please run the following tasks to complete the file submission process.</h4>
+
+                    <div id="Task_InitialiseProcessDiv" class="my-3">
+                        <hr />
+                        <h5>Step 1: Initialise Database Checks</h5>
+                        <div class="text-success d-none">This will initiate the journey- processing member records, generating error/warnings, etc.</div>
+                        
+                        @if (Model.CurrentStep == "ReturnInitialise")
+                        {
+                            <form asp-action="InitialiseProcessWithSteps" enctype="multipart/form-data" method="post" id="InitialiseProcessForm">
+                                <input type="hidden" value="@Model.EncryptedRemittanceId" id="RemittanceId" name="RemittanceId" />
+                                @* <input type="submit"  class="btn btn-primary click-and-wait-button my-2" value="Start now"/> *@
+                                <button id="SubmitFormButton" class="btn btn-primary click-and-wait-button my-2" type="submit"><i class="fas fa-file-import"></i> Start now</button>
+                            </form>
+
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-primary disabled">
+                                <i class="fas fa-check-circle h3 mx-2"></i>
+                                Completed
+                            </a>
+                        }
+                        <br/><span class="text-info">Notes: For a large file it can take up to 30 seconds to process.</span>
+                    </div>
+
+                    <div id="Task_AutoMatchDiv">
+                        <hr />
+                        <h5>Step 2: Initialise Matching Process</h5>
+                        <div class="text-success d-none">This will read all member records and try to execute the Auto_Match process- which helps the employer to submit the file with minimum errors.</div>
+                        @if (Model.CurrentStep == "Auto_Match")
+                        {
+                            @* this will be an Ajax call button *@
+                            <a id="AutoMatchInitiateLink" class="btn btn-primary click-and-wait-button my-2">Start now</a>
+                        }
+                        else{
+                            <a id="AutoMatchInitiateLink_Pending" class="btn btn-outline-primary click-and-wait-button disabled my-2">Start now</a>
+                        }
+                        <br /><span class="text-info">Notes: For a large file it can take up to 2 minutes to process.</span>
+                        
+
+
+
+                    </div>
+                </div>
+                <hr />
+                <div id="ShowMatchingResultContainerDiv" class="table-bordered d-none mt-3">
+                    <div class="alert alert-primary">
+                        <h3><i class="fas fa-check-circle mx-2"></i>Success: Auto_Match complete</h3>
+                        <div id="ShowMatchingResultDiv">
+                            @* Here we will dump we will dump the result from AjaxCall-> Execute_AutoMatchProcess(int remittanceId) *@
+                        </div>
+
+                    </div>
+
+                    <a href="/ErrorWarning/index?remittanceID=@Model.EncryptedRemittanceId" class="btn btn-primary mr-2">View errors and warnings summary</a>
+
+                    <a href="/Admin/" class="btn btn-danger">Dashboard</a>
+                </div>
+
+
+            }
+            else
+            {
+                <div class="table-bordered">
+                    <div class="alert alert-danger mb-3">
+                        @Html.Raw(Model.ErrorMessage)
+                    </div>
+                    <a class="btn btn-large btn-secondary">Dashboard</a>
+                </div>
+            }
+            
+        </div>
+    </div>
+
+
+</div>
+@section scripts{
+    <script src="~/js/home-auto-match.js"></script>
+}
