@@ -35,7 +35,7 @@
         public string DashboardRecentSubmission { get; set; }
         public string DashboardEmployers { get; set; }
         public string DashboardScoreHist { get; set; }
-        public string CheckFileAvailable { get; set; }
+        public string CheckFileIsUploaded { get; set; }
         public string DetailEmpList { get; set; }
         public string InitialiseProc { get; set; }
         public string ReturnCheckProc { get; set; }
@@ -47,6 +47,8 @@
         
         public string ErrorLogCreate { get; set; }
         public string GetUserDetails { get; set; }
+        public string VerifyUserRegistrationCode { get; set; }
+        public string RegisterUserWithNewPassword { get; set; }
     }
 
 }

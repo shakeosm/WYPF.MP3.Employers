@@ -91,17 +91,24 @@
         <div class="container">
             <div class="jumbotron mt-5">
                 <h3><b>Step 3 – enter any additional payments</b></h3><hr />
-                <div class="row">
+                <div class="row additional-payment-row">
                     <h4 class="col-md-10">Deficit</h4>
-                    <input asp-for="@Model.DeficitRec" onkeypress="return validate(event)" onkeyup="foo()" id="Deficit" placeholder="£0" class="col-md-2" data-toggle="tooltip" title="if your additional payment relates to a WYPF invoice, please quote the invoice reference and the customer number in the additional information box below">
+                    <input asp-for="@Model.DeficitRec" id="Deficit" placeholder="£0" class="col-md-2 additional-payment-input" data-toggle="tooltip" title="if your additional payment relates to a WYPF invoice, please quote the invoice reference and the customer number in the additional information box below">
 
                 </div>
-                <div class="row"><h4 class="col-md-10">Previous year-end adjustments</h4><input asp-for="@Model.YearEndBalanceRec" onkeypress="return validate(event)" id="YearEndBalance" placeholder="£0" class="col-md-2"></div>
-                <div class="row"><h4 class="col-md-10">Unfunded benefits</h4><input asp-for="@Model.FundedBenefitsRec" onkeypress="return validate(event)" id="FundedBenefits" placeholder="£0" class="col-md-2"></div>
-                <div class="row"><h4 class="col-md-10">Miscellaneous</h4><input asp-for="@Model.Miscellaneous_Rec" onkeypress="return validate(event)" id="Miscellaneous" placeholder="£0" class="col-md-2"></div>
+                <div class="row additional-payment-row"><h4 class="col-md-10">Previous year-end adjustments</h4>
+                    <input asp-for="@Model.YearEndBalanceRec" id="YearEndBalance" placeholder="£0" class="col-md-2 additional-payment-input">
+                    </div>
+                <div class="row additional-payment-row"><h4 class="col-md-10">Unfunded benefits</h4>
+                    <input asp-for="@Model.FundedBenefitsRec" id="FundedBenefits" placeholder="£0" class="col-md-2 additional-payment-input"></div>
+                <div class="row additional-payment-row"><h4 class="col-md-10">Miscellaneous</h4>
+                    <input asp-for="@Model.Miscellaneous_Rec" id="Miscellaneous" placeholder="£0" class="col-md-2 additional-payment-input"></div>
                 @*<div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2" id="MemberContribAPCLblValue">£ @Model.MemberContribAPCSS</h4></div><hr />*@
 
-                <div class="row"><h4 class="col-md-10"><b>Total additional payments</b></h4><label class="col-md-2" id="DecifitTotalLblValue">£ @Model.DeficitTotalLblValue().ToString("N")</label></div><br>
+                <div class="row mb-5">
+                    <h4 class="col-md-10"><b>Total additional payments</b></h4>
+                    <label class="col-md-2" id="DecifitTotalLblValue">£ @Model.DeficitTotalLblValue().ToString("N")</label>
+                </div>
 
             </div>
         </div>
@@ -109,7 +116,10 @@
             <div class="jumbotron mt-5">
 
                 <h3><b>Step 4 – check grand total</b></h3><hr />
-                <div class="row"><h4 class="col-md-10"><b>Total (Employees, employers and additional payments)</b></h4><h4 class="col-md-2" id="GrandTotalValue"><b>£ @Model.GrandTotalValue().ToString("N")</b></H4></div><br>
+                <div class="row mb-5">
+                    <h4 class="col-md-10"><b>Total (Employees, employers and additional payments)</b></h4>
+                    <h4 class="col-md-2" id="GrandTotalValue"><b>£ @Model.GrandTotalValue().ToString("N")</b></H4>
+                </div>
             </div>
         </div>
         <div class="container">

@@ -28,7 +28,7 @@ namespace MCPhase3.Models
         public string L_USERID { get; set; }
 
     }
-    public class ErrorAndWarningViewModelWithRecords
+    public class ErrorAndWarningVM
     {
         public string MC_ALERT_ID { get; set; }
         public string EncryptedAlertid { get; set; }
@@ -70,7 +70,7 @@ namespace MCPhase3.Models
 
     public class ErrorAndWarningWrapperVM
     {        
-        public List<ErrorAndWarningViewModelWithRecords> ErrorsAndWarningsList { get; set; }
+        public List<ErrorAndWarningVM> ErrorsAndWarningsList { get; set; }
         public string EmployerName{ get; set; }
         public string PaylocationID { get; set; }
         public string RemittanceId { get; set; }

@@ -6,17 +6,21 @@
     var _apiEndpoints = ApiEndpoints.Value;
     var _Environment = _apiEndpoints.Environment;
     var _apiUrl = _apiEndpoints.WebApiBaseUrl;
+    var urlParts= _apiUrl.Split(":");
+    string maskedUrl = urlParts[1];
 }
 
 @* This one is for TEST environment- to show the user this is a TEST site *@
 
 @if (_Environment.ToLower().Equals("live") == false)
-{    
-    <div style="position:absolute; top:1em; right:1em;">
+{
+    <div class="bg-warning text-center text-danger sticky-top h4 p-2">@_Environment</div>
+
+    <div class="d-none" style="position:absolute; top:1em; right:1em;">
         <h3><span class="badge rounded-pill bg-danger">@_Environment</span></h3>
     </div>
 
-    <div style="position:absolute;top: 85px;right:1em;">
-        <p class="text-danger form-text font-monospace">@_apiUrl</p>
+    <div style="position:absolute;top: 40px;right:1em;">
+        <p class="text-danger form-text font-monospace">@maskedUrl</p>
     </div>
 }

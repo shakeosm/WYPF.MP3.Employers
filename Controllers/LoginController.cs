@@ -1,6 +1,8 @@
 ﻿using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
+using MCPhase3.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -76,8 +78,7 @@ namespace MCPhase3.Controllers
                     Boolean.TryParse(apiResult, out bool isMFA_Required);
 
                     if (isMFA_Required)
-                    {
-                        string mfa_SendVerificationCodeUrl = GetApiUrl(_configuration["ApiEndpoints:MFA_SendToEmployer"]);
+                    {                        
                         var mailData = new MailDataVM()
                         {
                             UserId = loginVM.UserId,
@@ -85,7 +86,10 @@ namespace MCPhase3.Controllers
                             FullName = currentUser.FullName,
                             /* EmailBody, Subject- will be generated in the API,*/
                         };
-                        apiResult = await ApiPost(mfa_SendVerificationCodeUrl, mailData);
+
+                        //## store this MailData object in Redis..  we will need this to Resend MFA code to user.. again and again..
+                        _cache.Set(GetKeyName(Constants.MFA_MailData), mailData);                        
+                        apiResult = await SendMFA_VerificationCode();
 
                         if (IsEmpty(apiResult))
                         {
@@ -133,6 +137,49 @@ namespace MCPhase3.Controllers
 
         }
 
+        /// <summary>This will send MFA Verification code to the User.. Send or Resend...</summary>
+        /// <returns></returns>
+        private async Task<string> SendMFA_VerificationCode()
+        {
+            string mfa_SendVerificationCodeUrl = GetApiUrl(_configuration["ApiEndpoints:MFA_SendToEmployer"]);
+            var mailData = _cache.Get<MailDataVM>(GetKeyName(Constants.MFA_MailData));  //## we did set this value after Log in - Success.. it must be there..
+            if (mailData is null) {
+                LogInfo("SendMFA_VerificationCode() => _cache.mailData is null");
+                return null;
+            }
+            string apiResult = await ApiPost(mfa_SendVerificationCodeUrl, mailData);
+            ContextSetValue(Constants.MFA_TokenExpiryTime, DateTime.Now.AddMinutes(2).ToLongTimeString());
+
+            return apiResult;
+        }
+
+        public async Task<ActionResult> VerifyTokenResend()
+        {
+            string apiError = "";
+            var result = await SendMFA_VerificationCode();
+            if (IsEmpty(result))
+            {
+                LogInfo("API error: Failed to send verification code. apiResult  =  NULL");
+
+                apiError = "Server error: Failed to send verification code. Please try again.";
+            }
+
+            string expiryTime = ContextGetValue(Constants.MFA_TokenExpiryTime);
+
+            var mailData = _cache.Get<MailDataVM>(GetKeyName(Constants.MFA_MailData));  //## we did set this value after Log in - Success.. it must be there..
+            var tokenDetails = new TokenDataVerifyVM()
+            {
+                UserId = mailData.UserId,
+                Email = MaskedEmail(mailData.EmailTo),
+                ExpiryTime = expiryTime,
+                VerificationMessage = apiError,
+            };
+
+            return View("VerifyToken", tokenDetails);
+        }
+
+
+
         private async Task<bool> is_MfaEnabled()
         {
             string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:Is_MfaEnabled"]);
@@ -170,7 +217,9 @@ namespace MCPhase3.Controllers
                 UserId = userId,
                 Email = MaskedEmail(emailId),
                 VerificationMessage = TempData["ErrorMessage"]?.ToString(),
+                ExpiryTime = ContextGetValue(Constants.MFA_TokenExpiryTime)
             };
+
             TempData["ErrorMessage"] = "";
 
             return View(tokenDetails);
@@ -299,7 +348,87 @@ namespace MCPhase3.Controllers
 
         }
 
+        /// <summary>
+        /// This will be used to Register new users to MP3 portal... they will be given a chance to change the password- 
+        /// which will look like a new User registration..
+        /// </summary>
+        /// <param name="id1"></param>
+        /// <param name="id2"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> Register(string id1, string id2)
+        {
+            string verifyUserRegistrationCodeApi = GetApiUrl(_apiEndpoints.VerifyUserRegistrationCode); //##: api/VerifyUserRegistrationCode
+            var userToken = new UserRegistrationTokenVM() { 
+                SessionToken = id2,
+                UserId = id1
+            };
 
+            var apiResult = await ApiPost(verifyUserRegistrationCodeApi, userToken);
+            var isVerified = JsonConvert.DeserializeObject<bool>(apiResult);
+
+            ContextSetValue(Constants.LoggedInAsKeyName, id1);
+
+            string cacheKey = $"{id1}_{Constants.UserRegistrationTokenDetails}";
+            _cache.Set(cacheKey, userToken);
+
+            if (isVerified)
+            { //## the user exist and Token is valid.. now pull the User details and allow the user to change their password
+
+                var currentUser = await GetUserDetails(id1);
+                await AddPayrollProviderInfo(currentUser);
+                var registerUser = new UserRegistrationVM()
+                {
+                    UserId = id1,
+                    UserDetails = currentUser,
+                };
+                ContextSetValue(Constants.NewUserRegistrationVerification, "true");
+
+                return View("Register", registerUser);
+            }
+            else {
+                return View("Register", new UserRegistrationVM());
+            }
+        }
+
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterUserWithNewPassword(RegisterUserWithNewPasswordVM vm)
+        {
+            var result = new TaskResults();
+
+            if (!ModelState.IsValid) {
+
+                result.IsSuccess = true;
+                result.Message = "Error: Please enter a valid password and confirm it.";
+
+                return Json(result);
+            }
+
+            string cacheKey = $"{vm.UserId}_{Constants.UserRegistrationTokenDetails}";
+            var userToken = _cache.Get<UserRegistrationTokenVM>(cacheKey);
+            vm.SessionToken = userToken.SessionToken;
+
+            string regiserUserApiUrl = GetApiUrl(_apiEndpoints.RegisterUserWithNewPassword);
+            var apiResult = await ApiPost(regiserUserApiUrl, vm);
+            var isRegistered = JsonConvert.DeserializeObject<bool>(apiResult);
+
+            if (isRegistered)
+            {
+                DeleteAllUserSessions();    //## to make sure no orphaned session values will screw up this new User session..
+
+                result.IsSuccess = true;
+                result.Message = $"Congratulations <span class='text-danger'>{vm.UserId}</span>!<p>Your account is successfully registered.</p><p>Please go to <span class='text-danger'>Log in</span> page and enter your credentials.</p>";
+            }
+            else {
+                result.Message = "Error while trying to register your account. We sincerely apoligize for this inconvenience. Please speak to you Finance Business Partner.";
+            }
+
+            return Json(result);
+        }
+        
         /// <summary>This will read Redis cache and find if there is any entry for this user session</summary>
         /// <param name="userId">User Id</param>
         /// <returns>UserSessionInfoVM object</returns>
@@ -426,6 +555,14 @@ namespace MCPhase3.Controllers
         public IActionResult Logout()
         {
 
+            DeleteAllUserSessions();
+            // await signInManager.SignOutAsync();
+            return RedirectToAction("Index", "Login");
+        }
+
+
+        private void DeleteAllUserSessions()
+        {
             //## clear the Redis cache... so the user can login next time easily            
             //## but delete if this is your Redis session.. 
             //## Scenario: user logged in from Browser 2 and wanna kick out Browser1 session.
@@ -454,8 +591,6 @@ namespace MCPhase3.Controllers
                 Response.Cookies.Delete(cookie);
             }
 
-            // await signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Login");
         }
 
 

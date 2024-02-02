@@ -14,6 +14,8 @@
         public const string SessionKeyEmployerName = "_employerName";
         //public const string SessionKeyPayrollProvider = "_payrollProvider";
 
+        public const string NewUserRegistrationVerification = "_NewUserVerifiedToken";
+        public static string UserRegistrationTokenDetails = "UserRegistrationTokenVM";
 
         public const string SessionKeyMonth = "_month";
         public const string SessionKeyYears = "_years";
@@ -63,11 +65,15 @@
         public static string EmployerProcessedCount = "EmployerProcessedCount";        
         
         public static string ApiCallParamObjectKeyName = "_ApiCallParamObjects";        
+        public static string MFA_MailData = "MFA_MailData";
+        public static string MFA_TokenExpiryTime = "MFA_TokenExpiryTime";
+        
+        
         //public static string Excel_XML_ConfigPath = "Excel_XML_ConfigPath";
 
         public static string RedisKeyList()
         {
-            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoggedInAsKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{Excel_DataTableToInsert},{Excel_DataTableToInsert}";
+            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoggedInAsKeyName},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{Excel_DataTableToInsert},{Excel_DataTableToInsert},{UserRegistrationTokenDetails}";
         }
 
         public enum PostingType

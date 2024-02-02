@@ -1,4 +1,6 @@
-﻿using MCPhase3.CodeRepository;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
 using Microsoft.AspNetCore.DataProtection;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -27,8 +30,8 @@ namespace MCPhase3.Controllers
         private readonly ILogger<ErrorWarningController> _logger;
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
-        ErrorAndWarningViewModelWithRecords _errorAndWarningViewModel = new ErrorAndWarningViewModelWithRecords();
-        List<ErrorAndWarningViewModelWithRecords> model = new List<ErrorAndWarningViewModelWithRecords>();
+        ErrorAndWarningVM _errorAndWarningViewModel = new ErrorAndWarningVM();
+        List<ErrorAndWarningVM> model = new List<ErrorAndWarningVM>();
 
         //following class I am using to consume api's
         EventDetailsBO eventDetails = new EventDetailsBO();
@@ -43,15 +46,15 @@ namespace MCPhase3.Controllers
 
         /// <summary>Error and warnings List is displayed in Index page</summary>
         /// <returns></returns>
-        public async Task<IActionResult> Index(AlertSumBO alertSumBO, int? pageNumber)
+        public async Task<IActionResult> Index(AlertSumBO alertSumBO)
         {
             var alertViewWrapperVM = new ErrorAndWarningWrapperVM();
             //## coming here for the first time- save in the Redis cache- and be happy .. now u can always find this record in the Cache
-            if (alertSumBO.remittanceId != null){
-                _cache.SetString(RemittanceIdKeyName(), alertSumBO.remittanceId);
+            if (alertSumBO.RemittanceId != null){
+                _cache.SetString(RemittanceIdKeyName(), alertSumBO.RemittanceId);
             }
             else{
-                alertSumBO.remittanceId = GetRemittanceId();
+                alertSumBO.RemittanceId = GetRemittanceId();
             }
             
             //When select to work with error and warnings on payloction level then I have to keep PaylocFile in sesssion so 
@@ -68,9 +71,9 @@ namespace MCPhase3.Controllers
             }
 
             alertSumBO.L_USERID = CurrentUserId();
-            var alertList = new List<ErrorAndWarningViewModelWithRecords>();
+            var alertList = new List<ErrorAndWarningVM>();
 
-            int remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.remittanceId));
+            int remID = Convert.ToInt32(DecryptUrlValue(alertSumBO.RemittanceId));
             LogInfo($"ErrorWarning/Index, remittanceId: {remID}", true);
 
             alertViewWrapperVM.RemittanceId = EncryptUrlValue(remID.ToString());
@@ -82,9 +85,9 @@ namespace MCPhase3.Controllers
             string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.ErrorAndWarnings);   //## api: /AlertSummaryRecordsPayLoc
             LogInfo($"ErrorAndWarningsApi: {apiBaseUrlForErrorAndWarnings}");
 
-            alertSumBO.remittanceId = remID.ToString();
+            alertSumBO.RemittanceId = remID.ToString();
             var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-            alertList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+            alertList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
 
             if (alertList != null && alertList.Count > 0)
             {
@@ -92,7 +95,7 @@ namespace MCPhase3.Controllers
 
                 foreach (var item in alertListFiltered)
                 {
-                    item.EncryptedRowRecordID = alertSumBO.remittanceId;
+                    item.EncryptedRowRecordID = alertSumBO.RemittanceId;
                 }
 
                 alertViewWrapperVM.ErrorsAndWarningsList = alertListFiltered;
@@ -133,16 +136,16 @@ namespace MCPhase3.Controllers
                 _cache.Set(errorWarningSummaryKeyName, summaryVM);
             }
 
-            var recordsList = new List<ErrorAndWarningViewModelWithRecords>();
+            var recordsList = new List<ErrorAndWarningVM>();
             string userName = CurrentUserId();
 
             var alertSumBO = new AlertSumBO()
             {
-                remittanceId = summaryVM.RemittanceId,
+                RemittanceId = summaryVM.RemittanceId,
                 L_USERID = userName
             };
 
-            LogInfo($"ErrorWarning/WarningsListforBulkApproval, remittanceId: { DecryptUrlValue(alertSumBO.remittanceId)}", true);
+            LogInfo($"ErrorWarning/WarningsListforBulkApproval, remittanceId: { DecryptUrlValue(alertSumBO.RemittanceId)}", true);
 
             //show error and worning on Remittance or paylocation level.
             string apiBaseUrlForErrorAndWarnings = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);    //## api/AlertDetailsForPayLocNextStep
@@ -150,7 +153,7 @@ namespace MCPhase3.Controllers
             {
                 alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
             }
             else
             {
@@ -164,7 +167,7 @@ namespace MCPhase3.Controllers
                 };
 
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
             }
 
             foreach (var record in recordsList)
@@ -198,12 +201,12 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> AlertListByAjax(string remittanceID, string alertType)
         {            
-            var recordsList = new List<ErrorAndWarningViewModelWithRecords>();
+            var recordsList = new List<ErrorAndWarningVM>();
             string userName = CurrentUserId();
 
             var alertSumBO = new AlertSumBO()
             {
-                remittanceId = remittanceID,
+                RemittanceId = remittanceID,
                 L_USERID = userName
             };
 
@@ -213,7 +216,7 @@ namespace MCPhase3.Controllers
             {
                 alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
             }
             else
             {
@@ -226,7 +229,7 @@ namespace MCPhase3.Controllers
                 };
 
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertListQueryParams);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResult);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
             }
 
             foreach (var record in recordsList)
@@ -394,8 +397,8 @@ namespace MCPhase3.Controllers
         {
             try
             {
-                List<ErrorAndWarningViewModelWithRecords> recordsList = new();
-                ErrorAndWarningViewModelWithRecords records = new();
+                List<ErrorAndWarningVM> recordsList = new();
+                ErrorAndWarningVM records = new();
 
                 int.TryParse(DecryptUrlValue(id, forceDecode: false), out int dataRowID);
                 //show employer name
@@ -412,7 +415,7 @@ namespace MCPhase3.Controllers
                 helpTextBO.L_DATAROWID_RECD = dataRowID;
 
                 apiResponse = await ApiPost(apiBaseUrlForErrorAndWarningsList, helpTextBO);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningViewModelWithRecords>>(apiResponse);
+                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResponse);
 
                 foreach (var item in recordsList)
                 {
@@ -705,6 +708,43 @@ namespace MCPhase3.Controllers
         {
             var newVal = Regex.Replace(val, @"[^0-9a-zA-Z\.\'\s_]", "");
             return newVal;
+        }
+
+
+        public async Task<IActionResult> RemittanceAlertsDownloadAll(string id)
+        {
+            if (IsEmpty(id) )
+                return RedirectToAction("Index");
+
+            _ = int.TryParse(DecryptUrlValue(id, forceDecode: false), out int remittanceId);            
+            
+            var apiParamList = new AlertSumBO()
+            {
+                RemittanceId = remittanceId.ToString(),
+                AlertType = "ALL",
+                L_USERID = CurrentUserId(),
+                L_PAYLOC_FILE_ID = 0,
+                ShowAlertsNotCleared = true
+            };
+
+            string alertDetailsApriUrl = GetApiUrl(_apiEndpoints.AlertDetailsPLNextSteps);   //## api/AlertDetailsForPayLocNextStep                       
+            //var recordsList = await callApi.GetErrorAndWarningList(apiParamList, alertDetailsByRemittanceId);
+            var recordsList = await ApiPost(alertDetailsApriUrl, apiParamList);
+            var alertlist = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(recordsList);
+
+            var cc = new CsvConfiguration(new System.Globalization.CultureInfo("en-US"));
+            using (var ms = new MemoryStream())
+            {
+                using (var sw = new StreamWriter(stream: ms, encoding: new UTF8Encoding(true)))
+                {
+                    using (var cw = new CsvWriter(sw, cc))
+                    {
+                        cw.WriteRecords(alertlist);
+                    }// The stream gets flushed here.
+                    return File(ms.ToArray(), "text/csv", $"{CurrentUserId()}-{remittanceId}-{DateTime.UtcNow.Ticks}.csv");
+                }
+            }
+
         }
     }
 }

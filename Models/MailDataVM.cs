@@ -24,6 +24,7 @@ namespace MCPhase3.Models
         public string Email { get; set; }
 
         public string VerificationMessage { get; set; }
+        public string ExpiryTime { get; set; }
 
     }
 }

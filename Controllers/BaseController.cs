@@ -120,7 +120,12 @@ namespace MCPhase3.Controllers
 
         public async Task<string> ApiGet(string apiUrl)
         {
+            string host = HttpContext.Request.Host.ToString();
+            LogInfo($"api: {apiUrl}, host: {host}");
+
+            //HttpContext.Response.Headers.Add("client-id", host);    //## the APi will know who is the Consumer and can log the request accordingly..
             using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("client-id", host);
             using var response = await httpClient.GetAsync(apiUrl);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {

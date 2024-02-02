@@ -5,6 +5,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using static MCPhase3.Common.Constants;
 
 namespace MCPhase3.CodeRepository
 {
@@ -57,15 +58,15 @@ namespace MCPhase3.CodeRepository
         }
 
 
-        public static bool CheckPayrollPeriod(ref DataTable dt, string month, string posting, ref string CheckSpreadSheetErrorMsg)
+        public static bool CheckPayrollPeriod(ref DataTable dt, string selectedMonth, string selectedPosting, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
             string[] validMonths = { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" };
 
 
-            int monthFromDropDown = DateTime.ParseExact(month, "MMMM", CultureInfo.CurrentCulture).Month;
+            int selectedMonthNumber = DateTime.ParseExact(selectedMonth, "MMMM", CultureInfo.CurrentCulture).Month;
             int[] emptyRowNumber;
-            int inc = 0;
+            int rowNumber = 0;
             int checkRows = 0;
 
             if (!IsColumnEmptyNewMethod1(ref dt, "PAYROLL_PD", out emptyRowNumber))
@@ -74,57 +75,57 @@ namespace MCPhase3.CodeRepository
                 {
                     if (emptyRowNumber[i] != 0)
                     {
-                        inc = emptyRowNumber[i];
-                        inc++;
+                        rowNumber = emptyRowNumber[i];
+                        rowNumber++;
                         checkRows = emptyRowNumber[i];
                         checkRows++;
-                        CheckSpreadSheetErrorMsg += "<br /> <br />Payroll period 'PAYROLL_PD' can not be empty at row number:" + inc + " in spreadsheet.<br />If there is no PAYROLL_PD empty cell then please select few empty rows from bottom of apreadsheet and delete them.<br />";
+                        CheckSpreadSheetErrorMsg += "<br /> <br />Payroll period 'PAYROLL_PD' can not be empty at row number:" + rowNumber + " in spreadsheet.<br />If there is no PAYROLL_PD empty cell then please select few empty rows from bottom of apreadsheet and delete them.<br />";
                     }
                 }
                 result = false;
             }
 
-            inc = 1;
+            rowNumber = 1;
             foreach (DataRow rw in dt.Rows)
             {
                 string payrollPeriod = rw["PAYROLL_PD"].ToString();
-                inc++;
-                int monthNumber = 0;
+                rowNumber++;
+                int monthNumberInFile = 0;
 
                 bool isAllString = payrollPeriod.All(Char.IsLetter);
                 if (isAllString == false)
                 {
-                    CheckSpreadSheetErrorMsg += $"<br/>You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<b>{inc}</b> <br />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.<br />";
+                    CheckSpreadSheetErrorMsg += $"<br/>You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<b>{rowNumber}</b> <br />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.<br />";
                     result = false;
                 }
-                else if (!validMonths.Contains(payrollPeriod, StringComparer.CurrentCultureIgnoreCase) && inc != checkRows)
+                else if (!validMonths.Contains(payrollPeriod, StringComparer.CurrentCultureIgnoreCase) && rowNumber != checkRows)
                 {
                     if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
                     {
                         CheckSpreadSheetErrorMsg += "<br /> <br />";
                     }
 
-                    CheckSpreadSheetErrorMsg += "<br />You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<B>" + inc + " </B> <br />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.</Br>";
+                    CheckSpreadSheetErrorMsg += "<br />You have entered invalid payroll period 'PAYROLL_PD' in spreadsheet at row number:<B>" + rowNumber + " </B> <br />'PAYROLL_PD' value can be 3 character value (e.g) JAN or JANUARY.</Br>";
                     result = false;
                 }
                 else
                 {
                     string parseFormat = payrollPeriod.Length > 3 ? "MMMM" : "MMM";
-                    monthNumber = DateTime.ParseExact(payrollPeriod, parseFormat, CultureInfo.CurrentCulture).Month;
+                    monthNumberInFile = DateTime.ParseExact(payrollPeriod, parseFormat, CultureInfo.CurrentCulture).Month;
 
                 }
 
                 //Qasid disable following functionality to allow files with multiple months return in same file.
                 //check the dropdown selected month is same as file's month 
-                if (posting.Equals("1"))    //TODO: Use Enum value for Posting
+                if (selectedPosting == PostingType.First.ToString()) 
                 {
-                    if (monthNumber != monthFromDropDown && !string.IsNullOrEmpty(payrollPeriod))
+                    if (monthNumberInFile != selectedMonthNumber && !string.IsNullOrEmpty(payrollPeriod))
                     {
-                        if (!CheckSpreadSheetErrorMsg.Equals(string.Empty))
+                        if (CheckSpreadSheetErrorMsg != "")
                         {
                             CheckSpreadSheetErrorMsg += "<br /> <br />";
                         }
-                        CheckSpreadSheetErrorMsg += $"You might have added wrong 'PAYROLL_PD' at row number:<b>{inc} </b> of spreadsheet.<br/>";
+                        CheckSpreadSheetErrorMsg += $"Wrong 'PAYROLL_PD' at row number:<b>{rowNumber} </b> of spreadsheet.<br/>";
                         result = false;
                     }
                 }

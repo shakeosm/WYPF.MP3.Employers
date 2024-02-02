@@ -101,7 +101,7 @@ namespace MCPhase3.Models
 
         public string EncryptedID { get; set; }
 
-        public List<ErrorAndWarningViewModelWithRecords> ErrorAndWarningList { get; set; }
+        public List<ErrorAndWarningVM> ErrorAndWarningList { get; set; }
 
         //List<HelpForEAndAUpdateRecord> helpList { get; set; }   
     }

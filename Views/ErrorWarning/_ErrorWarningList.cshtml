@@ -1,4 +1,4 @@
-﻿@model IEnumerable<MCPhase3.Models.ErrorAndWarningViewModelWithRecords>
+﻿@model IEnumerable<MCPhase3.Models.ErrorAndWarningVM>
 @{    
     var totalAlerts = Model.Where(a => a.CLEARED_FG == "N").Count();
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");

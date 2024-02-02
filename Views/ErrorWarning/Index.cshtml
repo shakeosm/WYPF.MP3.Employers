@@ -7,14 +7,15 @@
     string totalValueCss = "text-warning";
 
     bool hasRecords = Model.ErrorsAndWarningsList is not null && Model.ErrorsAndWarningsList.Any();
+    var totalAlertCount = Model.ErrorsAndWarningsList?.Sum(err=> err.ALERT_COUNT);
 }
 
 <div class="border shadow-lg p-4 mb-4 bg-white">
     <div class="container-fluid bg-3 text-center">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
-                    <div class="card px-0 pt-1 pb-0 mt-1 mb-1">
+                <div class="col-12 text-center p-0 mt-3">
+                    <div class="card">
 
                         <!-- progressbar -->
                         <ul id="progressbar">
@@ -43,7 +44,17 @@
             }
 
             <div class="row">
-                <h3 style="color:black;">Errors and Warnings Summary.</h3>
+                <div class="h3 col-6">
+                    Errors and Warnings Summary.
+                </div>
+                <div class="col-6 text-end">
+                    <a href="RemittanceAlertsDownloadAll/@Model.RemittanceId" class="btn btn-outline-primary mx-2 " alt="Download all">
+                        <i class="fas fa-cloud-download-alt fa-lg mx-2"></i>
+                        Download (@totalAlertCount)
+                    </a> 
+                </div>
+
+                
                 @*<p style="font-size:small;">Shows all data alerts and their count. User may return or shows list of all records with specific alert.</p><br />*@
 
             </div>

@@ -68,6 +68,7 @@ namespace MCPhase3.Controllers
             //client type is null or empty goto login page again
             if (IsEmpty(clientType))
             {
+                LogInfo("Index() => IsEmpty(clientType) .. redirecting to Login() page");
                 return RedirectToAction("Index", "Login");
             }
 
@@ -207,7 +208,7 @@ namespace MCPhase3.Controllers
             string empName = currentUser.Pay_Location_Name;
             string empID = currentUser.Pay_Location_Ref;// ContextGetValue(Constants.SessionKeyPayrollProvider);
 
-            var fileCheckBO = new CheckFileUploadedBO
+            var submissionPeriod = new CheckFileUploadedBO
             {
                 P_Month = vm.SelectedMonth,
                 P_Year = vm.SelectedYear,
@@ -220,12 +221,12 @@ namespace MCPhase3.Controllers
             string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
             //update Event Details table File is uploaded successfully.
-            string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileAvailable);
+            string apiCheckFileIsUploadedUrl = GetApiUrl(_apiEndpoints.CheckFileIsUploaded);   //## api/CheckFileUploaded
 
             //check if records were uploaded previously for the selected month and year.
             //int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
-            var apiResult = await ApiPost(apiBaseUrlForCheckFileAvailable, fileCheckBO);
-            int fileAvailableCheck = JsonConvert.DeserializeObject<int>(apiResult);
+            var apiResult = await ApiPost(apiCheckFileIsUploadedUrl, submissionPeriod);
+            int fileAlreadyUploaded = JsonConvert.DeserializeObject<int>(apiResult);
 
             string fileExt = string.Empty;
             string filePath = string.Empty;
@@ -241,7 +242,7 @@ namespace MCPhase3.Controllers
 
             if (vm.SelectedPostType == (int)PostingType.First)
             {
-                if (fileAvailableCheck == 1)
+                if (fileAlreadyUploaded == 1)
                 {
                     //TempData["MsgM"] 
                     _cache.SetString(Constants.FileUploadErrorMessage, $"File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.YearList} <br/> You can goto Dashboard and start process on file from there. ");
@@ -297,7 +298,7 @@ namespace MCPhase3.Controllers
             }
 
 
-            if (excelDt == null)
+            if (excelDt is null)
             {
                 _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
                 return RedirectToAction("Index", "Home");
@@ -441,7 +442,7 @@ namespace MCPhase3.Controllers
             string[] validTitles = ConfigGetValue("ValidMemberTitles").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             //Check all invalid signs from file and show error to employer
             string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileAvailable);
+            string apiBaseUrlForCheckFileAvailable = GetApiUrl(_apiEndpoints.CheckFileIsUploaded);
             //check if file is uploaded for the selected month and year.
             //int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
             var apiResult = await ApiPost(apiBaseUrlForCheckFileAvailable, fileCheckBO);
@@ -1050,13 +1051,13 @@ namespace MCPhase3.Controllers
 
             var autoMatchResult = await Execute_AutoMatchProcess(remttanceId);
             var taskResult = new TaskResults() { 
-                IsSuccess = autoMatchResult.L_STATUS_CODE != 3,
+                IsSuccess = autoMatchResult.L_STATUS_CODE == 0,
                 Message =  $"<i class='fas fa-users mx-2 mx-2'></i> Persons Matched: {autoMatchResult.personMatchCount}<br />" 
                     + $"<i class='fas fa-folder-open mx-2'></i> Folders Matched: {autoMatchResult.folderMatchCount}<br />"
             };
 
-            if (autoMatchResult.L_STATUS_CODE == 3) {
-                taskResult.Message = autoMatchResult.L_STATUS_TEXT;
+            if (autoMatchResult.L_STATUS_CODE != 0) {
+                taskResult.Message = $"Error: {autoMatchResult.L_STATUS_CODE} - {autoMatchResult.L_STATUS_TEXT}";
             }
 
             return Json(taskResult);
@@ -1066,28 +1067,27 @@ namespace MCPhase3.Controllers
         {
             apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch);    //## api/AutoMatchRecords
 
-            ContextRemoveValue(Constants.ReturnInitialiseCurrentStep); //## Remove the value.. so system will reset to original value- whaever it was before..
+            ContextRemoveValue(Constants.ReturnInitialiseCurrentStep); //## Remove the value.. so system will reset to original value- whatever it was before..
             ContextRemoveValue(Constants.EmployerProcessedCount);
             ContextRemoveValue(Constants.SessionKeyTotalRecords);
             ContextRemoveValue(Constants.SessionKeyTotalRecordsInDB);
 
             LogInfo($"Calling Automatch api: {apiBaseUrlForAutoMatch}.");
-            AutoMatchBO autoMatchBO = new();
-            
-            string apiResult = "";
+            AutoMatchBO autoMatchResult = new();
+                        
             //## even though 'initialiseProcessResult' is successful- we have seen on various ocassions that a Remittance still have status < 70, due to an on-going process.
             //## we need to wait for at least 5 seconds before allowing the user to initiate Auto_Match process.. otherwise- that will fail for a Remittance status < 70.
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 2; i++)
             {
-                apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remittanceId}");
-                autoMatchBO = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
+                string apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remittanceId}");
+                autoMatchResult = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
                 
-                LogInfo($"Automatch executed. autoMatchBO.L_STATUS_CODE: {autoMatchBO.L_STATUS_CODE} - {autoMatchBO.L_STATUS_TEXT}.");
+                LogInfo($"Automatch executed. autoMatchBO.L_STATUS_CODE: {autoMatchResult.L_STATUS_CODE} - {autoMatchResult.L_STATUS_TEXT}.");
 
-                if (autoMatchBO.L_STATUS_CODE == 2)
+                if (autoMatchResult.L_STATUS_CODE != 0)
                 {
-                    LogInfo($"Attempt {i + 1}: Automatch failed. autoMatchBO.L_STATUS_CODE: {autoMatchBO.L_STATUS_CODE}. Try again after 7 seconds.");
-                    Thread.Sleep(7000);
+                    LogInfo($"Attempt {i + 1}: Automatch failed. autoMatchBO.L_STATUS_CODE: {autoMatchResult.L_STATUS_CODE}-{autoMatchResult.L_STATUS_TEXT}. Try again after 5 seconds.");
+                    Thread.Sleep(5000);
                 }
                 else {
                     LogInfo($"Attempt {i + 1}: Automatch Success");
@@ -1095,14 +1095,16 @@ namespace MCPhase3.Controllers
                 }
             }
             
-            LogInfo($"Automatch success. autoMatchBO.L_STATUS_CODE: {autoMatchBO.L_STATUS_CODE} - {autoMatchBO.L_STATUS_TEXT}.");
+            LogInfo($"Automatch finished. autoMatchBO.L_STATUS_CODE: {autoMatchResult.L_STATUS_CODE} - {autoMatchResult.L_STATUS_TEXT}.");
 
-            return autoMatchBO;
+            return autoMatchResult;
 
         }
 
         /// <summary>This updates the Remittance score respectively and checks if we have a submission of the previous month.
-        /// For the Statuses- 50-70 -> it runs 'RETURN_CHECK_INITIAL_STAGE' and updates the score to a higher one..</summary>
+        /// For the Statuses- 50-70 -> it runs 'RETURN_CHECK_INITIAL_STAGE' and updates the score to a higher one..
+        /// It may not go to Status:70 (Ready to AutoMatch)- if a prev month file is missing. Which will require to run "Manual_Match" from Dashboard
+        /// </summary>
         /// <param name="remttanceId"></param>
         /// <returns></returns>
         private async Task<bool> Execute_Return_Check_Process(int remttanceId, string userID)
@@ -1117,7 +1119,7 @@ namespace MCPhase3.Controllers
             };
 
             string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc);      //## Get 'status of a file'
-            LogInfo($"\r\nExecute_Return_Check_Process()-> apiBaseUrlForCheckReturn - {apiBaseUrlForCheckReturn} -> remttanceId {remttanceId}");
+            LogInfo($"Execute_Return_Check_Process()-> apiBaseUrlForCheckReturn - {apiBaseUrlForCheckReturn} -> remttanceId {remttanceId}", true);
 
 
             var apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
@@ -1172,7 +1174,7 @@ namespace MCPhase3.Controllers
                 P_USERID = userID
             };
 
-            LogInfo($"ReturnInitialise: initialising the journey, Error/warning generation and other tasks to set the Status, Scores, etc");
+            LogInfo($"Execute_ReturnInitialiseProcess(): initialising the journey, Error/warning generation and other tasks to set the Status, Scores, etc");
 
             //## Following is a big piece of Task- initialising the journey, setting values, fixing issues and many things... 
             string initialiseProcApi = GetApiUrl(_apiEndpoints.InitialiseProc);     //## api/InitialiseProc
