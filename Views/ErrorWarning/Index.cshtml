@@ -7,7 +7,8 @@
     string totalValueCss = "text-warning";
 
     bool hasRecords = Model.ErrorsAndWarningsList is not null && Model.ErrorsAndWarningsList.Any();
-    var totalAlertCount = Model.ErrorsAndWarningsList?.Sum(err=> err.ALERT_COUNT);
+    var totalAlertCount = Model.ErrorsAndWarningsList?.Sum(err => err.ALERT_COUNT);
+    string showButton = hasRecords ? "" : "d-none";
 }
 
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -33,7 +34,7 @@
         </div>
     </div>
     <br />
-    <div class="container" id="divHide">
+    <div class="container">
         <div class="jumbotron">
             @*Session expired message shows*@
             @if (TempData["msg"] != null)
@@ -48,50 +49,50 @@
                     Errors and Warnings Summary.
                 </div>
                 <div class="col-6 text-end">
-                    <a href="RemittanceAlertsDownloadAll/@Model.RemittanceId" class="btn btn-outline-primary mx-2 " alt="Download all">
+                    <a href="RemittanceAlertsDownloadAll/@Model.RemittanceId" class="btn btn-outline-primary mx-2 @showButton" alt="Download all">
                         <i class="fas fa-cloud-download-alt fa-lg mx-2"></i>
                         Download (@totalAlertCount)
-                    </a> 
+                    </a>
                 </div>
-
-                
-                @*<p style="font-size:small;">Shows all data alerts and their count. User may return or shows list of all records with specific alert.</p><br />*@
-
             </div>
-            
+
             <div class="table table-bordered">
                 <h4>Payroll provider: <b>@Model.EmployerName</b> </h4>
 
-                <table id="ErrorsAndWarningsListTable" class="table table-sm table table-striped">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Status</th>
-                            <th>Description</th>
-                            <th class="text-center">Total</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!hasRecords)
-                        {
-                            <tr class="bg-success h5">
-                                <td colspan="4">
-                                    <i class="fas fa-thumbs-up fa-lg mr-2"></i>
-                                    Threre is no error/warning found.</td>
+                @if (!hasRecords)
+                {
+                    <div class="alert alert-success my-5">
+
+                        @*<h2>You have removed all the error and warnings, File is with WYPF for processing.</h2>
+                    <p>Click the following button to finish the process.</p>*@
+                        <h3>No Errors/Warnings Found.</h3>
+                        <p>Click the following button to return to Dashboard.</p>
+                        @* <a href="/Admin/Home/" class="btn btn-primary" alt="Back to Dashboard"> Dashboard</a> *@
+                    </div>
+                }
+                else
+                {
+                    <table id="ErrorsAndWarningsListTable" class="table table-sm table table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Status</th>
+                                <th>Description</th>
+                                <th class="text-center">Total</th>
+                                <th></th>
                             </tr>
-                        }
-                        else
-                        {
+                        </thead>
+                        <tbody>
                             @foreach (var item in Model.ErrorsAndWarningsList)
                             {
                                 //## The following object will be passed on to the Action with list of required Params only.
-                                var paramList = new AlertQueryVM() {
-                                    RemittanceId = Model.RemittanceId,
-                                    EmployerCode = item.PAYLOCATIONREF,
-                                    AlertType = item.ALERT_TYPE_REF,
-                                    Status = item.ALERT_DESC,
-                                    Total = item.ALERT_COUNT?.ToString().Replace(".0", ""),
-                                };
+                                var paramList = new AlertQueryVM()
+                    {
+                        RemittanceId = Model.RemittanceId,
+                        EmployerCode = item.PAYLOCATIONREF,
+                        AlertType = item.ALERT_TYPE_REF,
+                        Status = item.ALERT_DESC,
+                        Total = item.ALERT_COUNT?.ToString().Replace(".0", ""),
+                    };
 
                                 if (item.ACTION_BY.Equals("ALL"))
                                 {
@@ -123,38 +124,19 @@
                                     rowCounter++;
                                 }
                             }
-
-                        }
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                }
             </div>
 
             <div class="row mt-3">
                 <div class="text-center">
-                    <a href="/Admin/Home" class="btn btn-secondary btn-lg">Dashboard</a>
+                    <a href="/Admin/Home" class="btn btn-secondary btn-lg click-and-wait-button">Dashboard</a>
                 </div>
             </div>
         </div>
     </div>
 
-    @if (countErrors == 0)
-    {
-        <script>
-            document.getElementById('divHide').style.display = 'none';
-        </script>
-        <div class="container">
-            <div class="jumbotron">
-                <div class="alert alert-success">
-
-                    @*<h2>You have removed all the error and warnings, File is with WYPF for processing.</h2>
-                <p>Click the following button to finish the process.</p>*@
-                    <h2>No record found!</h2>
-                    <p>Click the following button to return to Dashboard.</p>
-                    <a href="/Admin/Home/" class="btn btn-primary" alt="Back to Dashboard"> Dashboard</a>
-                </div>
-            </div>
-        </div>
-    }
 
 </div>
 
@@ -177,7 +159,7 @@
     </div>
 </div>
 
-@section scripts{
+@section scripts {
     <script src="~/js/error-warning.js"></script>
     <script src="~/js/warning-list-bulk-approval.js"></script>
     <script src="~/js/site.js"></script>

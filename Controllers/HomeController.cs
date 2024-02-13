@@ -19,6 +19,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -63,7 +64,7 @@ namespace MCPhase3.Controllers
         {
             string clientType = ContextGetValue(Constants.SessionKeyClientType);
             //Session can set here to check if logged in user is Fire or LG.            
-            string userName = CurrentUserId();
+            string loginId = CurrentUserId();
 
             //client type is null or empty goto login page again
             if (IsEmpty(clientType))
@@ -78,7 +79,7 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("IndexFire", "Home");
             }
 
-            List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
+            List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(loginId);
             //staff login for frontend to upload a file for Employers causing an issue where it is getting a "-" in list which 
             //throws an exception.
 
@@ -114,13 +115,13 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> IndexFire()
         {
-            string userName = string.Empty;
-            userName = CurrentUserId();
+            string userId = string.Empty;
+            userId = CurrentUserId();
             string monthSelected = ContextGetValue(Constants.SessionKeyMonth) ?? string.Empty;
             string yearSelected = ContextGetValue(Constants.SessionKeyYears) ?? string.Empty;
             string postSelected = ContextGetValue(Constants.SessionKeyPosting) ?? string.Empty;
 
-            List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
+            List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
 
             return View();
         }
@@ -135,7 +136,7 @@ namespace MCPhase3.Controllers
             var errorDetails = new ErrorViewModel()
             {
                 RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-                UserId = HttpContext.Session.GetString(Constants.LoggedInAsKeyName),
+                UserId = HttpContext.Session.GetString(Constants.LoginNameKey),
                 ApplicationId = Constants.EmployersPortal,
                 ErrorPath = exDetails?.Path,
                 Message = exDetails?.Error.Message,
@@ -205,6 +206,11 @@ namespace MCPhase3.Controllers
 
             string userId = CurrentUserId();// ContextGetValue(SessionKeyUserID);
             var currentUser = await GetUserDetails(userId);
+            //TODO: it should have checked earlier.. before coming to this page
+            //if (IsEmpty(currentUser.Pay_Location_Name)) {
+            //    await AddPayrollProviderInfo(currentUser);
+            //}
+            
             string empName = currentUser.Pay_Location_Name;
             string empID = currentUser.Pay_Location_Ref;// ContextGetValue(Constants.SessionKeyPayrollProvider);
 
@@ -237,7 +243,7 @@ namespace MCPhase3.Controllers
             //string webRootPath = _host.WebRootPath;
             //MyModel model = new MyModel();
             //get list of paylocations
-            List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userId);
+            List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
             //bypass year and month check 
 
             if (vm.SelectedPostType == (int)PostingType.First)
@@ -261,7 +267,8 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            filePath = GenerateFilePathNameForUpload(vm.PaymentFile, fileNamePrefix: $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType}_");
+            string fileNamePrefix = $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType}_";
+            filePath = GenerateFilePathNameForUpload(vm.PaymentFile, fileNamePrefix);
             using (FileStream fileStream = new(filePath, FileMode.Create))
             {
                 await vm.PaymentFile.CopyToAsync(fileStream);
@@ -433,7 +440,7 @@ namespace MCPhase3.Controllers
                 P_Month = monthsList,
                 P_Year = yearsList
             };
-            string userName = CurrentUserId();
+            string userId = CurrentUserId();
             string empName = ContextGetValue(Constants.SessionKeyEmployerName);
             string empID = "XXXXXX";// ContextGetValue(Constants.SessionKeyPayLocId);
             fileCheckBO.P_EMPID = empID;
@@ -457,7 +464,7 @@ namespace MCPhase3.Controllers
             string webRootPath = _host.WebRootPath;
             MyModel model = new MyModel();
             //get list of paylocations
-            List<PayrollProvidersBO> subPayList = await CallPayrollProviderService(userName);
+            List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
 
             //bypass year and month check 
             if (posting.Equals(1))
@@ -666,9 +673,12 @@ namespace MCPhase3.Controllers
 
             //RemadShowTotalsValues formTotals = new RemadShowTotalsValues();
             var currentUser = await GetUserDetails(CurrentUserId());
+            //if (IsEmpty(currentUser.Pay_Location_Name)) { 
+            //    await AddPayrollProviderInfo(currentUser);
+            //}
 
             string remittanceID = string.Empty;
-            contributionSummaryInfo.UserLoginID = currentUser.LoginId;
+            contributionSummaryInfo.UserLoginID = currentUser.LoginName;
             contributionSummaryInfo.UserName = currentUser.UserId;
             contributionSummaryInfo.employerID = Convert.ToDouble(currentUser.Pay_Location_ID);
             contributionSummaryInfo.employerName = ContextGetValue(Constants.SessionKeyEmployerName);
@@ -686,20 +696,13 @@ namespace MCPhase3.Controllers
             //## First Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE'
             LogInfo($"Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE. {currentUser.Pay_Location_Ref}-{contributionSummaryInfo.employerName}, {contributionSummaryInfo.PaymentMonth}{contributionSummaryInfo.payrollYear}");
 
-            if (totalRecordsInFile >= 7000)
-            {
-                LogInfo($"Large Excel file.. {totalRecordsInFile} records.. adding a 2-seconds delay before RemittanceInsertApi().. to let it flow smoothly");
-                System.Threading.Thread.Sleep(2000);
-                LogInfo("Sleep(2000) --> Finished");
-            }
-
             var apiResult = await ApiPost(remittanceInsertApi, contributionSummaryInfo);
             remittanceID = JsonConvert.DeserializeObject<string>(apiResult);            
 
             if (apiResult == "") {
                 //## somehow crashed... 
                 TempData["Msg"] = "Failed to insert Remittance information into database. Please contact MP3 support team.";
-                WriteToDBEventLog(-1, $"Failed to insert Remittance information into database. User: {currentUser.LoginId}, employer: {contributionSummaryInfo.employerName}, Provider: {contributionSummaryInfo.payrollProviderID}, Perdio: {contributionSummaryInfo.payrollYear}/{contributionSummaryInfo.PaymentMonth}", 1, 1);
+                WriteToDBEventLog(-1, $"Failed to insert Remittance information into database. User: {currentUser.LoginName}, employer: {contributionSummaryInfo.employerName}, Provider: {contributionSummaryInfo.payrollProviderID}, Perdio: {contributionSummaryInfo.payrollYear}/{contributionSummaryInfo.PaymentMonth}", 1, 1);
 
                 return View(contributionSummaryInfo);
 
@@ -1072,30 +1075,12 @@ namespace MCPhase3.Controllers
             ContextRemoveValue(Constants.SessionKeyTotalRecords);
             ContextRemoveValue(Constants.SessionKeyTotalRecordsInDB);
 
-            LogInfo($"Calling Automatch api: {apiBaseUrlForAutoMatch}.");
-            AutoMatchBO autoMatchResult = new();
+            LogInfo($"Calling Automatch api: {apiBaseUrlForAutoMatch}. / {remittanceId}");
                         
-            //## even though 'initialiseProcessResult' is successful- we have seen on various ocassions that a Remittance still have status < 70, due to an on-going process.
-            //## we need to wait for at least 5 seconds before allowing the user to initiate Auto_Match process.. otherwise- that will fail for a Remittance status < 70.
-            for (int i = 0; i < 2; i++)
-            {
-                string apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remittanceId}");
-                autoMatchResult = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
+            string apiResult = await ApiGet($"{apiBaseUrlForAutoMatch}{remittanceId}");
+            AutoMatchBO autoMatchResult = JsonConvert.DeserializeObject<AutoMatchBO>(apiResult);
                 
-                LogInfo($"Automatch executed. autoMatchBO.L_STATUS_CODE: {autoMatchResult.L_STATUS_CODE} - {autoMatchResult.L_STATUS_TEXT}.");
-
-                if (autoMatchResult.L_STATUS_CODE != 0)
-                {
-                    LogInfo($"Attempt {i + 1}: Automatch failed. autoMatchBO.L_STATUS_CODE: {autoMatchResult.L_STATUS_CODE}-{autoMatchResult.L_STATUS_TEXT}. Try again after 5 seconds.");
-                    Thread.Sleep(5000);
-                }
-                else {
-                    LogInfo($"Attempt {i + 1}: Automatch Success");
-                    break;
-                }
-            }
-            
-            LogInfo($"Automatch finished. autoMatchBO.L_STATUS_CODE: {autoMatchResult.L_STATUS_CODE} - {autoMatchResult.L_STATUS_TEXT}.");
+            LogInfo($"Automatch executed. autoMatchBO.L_STATUS_CODE: {autoMatchResult.L_STATUS_CODE} - {autoMatchResult.L_STATUS_TEXT}.");
 
             return autoMatchResult;
 
@@ -1293,16 +1278,16 @@ namespace MCPhase3.Controllers
 
 
         /// <summary>
-        /// following method will show list of sub payroll provider with login name and id
+        /// following method will show list of sub payroll provider available for a User to Upload a file
         /// </summary>
-        /// <param name="userName"></param>
+        /// <param name="w2UserId">w2User id, not UPM.LoginName</param>
         /// <returns></returns>
-        private async Task<List<PayrollProvidersBO>> CallPayrollProviderService(string userName)
+        private async Task<List<PayrollProvidersBO>> GetPayrollProviderListByUser(string w2UserId)
         {
             //var subPayrollList = new List<PayrollProvidersBO>();
             string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.SubPayrollProvider);
 
-            var apiResult = await ApiGet(apiBaseUrlForSubPayrollProvider + userName);
+            var apiResult = await ApiGet(apiBaseUrlForSubPayrollProvider + w2UserId);
             var subPayrollList = JsonConvert.DeserializeObject<List<PayrollProvidersBO>>(apiResult);
 
             return subPayrollList;
@@ -1466,5 +1451,44 @@ namespace MCPhase3.Controllers
 
             return filePath;
         }
+
+        //private async Task AddPayrollProviderInfo(UserDetailsVM currentUser)
+        //{
+        //    var payrollBO = await GetPayrollProviderInfo(currentUser.UserId);
+
+        //    currentUser.Pay_Location_Ref = payrollBO.paylocation_ref;
+        //    currentUser.Pay_Location_ID = payrollBO.pay_location_ID;
+        //    currentUser.Pay_Location_Name = payrollBO.pay_location_name;
+        //    currentUser.Client_Id = payrollBO.client_Id;
+
+        //    //## now set this newly built object in the cache- so we can re-use it faster..
+        //    string cacheKey = GetKeyName(Constants.AppUserDetails);
+        //    _cache.Set(cacheKey, currentUser);
+        //}
+
+        ///// <summary>
+        ///// following method will show main payroll provider with login name and id
+        ///// </summary>
+        ///// <param name="userName"></param>
+        ///// <returns></returns>
+        //private async Task<PayrollProvidersBO> GetPayrollProviderInfo(string userName)
+        //{
+
+        //    //TODO: make it a simple APIGET call
+        //    PayrollProvidersBO payrollBO = new();
+        //    string apiBaseUrlForPayrollProvider = GetApiUrl(_apiEndpoints.PayrollProvider);     //## api/GetPayrollProviders
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        using var response = await httpClient.GetAsync(apiBaseUrlForPayrollProvider + userName);
+        //        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        //        {
+        //            string result = await response.Content.ReadAsStringAsync();
+        //            payrollBO = JsonConvert.DeserializeObject<PayrollProvidersBO>(result);
+        //        }
+        //    }
+
+        //    return payrollBO;
+        //}
+
     }
 }

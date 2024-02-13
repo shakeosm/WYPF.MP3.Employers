@@ -43,6 +43,7 @@ namespace MCPhase3
             services.Configure<CookieTempDataProviderOptions>(options =>
             {
                 options.Cookie.IsEssential = true;
+                options.Cookie.MaxAge = TimeSpan.FromMinutes(EXPIRY_MINUTES);
             });
 
             //to increase a rest api wait to maximum.

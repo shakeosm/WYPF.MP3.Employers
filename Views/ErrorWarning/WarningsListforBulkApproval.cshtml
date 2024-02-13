@@ -9,6 +9,7 @@
     bool showAcknowledgeAllButton = Model.Any(m => m.CLEARED_FG != "Y" && m.ALERT_CLASS == "W");
 
 }
+
 <div class="border shadow-lg p-4 mb-4 bg-white">
     <div id="ShowUpdateStatusDiv">
         @{
@@ -57,7 +58,7 @@
             <table class="table table-bordered table-warning">
                 <thead class="thead-light">
                     <tr>
-                        <td>@alertType</td>
+                        <td><b>@alertType</b></td>
                         <td><b>@ViewBag.status</b></td>
                         <td class="text-center h3"><span id="TotalErrorCountSpan" class="badge bg-danger rounded-pill">@totalAlerts</span></td>                        
                     </tr>
@@ -78,7 +79,7 @@
                 }   
 
                 @*This is simply a form, will never get posted.. sends data via url... *@
-                <form asp-action="WarningApprovalNew" id="myForm" enctype="multipart/form-data" method="post">
+                <form asp-action="WarningApprovalNew" id="WarningApprovalForm" class="mt-3" enctype="multipart/form-data" method="post">
                     <table id="WarningListTable" class="table table-bordered">
                         <thead class="thead-light">
                             <tr>
@@ -180,7 +181,11 @@
 
 @section scripts{
 
-    <script src="~/js/warning-list-bulk-approval.js"></script>
+    <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet" />
 
+    <script src="~/js/warning-list-bulk-approval.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 }
 

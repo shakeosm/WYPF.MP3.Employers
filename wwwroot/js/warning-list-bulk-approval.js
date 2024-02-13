@@ -1,8 +1,17 @@
 ﻿$(function () {
 
     $('#WarningListTable').DataTable({
-        stateSave: true
+        stateSave: true,
+        dom: 'Bfrtip',
+        buttons: [
+            'excelHtml5',
+            'csvHtml5',
+        ]
     });
+
+    //## customize the button appearance..
+    $("#WarningApprovalForm .buttons-csv").html("<i class='fas fa-cloud-download-alt fa-lg mx-2'></i>Download");
+    $("#WarningApprovalForm .buttons-csv").addClass("text-primary");
 
     if ($("#UpdateStatusAlertDiv").length) {
         setTimeout(function () {

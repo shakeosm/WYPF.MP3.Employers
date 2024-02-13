@@ -55,8 +55,12 @@ namespace MCPhase3.Controllers
         //#########################
         //## Life saving methods ##
         //#########################
-        public string CurrentUserId() => HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
-        public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
+        //public string CurrentUserId() => HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
+        
+        /// <summary>Returns w2User UserId- which is used in all Procedures</summary>
+        /// <returns></returns>
+        public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKey);   
+        public string SessionInfoKeyName()=> $"{Constants.SessionInfoKeyName}_{CurrentUserId()}";
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
         /// <param name="returnAsEncrypted">Will return an Encrypted value if True, set false to get Number value</param>        
@@ -161,7 +165,7 @@ namespace MCPhase3.Controllers
                 var errorDetails = new ErrorViewModel()
                 {
                     RequestId = "0",
-                    UserId = HttpContext.Session.GetString(Constants.LoggedInAsKeyName),
+                    UserId = HttpContext.Session.GetString(Constants.LoginNameKey),
                     ApplicationId = Constants.EmployersPortal,
                     ErrorPath = $"ApiPost()-> {apiUrl}",
                     Message = $"Failed API call with status: {response.StatusCode}",
@@ -191,17 +195,20 @@ namespace MCPhase3.Controllers
             await ApiPost(insertErrorLogApi, errorViewModel);
         }
 
-        public async Task<UserDetailsVM> GetUserDetails(string userName)
+
+        public async Task<UserDetailsVM> GetUserDetails(string loginName)
         {
-            string cacheKey = GetKeyName(Constants.AppUserDetails);
+            string cacheKey = $"{loginName}_{Constants.AppUserDetails}";
             var appUser = _cache.Get<UserDetailsVM>(cacheKey);
 
-            if (appUser is null) { 
-                string insertErrorLogApi = GetApiUrl(_apiEndpoints.GetUserDetails);
-                var apiResult = await ApiGet(insertErrorLogApi + userName);
+            if (appUser is null)
+            {
+                string getUserDetailsApi = GetApiUrl(_apiEndpoints.GetUserDetails);
+                var apiResult = await ApiGet(getUserDetailsApi + loginName);
                 appUser = JsonConvert.DeserializeObject<UserDetailsVM>(apiResult);
 
                 _cache.Set(cacheKey, appUser);  //## set it, first time only.. subsequent calls will be able to read it from local cache            
+                LogInfo($"GetUserDetails() => cacheKey: {cacheKey}");
             }
 
             return appUser;
@@ -260,6 +267,46 @@ namespace MCPhase3.Controllers
                 catch (Exception e)
                 {
                     Console.WriteLine("Error at: public void LogInfo => " + e.ToString());
+                }
+            }
+        }
+
+        
+        public void Log_ClearOlderCustomerFilesNotProcessed(string message)
+        {
+            //var logMessageText = $"{DateTime.Now.ToLongTimeString()}> {message}";
+
+#if DEBUG
+            Console.WriteLine(message);
+#endif
+
+            if (_configuration["Log_ClearOlderCustomerFilesNotProcessed"].ToString().ToLower() == "yes")
+            {
+                var line = Environment.NewLine + Environment.NewLine;
+                //logMessageText = $"{DateTime.Now.ToLongTimeString()}> {message}";
+                try
+                {
+                    string filepath = _configuration["LogDebugInfoFilePath"].ToString() + "FileCleanup\\";
+
+                    if (!Directory.Exists(filepath))
+                    {
+                        Directory.CreateDirectory(filepath);
+                    }
+
+                    filepath = filepath + DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    if (!System.IO.File.Exists(filepath))
+                    {
+                        System.IO.File.Create(filepath).Dispose();
+                    }
+
+                    using StreamWriter sw = System.IO.File.AppendText(filepath);
+                    sw.WriteLine(message);
+                    sw.Flush();
+                    sw.Close();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error at: public void Log_ClearOlderCustomerFilesNotProcessed() => " + e.ToString());
                 }
             }
         }

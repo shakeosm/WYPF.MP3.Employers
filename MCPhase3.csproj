@@ -39,6 +39,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <_WebToolingArtifacts Remove="Properties\PublishProfiles\MP3-EmployersPublish.pubxml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Services\" />
     <Folder Include="Views\Shared\Partials\" />
     <Folder Include="wwwroot\FilesForFTP\" />

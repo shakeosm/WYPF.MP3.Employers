@@ -93,9 +93,6 @@
                             <a id="AutoMatchInitiateLink_Pending" class="btn btn-outline-primary click-and-wait-button disabled my-2">Start now</a>
                         }
                         <br /><span class="text-info">Notes: For a large file it can take up to 2 minutes to process.</span>
-                        
-
-
 
                     </div>
                 </div>
@@ -111,7 +108,12 @@
 
                     <a href="/ErrorWarning/index?remittanceID=@Model.EncryptedRemittanceId" class="btn btn-primary mr-2">View errors and warnings summary</a>
 
-                    <a href="/Admin/" class="btn btn-danger">Dashboard</a>
+                    <a href="/Admin/Home/" class="btn btn-danger click-and-wait-button">Dashboard</a>
+                </div>
+
+                <div id="ShowDashboardButtonOnAjaxFail" class="d-none m-3 p-3">
+                    @* Just in case Ajax call is failed- we need to show the Back button here.. *@
+                    <a href="/Admin/Home/" class="btn btn-danger click-and-wait-button">Dashboard</a>
                 </div>
 
 
@@ -122,7 +124,7 @@
                     <div class="alert alert-danger mb-3">
                         @Html.Raw(Model.ErrorMessage)
                     </div>
-                    <a class="btn btn-large btn-secondary">Dashboard</a>
+                    <a href="/Admin/Home/" class="btn btn-danger click-and-wait-button">Dashboard</a>
                 </div>
             }
             

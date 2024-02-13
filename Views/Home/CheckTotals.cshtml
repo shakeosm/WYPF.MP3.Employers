@@ -80,7 +80,9 @@
                 <input type="hidden" asp-for="@Model.payrollProviderID">
 
                 <div class="row"><h4 class="col-md-10">Total employer contribution</h4><h4 class="col-md-2">£ @Model.EmployersTotalSS.ToString("N")</h4></div>
-                <div class="row"><h4 class="col-md-10">Total employer additional pension contributions (APC) reg 16:  </h4><h4 class="col-md-2">£ @Model.EmployerContribAPCSS.ToString("N")</h4></div><hr />
+                <div class="row"><h4 class="col-md-10">
+                    Total employer additional pension contributions (APC) reg 16:  </h4>
+                    <h4 class="col-md-2">£ @Model.EmployerContribAPCSS.ToString("N")</h4></div><hr />
 
                 <div class="row"><h4 class="col-md-10"><b>Employer total:</b></h4><h4 class="col-md-2" id="EmployersTotalValue"><b>£ @Convert.ToDouble(Model.EmployerContribAPCSS + Model.EmployerContribSS).ToString("N")</b></h4></div><br>
                 <div class="row"><h4 class="col-md-10"><b>Total employees and employer contribution</b></h4><h4 class="col-md-2" id="EmployersEmployeeTotalValue"><b>£ @Model.EmployersEmployeeTotalValue().ToString("N")</b></h4></div>

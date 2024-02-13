@@ -276,7 +276,7 @@ namespace MCPhase3.Controllers
 
         public async Task<IActionResult> Home()
         {
-            LogInfo("Loading Admin/Home", true);
+            
             //check of PaylocID session has value then empty it.
             if (ContextGetValue(Constants.SessionKeyPaylocFileID) != null)
             {
@@ -294,7 +294,7 @@ namespace MCPhase3.Controllers
                 RemittanceList = await GetRemittanceListByStatus(paramList)
             };
 
-            LogInfo("Admin/Home Loaded..");
+            LogInfo($"Admin/Home Loaded.. UserId: {paramList.UserId}, StatusType: {Constants.StatusType_EMPLOYER}");
 
             return View(viewModel);
            
@@ -450,7 +450,7 @@ namespace MCPhase3.Controllers
                 {
 
                     RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-                    UserId = HttpContext.Session.GetString(Constants.LoggedInAsKeyName),
+                    UserId = HttpContext.Session.GetString(Constants.LoginNameKey),
                     ApplicationId = Constants.EmployersPortal,
                     ErrorPath = ex.Source + ",  url: " + WebapiBaseUrlForSubmitReturn,
                     Message = ex.Message,
@@ -505,7 +505,7 @@ namespace MCPhase3.Controllers
             LogInfo($"DeleteRemittanceAjax() -> apiDeleteRemittanceUrl()-> api: {apiDeleteRemittanceUrl}");
 
             string apiResponse = await ApiGet($"{apiDeleteRemittanceUrl}{remID}/{userId}");
-            string result = JsonConvert.DeserializeObject<string>(apiResponse);
+            var result = JsonConvert.DeserializeObject<TaskResults>(apiResponse);
 
             return Json(result);
         }

@@ -23,7 +23,7 @@ namespace MCPhase3.CodeRepository.ActionFilters
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {            
-            string currentUserId = filterContext.HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
+            string currentUserId = filterContext.HttpContext.Session.GetString(Constants.UserIdKey);
             string urlPath = filterContext.HttpContext.Request.Path.ToString().ToLower();
 
 
@@ -31,7 +31,7 @@ namespace MCPhase3.CodeRepository.ActionFilters
             {
                 //## do no check....//## VIP pass for these paths 
             }            
-            else if (filterContext.HttpContext.Session.GetString(Constants.LoggedInAsKeyName) is null)
+            else if (filterContext.HttpContext.Session.GetString(Constants.UserIdKey) is null)
             {
                 //## session expired
                 filterContext.Result = RedirectResult("Login", "SessionExpired");
@@ -43,7 +43,7 @@ namespace MCPhase3.CodeRepository.ActionFilters
                 //## This current-authenticated Redis session may have been deleted by the Admin- after changing the Password..
                 //## So check- whether we still have a Redis session? If not- we need to Login again
                 string sessionGuid = filterContext.HttpContext.Session.GetString(Constants.SessionGuidKeyName);
-                string sessionInfoKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}"; //## this must match the Keyname in the BaseController.. Don't change it here
+                string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}_{currentUserId}";     //## this must match the Keyname in the BaseController.. Don't change it here
                 var redisCache = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
 
                 if (redisCache == null)

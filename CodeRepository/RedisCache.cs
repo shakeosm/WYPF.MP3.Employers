@@ -73,7 +73,7 @@ namespace MCPhase3.CodeRepository
         public void DeleteUserSession(string userId)
         {
 
-            string redisKeyName = $"{userId}{Constants.LoggedInAsKeyName}";   //## ie: 'browna_UserName'
+            string redisKeyName = $"{userId}{Constants.LoginNameKey}";   //## ie: 'browna_UserName'
 
             var sessionKeyName = $"{userId}_{Constants.SessionInfoKeyName}";    //## ie: 'browna_SessionInfo'
 

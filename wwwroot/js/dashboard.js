@@ -141,13 +141,23 @@
             contentType: false,
             success: function (response) {
                 hideOverlaySpinner();
+                console.log("response.isSuccess: " + response.isSuccess + ", message: " + response.message);
+                if (response.isSuccess === true) {
+                    $(caller).closest("tr").remove(); //## remove the row.. no need to reload the page..
+                    Swal.fire(
+                        'Deleted!',
+                        "The delete operation is successful.<br/><div class='alert alert-success mt-3'>" + response.message + "</div>",
+                        'success'
+                    )
+                } else {
+                    Swal.fire(
+                        'Failed!',
+                        "Failed to Delete.<br/><div class='alert alert-warning mt-3'>" + response.message + "</div>",
+                        'error'
+                    );
+                }
 
-                $(caller).closest("tr").remove(); //## remove the row.. no need to reload the page..
-                Swal.fire(
-                    'Deleted!',
-                    "The delete operation is successful.<br/><div class='alert alert-success mt-3'>" + response + "</div>",
-                    'success'
-                )
+
 
             },
             failure: function (response) {

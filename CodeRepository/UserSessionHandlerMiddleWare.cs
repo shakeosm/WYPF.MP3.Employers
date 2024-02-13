@@ -23,7 +23,7 @@ namespace MCPhase3.CodeRepository
 
         public async Task InvokeAsync(HttpContext context)
         {            
-            string currentUserId = context.Session.GetString(Constants.LoggedInAsKeyName);
+            string currentUserId = context.Session.GetString(Constants.LoginNameKey);
             //string x = context.Session.GetString(Constants.LoggedInAsKeyName);
 
             //using StreamWriter sw = System.IO.File.AppendText("C:\\MP3\\CustomerUploads\\UserSessionHandlerMiddleWare.txt");

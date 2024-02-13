@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -50,8 +51,8 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> Index(LoginViewModel loginVM)
         {
             //## lets store the UserId  in the Browser session, as we will be using this at very early stage. if Login isn't successful- they will be overridden later..
-            ContextSetValue(Constants.LoggedInAsKeyName, loginVM.UserId);
-            
+            ContextSetValue(Constants.LoginNameKey, loginVM.UserId);    //## this 'loginVM.UserId' this is actually 'Upm2.LoginName'. eg: we have userId: 'BlackburnD' and LoginName: 'BlackburnD1'
+
             //check username and password
             var loginResult = await LoginCheckMethod(loginVM.UserId, loginVM.Password);
 
@@ -59,8 +60,12 @@ namespace MCPhase3.Controllers
             if (loginResult == (int)LoginStatus.Valid)
             {
                 //## Get the User Details..
-                var currentUser = await base.GetUserDetails(loginVM.UserId);
+                var currentUser = await base.GetUserDetails(loginVM.UserId);    //## we actually passing the LoginName (UPM.LoginName) to get the User Details.. 
                 await AddPayrollProviderInfo(currentUser);
+
+                //## now change the 'UserId' VALUE IN THE sESSION.. we have a tricky situation- where UserID not always same as LoginName.
+                //## so- LoginName is only for Login process.. once the user is logged in- use UserId everywhere- in all Procedure calls..
+                ContextSetValue(Constants.UserIdKey, currentUser.UserId);
 
                 //## store the current UserId BrowserId and WindowsId in the session to be used later..                
                 ContextSetValue(Constants.LoggedInUserEmailKeyName, currentUser.Email);
@@ -185,6 +190,7 @@ namespace MCPhase3.Controllers
             string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:Is_MfaEnabled"]);
             var apiResult = await ApiGet(mfa_Requirement_Check_Url);
             bool mfaEnabled = bool.Parse(apiResult);
+            LogInfo($"is_MfaEnabled() >> calling: {mfa_Requirement_Check_Url}, mfaEnabled: {mfaEnabled}");
             return mfaEnabled;
         }
 
@@ -198,7 +204,7 @@ namespace MCPhase3.Controllers
             currentUser.Client_Id = payrollBO.client_Id;
 
             //## now set this newly built object in the cache- so we can re-use it faster..
-            string cacheKey = GetKeyName(Constants.AppUserDetails);
+            string cacheKey = $"{currentUser.UserId}_{Constants.AppUserDetails}";            
             _cache.Set(cacheKey, currentUser);
         }
 
@@ -302,15 +308,15 @@ namespace MCPhase3.Controllers
         }
 
 
-        private async Task<IActionResult> ProceedToLogIn(string userId)
+        private async Task<IActionResult> ProceedToLogIn(string loginName)
         {
-            var currentUser = await base.GetUserDetails(userId);
+            var currentUser = await base.GetUserDetails(loginName);
             if (string.IsNullOrEmpty(currentUser.Client_Id))
             {
                 await AddPayrollProviderInfo(currentUser);
             }
 
-            LogInfo($"ProceedToLogIn() => {userId} -> {currentUser.Email}");
+            LogInfo($"ProceedToLogIn() => {loginName} -> {currentUser.Email}");
 
             var fireSchemeId = _configuration.GetValue<string>("ValidSchemesId")
                                                .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -319,7 +325,7 @@ namespace MCPhase3.Controllers
 
             //check user login details            
             HttpContext.Session.SetString(Constants.SessionKeyClientId, currentUser.Client_Id);
-            HttpContext.Session.SetString(Constants.LoggedInAsKeyName, userId);      //## used in the 'UserSessionCheckActionFilter' for Authentication  
+            HttpContext.Session.SetString(Constants.LoginNameKey, loginName);      //## used in the 'UserSessionCheckActionFilter' for Authentication  
             //HttpContext.Session.SetString(Constants.LoggedInAsKeyName, vm.UserId);
             HttpContext.Session.SetString(Constants.SessionKeyPayLocName, currentUser.Pay_Location_Name);
             //HttpContext.Session.SetString(Constants.SessionKeyPayLocId, payrollBO.pay_location_ID.ToString());
@@ -368,7 +374,7 @@ namespace MCPhase3.Controllers
             var apiResult = await ApiPost(verifyUserRegistrationCodeApi, userToken);
             var isVerified = JsonConvert.DeserializeObject<bool>(apiResult);
 
-            ContextSetValue(Constants.LoggedInAsKeyName, id1);
+            ContextSetValue(Constants.LoginNameKey, id1);
 
             string cacheKey = $"{id1}_{Constants.UserRegistrationTokenDetails}";
             _cache.Set(cacheKey, userToken);
@@ -624,6 +630,9 @@ namespace MCPhase3.Controllers
             HttpContext.Session.Clear();
 
             //HttpContext.Session.Remove(SessionKeyUserID);
+            HttpContext.Session.Remove(LoggedInUserEmailKeyName);
+            HttpContext.Session.Remove(LoginNameKey);
+            HttpContext.Session.Remove(UserIdKey);
             HttpContext.Session.Remove(SessionKeyPayLocName);
             //HttpContext.Session.Remove(SessionKeyPayLocId);
             HttpContext.Session.Remove(SessionKeyClientId);
@@ -666,6 +675,62 @@ namespace MCPhase3.Controllers
                 ClearSessionValues();
 
                 return Json("success");
+            }
+            return Json("who are you?");
+        }
+
+        [HttpGet]
+        public IActionResult ClearOlderCustomerFilesNotProcessed(string id)
+        {
+            string uploadFolder = _configuration["FileUploadPath"];
+
+            if (System.IO.Path.Exists(uploadFolder)) {
+                string[] files = Directory.GetFiles(uploadFolder);
+                StringBuilder cleanupResult = new StringBuilder();
+                cleanupResult.AppendLine("############### New hourly execution #############");
+                cleanupResult.AppendLine($"############# Time: {DateTime.Now} ##########");
+
+                if(files.Any() == false)
+                {
+                    cleanupResult.AppendLine("No files found...");
+                    cleanupResult.AppendLine();
+                    Log_ClearOlderCustomerFilesNotProcessed(cleanupResult.ToString());
+                    return Json($"success, called at: {DateTime.Now}");
+                }
+
+                int oldFilesFound = 0; int newFilesFound = 0;
+                foreach (string file in files)
+                {
+                    FileInfo fi = new FileInfo(file);
+                    var created = fi.CreationTime;
+                    string hoursElapsed = _configuration["ClearCustomerFilesOlderThan_X_Hours"].ToString();
+                    int.TryParse(hoursElapsed, out int hoursThresholdToDeleteFile);
+
+                    //cleanupResult.AppendLine($"{DateTime.Now} >> File: {file}, created: {created}");
+                    if (DateTime.Now > created.AddHours(hoursThresholdToDeleteFile))
+                    {
+                        try
+                        {
+                            System.IO.File.Delete(file);
+                            cleanupResult.AppendLine($"deleting >> {file}, created: {created},");
+                        }
+                        catch (Exception ex)
+                        {
+                            cleanupResult.AppendLine($"Error: Failed to Delete >> {file}, created: {created}, Reason: {ex.ToString()}");
+                        }
+                        
+                        oldFilesFound++;
+                    }
+                    else {
+                        cleanupResult.AppendLine($"New File>> {file}, created: {created},");
+                        newFilesFound++;
+                    }
+                }
+                cleanupResult.AppendLine($"Total: {files.Length} files found. New file: {newFilesFound}, Old: {oldFilesFound}.");
+                cleanupResult.AppendLine();
+                Log_ClearOlderCustomerFilesNotProcessed(cleanupResult.ToString());
+
+                return Json($"success, called at: {DateTime.Now}");
             }
             return Json("who are you?");
         }

@@ -2,22 +2,18 @@
     document.getElementById('passToWYPF').style.display = 'block';
 
     //## if it has 11+ Rows.. (1 TH + 10 TR)
-    if ($("#ErrorsAndWarningsListTable tr").length > 11) {
+    //if ($("#ErrorsAndWarningsListTable tr").length > 11) {
+    if ($("#ErrorsAndWarningsListTable").length) {
         $('#ErrorsAndWarningsListTable').DataTable({
             stateSave: true,
-            "ordering": false
+            "ordering": false,
+            dom: 'Bfrtip',
+            buttons: [
+                'excelHtml5',
+                'csvHtml5',
+            ]
         });
     }
-
-    //## This will collapse the current Div- (showing list of Errors in each category) and show the List of all Main Errors/Warnings
-    //$(document).on('click', '#BackToErrorsAndWarningsListButton', function (event) {
-    //    event.preventDefault();
-    //    $("#AlertListModalContentsWrapper").slideUp(300);           //## Child table - will Collapse
-    //    $("#ErrorsAndWarningsListTable_wrapper").slideDown(300);    //## Parent Table - will show
-    //    $("#AlertListModalContentsWrapper").addClass("d-none");     //## Child table
-       
-    //    ScrollToPageBottom();
-    //});
 
 
     //## This will collapse the "Main Errors/Warnings"" Div- and show child items in each Error/Warnings
@@ -51,9 +47,6 @@
                 }
 
                 $("#AlertListModal").modal("show");
-                //$("#AlertListModalContentsWrapper").slideDown(300);         //## Child table - will show
-                //$("#ErrorsAndWarningsListTable_wrapper").slideUp(300);    //## Parent Table - will Collapse
-                //$("#AlertListModalContentsWrapper").removeClass("d-none");//## Child table
 
                 hideOverlaySpinner();
             },
