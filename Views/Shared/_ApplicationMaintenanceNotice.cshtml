@@ -1,0 +1,12 @@
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration configuration
+@{
+    var deploymentStartTime = configuration["Deployment:StartTime"];    
+    bool hasDeploymentPlannedToday = !string.IsNullOrEmpty(deploymentStartTime);
+}
+
+@if (hasDeploymentPlannedToday)
+{
+    var deploymentMessage = configuration["Deployment:Message"];
+    <div class="bg-warning text-center fw-bold text-danger sticky-top p-2">@deploymentMessage</div>
+}
