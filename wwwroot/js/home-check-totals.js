@@ -10,16 +10,21 @@
             var Miscellaneous = parseFloat($('#Miscellaneous').val());
 
             var additionalTotal = deficit + yearEndBalance + unfundedBenefits + Miscellaneous;
-            additionalTotal = additionalTotal.toFixed(2);
+            additionalTotal = parseFloat(additionalTotal).toFixed(2);
             
-            $('#DecifitTotalLblValue').text('£ ' + additionalTotal);
+            $('#DecifitTotalLblValue').text(additionalTotal);
 
-            var employersEmployeeTotalValue = $("#EmployersEmployeeTotalValue").text(); //## this is <h4> item
-            var empVal = employersEmployeeTotalValue.replace('£', '').replace(',', '');
+            var employersEmployeeTotalValue = $("#EmployersEmployeeTotalValueRawFormat").val();
 
-            var grandTotal = parseFloat(empVal) + parseFloat(additionalTotal);
-            grandTotal = grandTotal.toFixed(2);
-            $('#GrandTotalValue').text('£ ' + grandTotal);
+            var grandTotal = parseFloat(employersEmployeeTotalValue) + parseFloat(additionalTotal);
+            
+            if (additionalTotal < 1) {
+                $('#GrandTotalValue').text(employersEmployeeTotalValue);
+            } else {
+                $('#GrandTotalValue').text(new Intl.NumberFormat('en-US').format(grandTotal) );
+            }
+
+            console.log("additionalTotal: " + additionalTotal + ",    employersEmployeeTotalValue: " + employersEmployeeTotalValue + ",      grandTotal: " + grandTotal);
 
         }
     });

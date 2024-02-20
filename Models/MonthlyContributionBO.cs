@@ -56,7 +56,5 @@ namespace MCPhase3.Models
 
         public double EmployeeTotal () => MemberContribSS + MemberContrib5050SS + MemberContribAPCSS + MemberContribPOESSS + MemberContribARCSS;
         public double EmployersEmployeeTotalValue() => EmployeeTotal() + EmployersTotalSS;
-        public double DeficitTotalLblValue() => DeficitRec + YearEndBalanceRec + FundedBenefitsRec + Miscellaneous_Rec;
-        public double GrandTotalValue() => DeficitTotalLblValue() + EmployersEmployeeTotalValue();
     }
 }
