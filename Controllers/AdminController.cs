@@ -11,7 +11,9 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static MCPhase3.Common.Constants;
@@ -169,6 +171,7 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> UpdatePassword()
         {
             var currentUser = await GetUserDetails(CurrentUserId());
+
             var login = new LoginBO() { 
                 userName = CurrentUserId(),
                 UserDetails = currentUser,
@@ -508,6 +511,89 @@ namespace MCPhase3.Controllers
             var result = JsonConvert.DeserializeObject<TaskResults>(apiResponse);
 
             return Json(result);
+        }
+
+
+        [HttpGet]
+        public IActionResult CPanel()
+        {
+            if (!I_Am_A_SuperUser()) {
+                LogInfo($"User attempting to Load Admin/CPanel page which is restricted.");
+                return RedirectToAction("Home");
+            }
+
+            string uploadFolderPath = _configuration["FileUploadPath"];
+            string filesInDoneFolderPath = uploadFolderPath + _configuration["FileUploadDonePath"];
+            string logFileFolderPath = _configuration["LogDebugInfoFilePath"];
+
+            var vm = new AdminControlPanelVM
+            {
+                FilesNotProcessedList = GetFileList(uploadFolderPath),
+                FilesInDoneList = GetFileList(filesInDoneFolderPath),
+                UserActivityList = GetFileList(logFileFolderPath)
+            };
+
+            return View("ControlPanel", vm);
+        }
+
+        public List<FileDetails> GetFileList(string folderPath)
+        {
+            //string uploadFolder = _configuration["FileUploadPath"];
+            var fileList = new List<FileDetails>();
+
+            if (System.IO.Path.Exists(folderPath))
+            {
+                string[] files = Directory.GetFiles(folderPath);
+
+                if (files.Any() == false)
+                {
+                    return fileList;
+                }
+               
+                foreach (string file in files)
+                {
+                    FileInfo fi = new FileInfo(file);
+                    var created = fi.CreationTime;
+
+                    fileList.Add(new FileDetails() { 
+                        CreatedOn = created,
+                        FileName = file.Replace(folderPath, ""),    //## no need to show the FolderPath in the UI...
+                    });
+
+                }
+            }
+
+            return fileList.OrderByDescending(fl=> fl.CreatedOn).ToList();
+
+        }
+
+        //[HttpGet("/Admin/ShowUserActivityLogByAjax/{fileName}")]
+        [HttpGet]
+        public ActionResult ShowUserActivityLogByAjax(string id)
+        {
+            var result = new TaskResults()
+            {
+                IsSuccess = false,
+                Message = "File not found!"
+            };
+
+            if (IsEmpty(id) || !id.EndsWith(".txt"))
+            {
+                return Json(result);
+            }
+
+            string logFileFolderPath = _configuration["LogDebugInfoFilePath"];
+            string activityLogFilePath = logFileFolderPath + id;
+
+            if (System.IO.Path.Exists(activityLogFilePath)) 
+            {
+                var contents = System.IO.File.ReadAllText(activityLogFilePath);
+                result.IsSuccess = true;
+                result.Message = contents;
+            }
+
+            return Json(result);
+
         }
 
     }

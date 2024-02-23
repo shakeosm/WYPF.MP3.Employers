@@ -15,5 +15,6 @@
         public string Pay_Location_Ref { get; set; }
         public string Pay_Location_ID { get; set; }
         public string Client_Id { get; set; }
+        public bool IsSuperUser { get; set; }
     }
 }

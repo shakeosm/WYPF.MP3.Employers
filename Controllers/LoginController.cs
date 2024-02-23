@@ -70,7 +70,10 @@ namespace MCPhase3.Controllers
                 //## store the current UserId BrowserId and WindowsId in the session to be used later..                
                 ContextSetValue(Constants.LoggedInUserEmailKeyName, currentUser.Email);
                 ContextSetValue(Constants.BrowserId, loginVM.BrowserId);
-                ContextSetValue(Constants.WindowsId, loginVM.WindowsId);                
+                ContextSetValue(Constants.WindowsId, loginVM.WindowsId);
+
+                //## Super User Scenario
+                await LoggedInAs_SuperUser_SetSessionValue(loginVM.UserId);
 
                 //## Check in the Config- whether we should do MFA verification  or not.. we can sometimes disable it- for various reasons..
                 if (await is_MfaEnabled())
@@ -140,6 +143,24 @@ namespace MCPhase3.Controllers
             //## if none of the above were true- which is not possible- then take back to login screen again.. where else!?
             return View(loginVM);
 
+        }
+
+
+        /// <summary>This will go to the API and see if the current user is listed as a SuperUser</summary>
+        /// <param name="userId">UserId- the one they have used for Login</param>
+        /// <returns>It sets value in the Session, does not return any value</returns>
+        private async Task LoggedInAs_SuperUser_SetSessionValue(string userId)
+        {
+            string apiUrl = GetApiUrl(_apiEndpoints.SuperUserCheck);
+            var result = await ApiGet(apiUrl + userId);
+            if (IsEmpty(result))
+            {
+                ContextSetValue(Constants.LoggedInAs_SuperUser, "false");   //## if any error happenned- then just say 'NO, Not a SuperUser'
+            }
+            else {
+                ContextSetValue(Constants.LoggedInAs_SuperUser, result.ToString());
+            }
+            
         }
 
         /// <summary>This will send MFA Verification code to the User.. Send or Resend...</summary>
@@ -638,6 +659,7 @@ namespace MCPhase3.Controllers
             HttpContext.Session.Remove(SessionKeyClientId);
             HttpContext.Session.Remove(SessionKeyClientType);
             HttpContext.Session.Remove(SessionKeyEmployerName);
+            HttpContext.Session.Remove(LoggedInAs_SuperUser);
             //HttpContext.Session.Remove(SessionKeyPayrollProvider);
 
             HttpContext.Response.Cookies.Delete(".AspNetCore.Session");

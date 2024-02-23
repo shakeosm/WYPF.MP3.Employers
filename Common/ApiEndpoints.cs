@@ -49,6 +49,7 @@
         public string GetUserDetails { get; set; }
         public string VerifyUserRegistrationCode { get; set; }
         public string RegisterUserWithNewPassword { get; set; }
+        public string SuperUserCheck { get; set; }
     }
 
 }

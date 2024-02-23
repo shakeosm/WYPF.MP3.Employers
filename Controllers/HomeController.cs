@@ -1,4 +1,5 @@
-﻿using MCPhase3.CodeRepository;
+﻿using CsvHelper;
+using MCPhase3.CodeRepository;
 using MCPhase3.CodeRepository.InsertDataProcess;
 using MCPhase3.Common;
 using MCPhase3.Models;
@@ -17,11 +18,10 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using static MCPhase3.Common.Constants;
 
@@ -188,6 +188,12 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            if (!Path.Exists(_customerUploadsLocalFolder))
+            {
+                _cache.SetString(Constants.FileUploadErrorMessage, "Error: File upload area not defined. Please contact support.");
+                return RedirectToAction("Index", "Home");
+            }
+
             var fileCheck = IsFileValid(vm.PaymentFile);
 
             if (!fileCheck.IsSuccess)
@@ -202,23 +208,20 @@ namespace MCPhase3.Controllers
             HttpContext.Session.SetString(Constants.SessionKeyPosting, vm.SelectedPostType.ToString());
             HttpContext.Session.SetString(Constants.SessionKeySchemeName, SessionSchemeNameValue);
 
-            //TotalRecordsInsertedAPICall apiCall = new TotalRecordsInsertedAPICall();
+            //## store the user selection in the cache- so we can set the as Seleted once the user goes back to the page
+            TempData["SelectedYear"] = vm.SelectedYear;  //## TempData[] is to transfer data between Actions in a controller- while on the same call..
+            TempData["SelectedMonth"] = vm.SelectedMonth;
+            TempData["SelectedPostType"] = vm.SelectedPostType;
 
-            string userId = CurrentUserId();// ContextGetValue(SessionKeyUserID);
-            var currentUser = await GetUserDetails(userId);
-            //TODO: it should have checked earlier.. before coming to this page
-            //if (IsEmpty(currentUser.Pay_Location_Name)) {
-            //    await AddPayrollProviderInfo(currentUser);
-            //}
-            
+            string userId = CurrentUserId();
+            var currentUser = await GetUserDetails(userId);            
             string empName = currentUser.Pay_Location_Name;
-            string empID = currentUser.Pay_Location_Ref;// ContextGetValue(Constants.SessionKeyPayrollProvider);
 
-            var submissionPeriod = new CheckFileUploadedBO
+            var submissionInfo = new CheckFileUploadedBO
             {
                 P_Month = vm.SelectedMonth,
                 P_Year = vm.SelectedYear,
-                P_EMPID = empID
+                P_EMPID = vm.SelectedPayLocationId  //## actually refering to 'payroll_provider_id' in table. EmployerId: '1003701' and payroll_provider_id: 'BAR0122'
             };
 
             //Member titles coming from config - 
@@ -226,49 +229,35 @@ namespace MCPhase3.Controllers
             //Check all invalid signs from file and show error to employer
             string[] invalidSigns = ConfigGetValue("SignToCheck").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
-            //update Event Details table File is uploaded successfully.
+            //check if records were uploaded previously for the SelectedPayLocationId, month and year.
             string apiCheckFileIsUploadedUrl = GetApiUrl(_apiEndpoints.CheckFileIsUploaded);   //## api/CheckFileUploaded
-
-            //check if records were uploaded previously for the selected month and year.
-            //int fileAvailableCheck = await apiCall.CheckFileAvailable(fileCheckBO, apiBaseUrlForCheckFileAvailable);
-            var apiResult = await ApiPost(apiCheckFileIsUploadedUrl, submissionPeriod);
+            var apiResult = await ApiPost(apiCheckFileIsUploadedUrl, submissionInfo);
             int fileAlreadyUploaded = JsonConvert.DeserializeObject<int>(apiResult);
 
-            string fileExt = string.Empty;
-            string filePath = string.Empty;
-            string spreadSheetName = string.Empty;
-            string errorMessage = string.Empty;
-            //bool answer = true;
-            // string fileNameWithoutExt = string.Empty;
-            //string webRootPath = _host.WebRootPath;
-            //MyModel model = new MyModel();
-            //get list of paylocations
             List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
-            //bypass year and month check 
 
             if (vm.SelectedPostType == (int)PostingType.First)
             {
                 if (fileAlreadyUploaded == 1)
                 {
-                    //TempData["MsgM"] 
-                    _cache.SetString(Constants.FileUploadErrorMessage, $"File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.YearList} <br/> You can goto Dashboard and start process on file from there. ");
+                    _cache.SetString(Constants.FileUploadErrorMessage, $"<h5>File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.SelectedYear} <br/> You can goto Dashboard and start process on file from there.</h5>");
                     return RedirectToAction("Index", "Home");
                 }
             }
 
-            if (excelDt != null)
+            /// If “2nd posting for same month“ is selected- then Validate process should check the uploaded Excel sheet - there should be records only for the selected Month/Year
+            if (vm.SelectedPostType == (int)PostingType.Second)
             {
-                excelDt.Clear();
+                if (!IsA_Valid2ndMonthPosting(vm.SelectedYear, vm.SelectedMonth, vm.SelectedPayLocationId))
+                {                 
+                    //## Respective error message is already set from that function
+                    return RedirectToAction("Index", "Home");
+                }
             }
 
-            if (!Path.Exists(_customerUploadsLocalFolder))
-            {
-                _cache.SetString(Constants.FileUploadErrorMessage, "Error: File upload area not defined. Please contact support.");
-                return RedirectToAction("Index", "Home");
-            }
 
             string fileNamePrefix = $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType}_";
-            filePath = GenerateFilePathNameForUpload(vm.PaymentFile, fileNamePrefix);
+            string filePath = GenerateFilePathNameForUpload(vm.PaymentFile, fileNamePrefix);
             using (FileStream fileStream = new(filePath, FileMode.Create))
             {
                 await vm.PaymentFile.CopyToAsync(fileStream);
@@ -286,6 +275,13 @@ namespace MCPhase3.Controllers
                 System.IO.File.Delete(filePath);
                 _cache.SetString(Constants.FileUploadErrorMessage, result.Message);
                 return RedirectToAction("Index", "Home");
+            }
+
+
+            string errorMessage = string.Empty;
+
+            if (excelDt != null){
+                excelDt.Clear();
             }
 
             try
@@ -308,49 +304,41 @@ namespace MCPhase3.Controllers
             if (excelDt is null)
             {
                 _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
+                LogInfo($"_commonRepo.ConvertExcelToDataTable({filePath}) is NULL");
                 return RedirectToAction("Index", "Home");
             }
 
-            LogInfo($"change column heading Name");
+            LogInfo($"_commonRepo.ChangeColumnHeadings(), Rows: {excelDt.Rows.Count}");
             // change column heading Name
             if (!_commonRepo.ChangeColumnHeadings(excelDt, out errorMessage))
             {
                 _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
                 return RedirectToAction("Index", "Home");
             }
-            LogInfo($"change column heading Name: Finished");
+            LogInfo($"_commonRepo.ChangeColumnHeadings(): Finished");
 
             // convert all fields in data table to string
             modelDT.stringDT = _commonRepo.ConvertAllFieldsToString(excelDt, userId);
 
             int numberOfRows = modelDT.stringDT.Rows.Count;
-
             LogInfo($"ConvertAllFieldsToString: Finished. numberOfRows: {numberOfRows}");
-
-            //Add selected name of month into Session, filename and total records in file.
-            //HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth.ToString());
-            //HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear.ToString());
 
             var fileNameForUpload = Path.GetFileName(filePath);
             HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
             HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, numberOfRows.ToString());
-
-            //## store the user selection in the cache- so we can set the as Seleted once the user goes back to the page
-            TempData["SelectedYear"] = vm.SelectedYear;  //## TempData[] is to transfer data between Actions in a controller- while on the same call..
-            TempData["SelectedMonth"] = vm.SelectedMonth;
-            TempData["SelectedPostType"] = vm.SelectedPostType;
 
             //Seperated LG and Fire functions
             //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
             //## This is the actual Field / Data validation on the Excel file - which is now in a DataSet. This will generate respective error message based on the defined validation rules on each field.
             string CheckSpreadSheetErrorMsg = _validateExcel.ValidateValues(modelDT.stringDT, vm.SelectedMonth, vm.SelectedPostType.ToString(), vm.SelectedYear, subPayList, validTitles, invalidSigns, ref errorMessage);
 
-            LogInfo($"_validateExcel.ValidateValues: Finished.");
+            LogInfo($"_validateExcel.ValidateValues({vm.SelectedYear}, {vm.SelectedMonth}, {vm.SelectedPostType}): Finished.");
 
             if (!errorMessage.Equals(""))
             {
                 //following tempdata is showing list of errors in file.            
                 _cache.SetString(Constants.FileUploadErrorMessage, "<h3> Please remove the following errors from file and upload again</h3><br />" + CheckSpreadSheetErrorMsg);
+                LogInfo("Error while doing _validateExcel.ValidateValues(). Returning back to /Home/Index to reupload the file.");
                 return RedirectToAction("Index", "Home");
             }
             else
@@ -364,7 +352,7 @@ namespace MCPhase3.Controllers
                     //### This will insert new column in the DataTable, and add values in all rows, ie: UserName, ClientId, RemittanceId, MODDATE, PostDate
                     LogInfo($"_insertDataTable.PassDt. excelDt: {excelDt.Rows.Count} designDocPath: {designDocPath}");
                     _insertDataTable.ProcessDataTable(0, userId, "", "", "", excelDt, designDocPath);
-                    LogInfo($"_insertDataTable.PassDt Finished!");
+                    LogInfo($"_insertDataTable.ProcessDataTable() Finished!");
 
                     _cache.SetString(Constants.FileUploadErrorMessage, $"Success: File contents are validated successfully and ready to upload. Total <b>{numberOfRows}</b> records found.");
                     return RedirectToAction("Index", "Home");
@@ -373,6 +361,7 @@ namespace MCPhase3.Controllers
                 catch (Exception ex)
                 {
                     _cache.SetString(Constants.FileUploadErrorMessage, $"File upload failed! Please check error in qoutes : <b> {ex.Message}</b >'");
+                    LogInfo($"Error: File upload failed! Please check error: {ex} >>>  {ex.Message}");
                     return RedirectToAction("Index", "Home");
                 }
                 finally
@@ -412,6 +401,7 @@ namespace MCPhase3.Controllers
             }
 
             result.IsSuccess = IsEmpty(result.Message);
+            LogInfo($"IsFileValid() > result: {result}, Message: {result.Message}, File: {file.Name}, Length: {file.Length}, type: {file.ContentType}, extension: {Path.GetExtension(file.FileName)}");
 
 
             return result;
@@ -668,16 +658,7 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken] 
         public async Task<IActionResult> CheckTotals(MonthlyContributionBO contributionSummaryInfo)
         {
-            //## if there are 7k+ records- add 2 seconds delay in each DB calls... so things will go in block by block- not all at once and clog the App and DB Server
-            int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
-
-            //RemadShowTotalsValues formTotals = new RemadShowTotalsValues();
-            var currentUser = await GetUserDetails(CurrentUserId());
-            //if (IsEmpty(currentUser.Pay_Location_Name)) { 
-            //    await AddPayrollProviderInfo(currentUser);
-            //}
-
-            string remittanceID = string.Empty;
+            var currentUser = await GetUserDetails(CurrentUserId());            
             contributionSummaryInfo.UserLoginID = currentUser.LoginName;
             contributionSummaryInfo.UserName = currentUser.UserId;
             contributionSummaryInfo.employerID = Convert.ToDouble(currentUser.Pay_Location_ID);
@@ -697,13 +678,14 @@ namespace MCPhase3.Controllers
             LogInfo($"Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE. {currentUser.Pay_Location_Ref}-{contributionSummaryInfo.employerName}, {contributionSummaryInfo.PaymentMonth}{contributionSummaryInfo.payrollYear}");
 
             var apiResult = await ApiPost(remittanceInsertApi, contributionSummaryInfo);
-            remittanceID = JsonConvert.DeserializeObject<string>(apiResult);            
+            string remittanceID = JsonConvert.DeserializeObject<string>(apiResult);            
 
-            if (apiResult == "") {
+            if (IsEmpty(apiResult)) {
                 //## somehow crashed... 
+                string errorMessage = $"Failed to insert Remittance information into database. User: {currentUser.LoginName}, employer: {contributionSummaryInfo.employerName}, Provider: {contributionSummaryInfo.payrollProviderID}, Period: {contributionSummaryInfo.payrollYear}/{contributionSummaryInfo.PaymentMonth}";
                 TempData["Msg"] = "Failed to insert Remittance information into database. Please contact MP3 support team.";
-                WriteToDBEventLog(-1, $"Failed to insert Remittance information into database. User: {currentUser.LoginName}, employer: {contributionSummaryInfo.employerName}, Provider: {contributionSummaryInfo.payrollProviderID}, Perdio: {contributionSummaryInfo.payrollYear}/{contributionSummaryInfo.PaymentMonth}", 1, 1);
-
+                WriteToDBEventLog(-1, errorMessage, 1, 1);
+                LogInfo(errorMessage, true);
                 return View(contributionSummaryInfo);
 
             }
@@ -725,6 +707,7 @@ namespace MCPhase3.Controllers
             else {
                 TempData["MsgError"] = $"Remittance Id: {remittanceID}. System has failed inserting records in to the database, Please contact MP3 support.";
                 WriteToDBEventLog(Convert.ToInt32(remittanceID), "FAILED to execute Bulk data insert into database.", 1, 4);
+                LogInfo("FAILED to execute Bulk data insert into database.", true);
                 //## Delete this Temp file.. not needed anymore..
                 DeleteTheExcelFile();
                 return View(contributionSummaryInfo);
@@ -1382,9 +1365,12 @@ namespace MCPhase3.Controllers
 
                 result.Message = $"{warningMessage}<div class='h5 text-primary'>Please delete the empty rows and try again.</div>";
             }
-            
 
-            System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. delete it once processed
+
+            //System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. delete it once processed
+            //# don't delete the file after contents check. We may need this file for many use later.
+            //## one is- to check PayrollYear and Month values. for a '2nd Month posting'- we need to verify that all records in Excelsheet are for the same Year/Month selected in the UI
+            ContextSetValue(Constants.Staging_CSV_FilePathKey, csvFilePath);
 
             result.IsSuccess = IsEmpty(result.Message);
             return result;  //## success! All good!
@@ -1450,6 +1436,37 @@ namespace MCPhase3.Controllers
             string filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
 
             return filePath;
+        }
+
+        /// <summary>
+        /// If “2nd posting for same month“ is selected- then Validate process should check the uploaded excel sheet - there should be records only for the selected Month/Year
+        /// </summary>
+        /// <param name="payrollYear">Selected Payroll Year</param>
+        /// <param name="payrollMonth">Selected Payroll Month</param>
+        /// <param name="selectedPayLocationId">Selected PayLocationId</param>
+        /// <returns>True/False if valid</returns>
+        private bool IsA_Valid2ndMonthPosting(string payrollYear, string payrollMonth, string selectedPayLocationId)
+        {
+            //## we already have converted that Excel file into a CSV file while checking for malacious tags. We can get the path from Session cookie and start using it for further processing
+            string csvFilePath = ContextGetValue(Constants.Staging_CSV_FilePathKey);
+            var remittanceRecords = new List<ExcelsheetDataVM>();
+
+            using (var reader = new StreamReader(csvFilePath))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                remittanceRecords = csv.GetRecords<ExcelsheetDataVM>().ToList();
+            }
+
+            System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. now all need is finished
+
+            if (remittanceRecords.Any(r => r.PAYROLL_PD != payrollMonth) || remittanceRecords.Any(r => r.PAYROLL_YR != payrollYear) || remittanceRecords.Any(r => r.EMPLOYER_LOC_CODE != selectedPayLocationId))
+            {
+                string fileUploadErrorMessage2ndPosting = _Configure["FileUploadErrorMessage2ndPosting"];
+                _cache.SetString(Constants.FileUploadErrorMessage, fileUploadErrorMessage2ndPosting);
+                return false;
+            }
+            
+            return true;
         }
 
         //private async Task AddPayrollProviderInfo(UserDetailsVM currentUser)

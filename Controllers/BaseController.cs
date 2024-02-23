@@ -207,6 +207,8 @@ namespace MCPhase3.Controllers
                 var apiResult = await ApiGet(getUserDetailsApi + loginName);
                 appUser = JsonConvert.DeserializeObject<UserDetailsVM>(apiResult);
 
+                appUser.IsSuperUser = I_Am_A_SuperUser();
+
                 _cache.Set(cacheKey, appUser);  //## set it, first time only.. subsequent calls will be able to read it from local cache            
                 LogInfo($"GetUserDetails() => cacheKey: {cacheKey}");
             }
@@ -271,6 +273,11 @@ namespace MCPhase3.Controllers
             }
         }
 
+        public bool I_Am_A_SuperUser()
+        {
+            var value = ContextGetValue(Constants.LoggedInAs_SuperUser);
+            return Convert.ToBoolean(value) == true;
+        }
         
         public void Log_ClearOlderCustomerFilesNotProcessed(string message)
         {

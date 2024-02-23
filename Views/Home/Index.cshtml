@@ -19,11 +19,8 @@
     @*<h1 class="mainheading"> LG - Contribution advice</h1>
     <p class="mainheading">If you need to contact us phone 01274 434563 or 01274 435310</p>*@
     <div class="border shadow-lg p-4 mb-4 bg-white">
-        @*<div class="container-fluid bg-3 text-center">
-        <div class="container">*@
-        <div class="row justify-content-center">
-            <div class="col-11 col-sm-9 col-md-12 col-lg-12 col-xl-5 text-center p-0 mt-3 mb-2">
-                <div class="card px-0 pt-4 pb-0 mt-3 mb-3">
+            <div class="container text-center p-0">
+                <div class="card">
 
                     <!-- progressbar -->
                     <ul id="progressbar">
@@ -37,14 +34,13 @@
                     </ul>
                 </div>
             </div>
-        </div>
 
         <div class="container" id="uploadFile">
             <div class="jumbotron">
 
                 <div class="col-md-12 mb-5">
                     <h4>List of Paylocations:</h4>
-                    <select class="form-select col-md-6" asp-for="PayLocationList" asp-items="payLocationSelectList"></select>
+                    <select name="SelectedPayLocationId" class="form-select col-md-6" asp-for="PayLocationList" asp-items="payLocationSelectList"></select>
                 </div>
 
                 <h4>Step 1 - select payroll information</h4><hr />

@@ -8,6 +8,8 @@ namespace MCPhase3.ViewModels
 
     public class HomeFileUploadVM
     {
+        public string SelectedPayLocationId { get; set; }
+
         public List<string> MonthList { get; set; }
 
         [Required(ErrorMessage = "Payroll Month is required")]

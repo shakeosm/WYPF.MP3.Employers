@@ -1,0 +1,143 @@
+﻿@model MCPhase3.ViewModels.AdminControlPanelVM
+@{
+    ViewData["Title"] = "Super User Control Panel";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    
+}
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container-fluid">
+        <div class="alert alert-success h3">
+            <i class="fas fa-user-secret fa-lg mr-2 "></i>
+            Super user menu
+        </div>
+
+        <div class="row my-3">
+            @* User activity log *@
+            <div class="card border shadow col-6">
+                <h5 class="card-header text-danger">
+                    <i class="fas fa-list-alt fa-lg mr-2 "></i>
+                    User activity log
+                </h5>
+                <div class="card-body">
+                    <h4>In last 1 hour</h4>
+                    <table id="UserActivityLogTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <td>#</td>
+                                <td>User Name</td>
+                                <td>Last active</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.UserActivityList)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="#" class="btn btn-outline-primary p-1 show-activity-log-button" data-file-name="@item.FileName">
+                                            <i class="fas fa-search-plus fa-lg"></i>
+                                        </a>
+                                    </td>
+                                    <td>@item.FileName</td>
+                                    <td>@item.CreatedOn</td>
+                                </tr>
+                            
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+
+        @* User Uploaded files *@
+        <div class="row my-3">
+            @* Files not processed yet *@
+            <div class="card border shadow col-6">
+                <h5 class="card-header text-danger">
+                    <i class="fas fa-file-excel fa-lg mr-2 "></i>
+                    Files not processed yet
+                </h5>
+                <div class="card-body">
+                    <h4>In last 1 hour</h4>
+                    <table id="FilesNotProcessedTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <td>#</td>
+                                <td>File Name</td>
+                                <td>Uploaded on</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.FilesNotProcessedList)
+                            {                                                      
+                                <tr>
+                                    <td>#</td>
+                                    <td>@item.FileName</td>
+                                    <td>@item.CreatedOn</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @* Files in DONE folder *@
+            <div class="card border shadow col-6">
+                <h5 class="card-header text-danger">
+                    <i class="fas fa-cloud-download-alt fa-lg mr-2 "></i>
+                    Files in Done folder
+                </h5>
+                <div class="card-body">
+                    <h4>In last 1 hour</h4>
+                    <table id="FilesDoneListTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <td>#</td>
+                                <td>File Name</td>
+                                <td>Uploaded on</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.FilesInDoneList)
+                            {
+                                <tr>
+                                    <td>#</td>
+                                    <td>@item.FileName</td>
+                                    <td>@item.CreatedOn</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<!-- Scrollable modal to show User Activity Log-->
+
+<div id="UserActivityLogPopupModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="UserActivityLogModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fs-5" id="UserActivityLogModalTitle">@* UserName will be dumped here *@</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="UserActivityLogPlaceholderDiv">
+                    @*Here we will dump the UserActivity details to show in this popup modal window...*@
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script src="~/js/admin-super-user.js"></script>
+}

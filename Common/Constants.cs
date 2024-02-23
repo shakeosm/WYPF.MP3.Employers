@@ -42,7 +42,9 @@
         
         /// <summary>The complete File path and name of the file uploaded by the Customer</summary>
         public const string UploadedFilePathKey = "MP3.Employers.UploadedFilePathName";    
+        public const string Staging_CSV_FilePathKey = "MP3.Employers.Staging_CSV_FilePathName";    
         public const string FileUploadErrorMessage = "MP3.Employers.FileUploadErrorMessage";    
+        
         public const string CustomErrorDetails = "MP3.Employers.CustomErrorDetails";      //# to show the user a custom error message in a Error500 page
 
         public const string Error403_Page = @"~/Views/Errors/Errror403.cshtml";
@@ -58,6 +60,7 @@
         public static string MemberMatchingList = "MemberMatchingList";
         public static string UserPayLocationInfo = "MP3.Employers.UserPayLocationInfo";
         public static string AppUserDetails = "AppUserDetails";
+        public static string LoggedInAs_SuperUser = "LoggedInAs_SuperUser";
         
         public static string ExcelDataAsString = "ExcelDataAsString";
         public static string CurrentAlertDescription = "CurrentAlertDescription";
