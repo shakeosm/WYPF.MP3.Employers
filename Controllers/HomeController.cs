@@ -87,9 +87,9 @@ namespace MCPhase3.Controllers
 
 
             //## do we have an error message from previous FileUpload attempt? This page maybe loading after a Index_POST() call failed and redirected back here..
-            string fileUploadErrorMessage = _cache.GetString(Constants.FileUploadErrorMessage);
+            string fileUploadErrorMessage = _cache.GetString(GetKeyName(Constants.FileUploadErrorMessage));
             //## Delete the message once Read.. otherwise- this will keep coming on every page request...
-            _cache.Delete(Constants.FileUploadErrorMessage);
+            _cache.Delete(GetKeyName(Constants.FileUploadErrorMessage));
 
             var viewModel = new HomeFileUploadVM()
             {
@@ -184,13 +184,13 @@ namespace MCPhase3.Controllers
             LogInfo($"Create Remittance process started");
             if (!ModelState.IsValid)
             {
-                _cache.SetString(Constants.FileUploadErrorMessage, "Error: You must select 'Year', 'Month' and 'PostType' to continue");
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), "Error: You must select 'Year', 'Month' and 'PostType' to continue");
                 return RedirectToAction("Index", "Home");
             }
 
             if (!Path.Exists(_customerUploadsLocalFolder))
             {
-                _cache.SetString(Constants.FileUploadErrorMessage, "Error: File upload area not defined. Please contact support.");
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), "Error: File upload area not defined. Please contact support.");
                 return RedirectToAction("Index", "Home");
             }
 
@@ -198,7 +198,7 @@ namespace MCPhase3.Controllers
 
             if (!fileCheck.IsSuccess)
             {
-                _cache.SetString(Constants.FileUploadErrorMessage, fileCheck.Message);
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), fileCheck.Message);
                 return RedirectToAction("Index", "Home");
             }
 
@@ -240,7 +240,7 @@ namespace MCPhase3.Controllers
             {
                 if (fileAlreadyUploaded == 1)
                 {
-                    _cache.SetString(Constants.FileUploadErrorMessage, $"<h5>File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.SelectedYear} <br/> You can goto Dashboard and start process on file from there.</h5>");
+                    _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"<h5>File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.SelectedYear} <br/> You can goto Dashboard and start process on file from there.</h5>");
                     return RedirectToAction("Index", "Home");
                 }
             }
@@ -248,7 +248,7 @@ namespace MCPhase3.Controllers
             /// If “2nd posting for same month“ is selected- then Validate process should check the uploaded Excel sheet - there should be records only for the selected Month/Year
             if (vm.SelectedPostType == (int)PostingType.Second)
             {
-                if (!IsA_Valid2ndMonthPosting(vm.SelectedYear, vm.SelectedMonth, vm.SelectedPayLocationId))
+                if (!IsA_Valid2ndMonthPosting(vm.SelectedYear, vm.SelectedMonth[..3], vm.SelectedPayLocationId))
                 {                 
                     //## Respective error message is already set from that function
                     return RedirectToAction("Index", "Home");
@@ -273,7 +273,7 @@ namespace MCPhase3.Controllers
             if (result.IsSuccess == false)
             {
                 System.IO.File.Delete(filePath);
-                _cache.SetString(Constants.FileUploadErrorMessage, result.Message);
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), result.Message);
                 return RedirectToAction("Index", "Home");
             }
 
@@ -296,14 +296,14 @@ namespace MCPhase3.Controllers
             }
             catch (Exception ex)
             {
-                _cache.SetString(Constants.FileUploadErrorMessage, "Error transforming the excel file. Please check all column 'Names' are correct and NO empty rows in the sheet." + ex.Message);
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), "Error transforming the excel file. Please check all column 'Names' are correct and NO empty rows in the sheet." + ex.Message);
                 return RedirectToAction("Index", "Home");
             }
 
 
             if (excelDt is null)
             {
-                _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), errorMessage);
                 LogInfo($"_commonRepo.ConvertExcelToDataTable({filePath}) is NULL");
                 return RedirectToAction("Index", "Home");
             }
@@ -312,7 +312,7 @@ namespace MCPhase3.Controllers
             // change column heading Name
             if (!_commonRepo.ChangeColumnHeadings(excelDt, out errorMessage))
             {
-                _cache.SetString(Constants.FileUploadErrorMessage, errorMessage);
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), errorMessage);
                 return RedirectToAction("Index", "Home");
             }
             LogInfo($"_commonRepo.ChangeColumnHeadings(): Finished");
@@ -337,7 +337,7 @@ namespace MCPhase3.Controllers
             if (!errorMessage.Equals(""))
             {
                 //following tempdata is showing list of errors in file.            
-                _cache.SetString(Constants.FileUploadErrorMessage, "<h3> Please remove the following errors from file and upload again</h3><br />" + CheckSpreadSheetErrorMsg);
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), "<h3> Please remove the following errors from file and upload again</h3><br />" + CheckSpreadSheetErrorMsg);
                 LogInfo("Error while doing _validateExcel.ValidateValues(). Returning back to /Home/Index to reupload the file.");
                 return RedirectToAction("Index", "Home");
             }
@@ -354,13 +354,13 @@ namespace MCPhase3.Controllers
                     _insertDataTable.ProcessDataTable(0, userId, "", "", "", excelDt, designDocPath);
                     LogInfo($"_insertDataTable.ProcessDataTable() Finished!");
 
-                    _cache.SetString(Constants.FileUploadErrorMessage, $"Success: File contents are validated successfully and ready to upload. Total <b>{numberOfRows}</b> records found.");
+                    _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"Success: File contents are validated successfully and ready to upload. Total <b>{numberOfRows}</b> records found.");
                     return RedirectToAction("Index", "Home");
 
                 }
                 catch (Exception ex)
                 {
-                    _cache.SetString(Constants.FileUploadErrorMessage, $"File upload failed! Please check error in qoutes : <b> {ex.Message}</b >'");
+                    _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"File upload failed! Please check error in qoutes : <b> {ex.Message}</b >'");
                     LogInfo($"Error: File upload failed! Please check error: {ex} >>>  {ex.Message}");
                     return RedirectToAction("Index", "Home");
                 }
@@ -1459,10 +1459,11 @@ namespace MCPhase3.Controllers
 
             System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. now all need is finished
 
-            if (remittanceRecords.Any(r => r.PAYROLL_PD != payrollMonth) || remittanceRecords.Any(r => r.PAYROLL_YR != payrollYear) || remittanceRecords.Any(r => r.EMPLOYER_LOC_CODE != selectedPayLocationId))
+            //if (remittanceRecords.Any(r => r.PAYROLL_PD != payrollMonth) || remittanceRecords.Any(r => r.PAYROLL_YR != payrollYear) || remittanceRecords.Any(r => r.EMPLOYER_LOC_CODE != selectedPayLocationId))
+            if (remittanceRecords.Any(r => r.PAYROLL_PD.Contains(payrollMonth) == false) || remittanceRecords.Any(r => r.PAYROLL_YR != payrollYear) || remittanceRecords.Any(r => r.EMPLOYER_LOC_CODE != selectedPayLocationId))
             {
                 string fileUploadErrorMessage2ndPosting = _Configure["FileUploadErrorMessage2ndPosting"];
-                _cache.SetString(Constants.FileUploadErrorMessage, fileUploadErrorMessage2ndPosting);
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), fileUploadErrorMessage2ndPosting);
                 return false;
             }
             

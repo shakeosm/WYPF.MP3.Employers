@@ -208,7 +208,7 @@ namespace MCPhase3.Controllers
             //};
 
             ViewBag.isStaff = 1;
-            loginBO.userName = CurrentUserId();
+            loginBO.userName = ContextGetValue(Constants.LoginNameKey);
             var result = (Password)await UpdatePasswordMethod(loginBO);
             if (result == Password.Updated)
             {

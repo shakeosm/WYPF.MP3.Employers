@@ -77,7 +77,7 @@
 
         public static string RedisKeyList()
         {
-            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoginNameKey},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{Excel_DataTableToInsert},{Excel_DataTableToInsert},{UserRegistrationTokenDetails}";
+            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoginNameKey},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{Excel_DataTableToInsert},{Excel_DataTableToInsert},{UserRegistrationTokenDetails},{FileUploadErrorMessage}";
         }
 
         public enum PostingType
@@ -96,9 +96,9 @@
 
         public enum Password
         {
+            IncorrectOldPassword = 0,
             Updated = 1,
             Invalid = 2,
-            IncorrectOldPassword = 3,
         }
     }
 }

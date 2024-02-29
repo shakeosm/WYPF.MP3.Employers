@@ -35,15 +35,15 @@ namespace MCPhase3.Controllers
         public IActionResult Index()
         {
             //## following function will check if session has value then login user with out showing login page again.
-            bool sessionResult = SessionHasValue();
-
+            bool sessionResult = SessionHasValue();            
             if (sessionResult)
             {
                 return RedirectToAction("Index", "Admin");
             }
 
+            string loginErrorMessage = TempData["Msg1"]?.ToString();
             ClearTempData();
-            return View(new LoginViewModel());
+            return View(new LoginViewModel() { LoginErrorMessage  = loginErrorMessage });
         }
 
 
@@ -626,6 +626,7 @@ namespace MCPhase3.Controllers
         /// <returns>Login Page with 'session expired' message</returns>
         public IActionResult SessionExpired()
         {
+            ClearRedisUserSession(CurrentUserId());
             ClearTempData();
             ClearSessionValues();
 
