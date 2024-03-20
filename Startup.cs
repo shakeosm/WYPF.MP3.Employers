@@ -60,7 +60,8 @@ namespace MCPhase3
 
             services.AddTransient<ICommonRepo, CommonRepo>();
             services.AddTransient<IValidateExcelFile, ValidateExcelFile>();
-            services.AddTransient<IInsertDataTable, InsertDataTable>();
+            services.AddTransient<IExcelData, ExcelData>();
+            services.AddTransient<ICheckTotalsService, CheckTotalsService>();
 
             // Add Redis services to the container.
             services.AddSingleton<IRedisCache, RedisCache>();

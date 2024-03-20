@@ -10,7 +10,7 @@ namespace MCPhase3.Models
     public class MyModel
     {
         public string myErrorMessageText { get; set; }
-        public DataTable stringDT;
+        public DataTable stringDataTable;
 
         public string monthsList { get; set; }
         public string yearsList { get; set; }

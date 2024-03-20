@@ -2,14 +2,6 @@
 @{
     ViewData["Title"] = "Check Totals";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-
-    double employeesTotal = 0;
-    if (ViewBag.EmployeeTotal != null)    
-    {
-        employeesTotal = ViewBag.EmployeeTotal;
-    }
-
-    double employerTotal = Model.EmployerContribAPCSS + Model.EmployerContribSS;
 }
 
 <div class="border shadow-lg p-4 mb-4 bg-white">
@@ -94,7 +86,7 @@
                 <div class="row">
                     <h4 class="col-md-9"><b>Total employees contribution</b></h4>
                     <h4 class="col-1 text-end"><b>£</b></H4>
-                    <h4 class="col-2 text-end text-primary" id="MembersTotalValue"><b>@employeesTotal.ToString("N")</b></h4>
+                    <h4 class="col-2 text-end text-primary" id="MembersTotalValue"><b>@Model.EmployeeTotal().ToString("N")</b></h4>
                 </div>
             </div>
         </div>
@@ -129,7 +121,7 @@
                 <div class="row">
                     <h4 class="col-9"><b>Employer total:</b></h4>
                     <h4 class="col-1 text-end"><b>£</b></H4>
-                    <h4 class="col-2 text-end text-primary" id="EmployersTotalValue"><b>@employerTotal.ToString("N")</b></h4>
+                    <h4 class="col-2 text-end text-primary" id="EmployersTotalValue"><b>@Model.EmployersTotalSS.ToString("N")</b></h4>
                 </div><br>
                 
                 @* Total employees and employer contribution *@

@@ -1,21 +1,20 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using MCPhase3.CodeRepository.HelperClasses;
+﻿using MCPhase3.CodeRepository.HelperClasses;
 using MCPhase3.Common;
-using NPOI.Util;
+using MCPhase3.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Data;
 
 namespace MCPhase3.CodeRepository.InsertDataProcess
 {
-    public class InsertDataTable : IInsertDataTable
+    public class ExcelData : IExcelData
     {
         public DataTable dtInsert;
         XmlReader helper = new XmlReader();
         DTColumnDataChecks dtCheck = new DTColumnDataChecks();
         private readonly IRedisCache _cache;
 
-        public InsertDataTable(IRedisCache Cache)
+        public ExcelData(IRedisCache Cache)
         {
             _cache = Cache;
         }
@@ -25,13 +24,43 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             var columnDefinations = new List<ColumnDefinations>(helper.readXMLFile(xmlPath));
             //columnDefinations = helper.readXMLFile(path);
             dtInsert = dtCheck.AllColumnExistInExSheetCheck(excelData, columnDefinations);
-            _cache.Set($"{userId}_{Constants.Excel_DataTableToInsert}", dtInsert);
+            _cache.Set($"{userId}_{Constants.ExcelData_ToInsert}", dtInsert);
             //_cache.Set($"{userId}_{Constants.Excel_XML_ConfigPath}", xmlPath);
             
             Console.WriteLine($"{userId} > DataTable ReadAndSaveXML() => xmlPath: {xmlPath}, excelData.Rows: {excelData.Rows.Count}");
 
             return dtInsert;
         }
+
+
+        /// <summary>
+        /// This will add values in all rows, ie: UserName, ClientId, RemittanceId, MODDATE, PostDate
+        /// </summary>
+        /// <param name="remittanceId">Remittance Id</param>
+        /// <param name="newDataRowRecordId">DataRowRecord Id to start from</param>
+        /// <param name="clientId">Client Id</param>
+        /// <param name="schemeName">Scheme name</param>
+        /// <param name="userName">User Id</param>
+        public void AddRemittanceInfo(long remittanceId, int newDataRowRecordId, string clientId, string schemeName, string userName)
+        {
+            string cacheKeyName = $"{userName}_{Constants.ExcelData_ToInsert}";
+            var excelData = _cache.Get<List<ExcelsheetDataVM>>(cacheKeyName);
+            foreach (var item in excelData)
+            {
+                item.REMITTANCE_ID= remittanceId;
+                item.DATAROWID_RECD = newDataRowRecordId++;
+                item.CLIENTID = clientId;
+                item.SCHEMENAME = schemeName;
+                item.MODUSER = userName;
+                //item.MODTYPE = Constants.DATA_MODIFY_ADD;
+                //item.MODDATE = DateTime.Now;
+                
+                //item.EMPLOYER_NAME = userName;
+            }
+
+            _cache.Set(cacheKeyName, excelData);
+        }
+
 
         /// <summary>
         /// This will insert new column in the DataTable, and add values in all rows, ie: UserName, ClientId, RemittanceId, MODDATE, PostDate
@@ -43,6 +72,7 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
         /// <param name="remittanceID"></param>
         /// <param name="newData"></param>
         /// <param name="path"></param>
+        [Obsolete]
         public DataTable ProcessDataTable(int row, string userName, string schemeName, string clientID, string remittanceID, DataTable dtInsert, string path)
         {            
 
@@ -56,7 +86,7 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             }
             else
             {
-                dtInsert = _cache.Get<DataTable>($"{userName}_{Constants.Excel_DataTableToInsert}");
+                dtInsert = _cache.Get<DataTable>($"{userName}_{Constants.ExcelData_ToInsert}");
                 Console.WriteLine($"{userName} > DataTable PassDt() => path: {path}, remittanceID: {remittanceID}, Rows: {row}, dtInsert.Rows: {dtInsert?.Rows?.Count}");
 
                 //## These are extra columns will be added to the Excel sheet preparing for Database- which already has many other columns.                
@@ -98,9 +128,10 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             }
         }
 
+        [Obsolete]
         public DataTable Get(int row, string userName, string schemeName, string clientID, string remittanceID)
         {
-            dtInsert = _cache.Get<DataTable>($"{userName}_{Constants.Excel_DataTableToInsert}");
+            dtInsert = _cache.Get<DataTable>($"{userName}_{Constants.ExcelData_ToInsert}");
 
             //PassDT will have already xml document path so I keep it empty here.
             dtInsert = ProcessDataTable(row, userName, schemeName, clientID, remittanceID, dtInsert, path:"");
@@ -110,9 +141,16 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
             return dtInsert;
         }
 
+        public List<ExcelsheetDataVM> Get(string userName)
+        {
+            var result = _cache.Get<List<ExcelsheetDataVM>>($"{userName}_{Constants.ExcelData_ToInsert}");
+
+            return result;
+        }
+
     }
 
-    public interface IInsertDataTable
+    public interface IExcelData
     {
         DataTable ReadAndSaveXML(DataTable newData, string path, string userId);
 
@@ -128,6 +166,17 @@ namespace MCPhase3.CodeRepository.InsertDataProcess
         /// <param name="path"></param>
         DataTable ProcessDataTable(int row, string userName, string schemeName, string clientID, string remittanceID, DataTable newData, string path);
 
+        /// <summary>
+        /// This will add RemittanceInfo in all rows, ie: UserName, ClientId, SchemeName, RemittanceId, MODDATE, PostDate
+        /// </summary>
+        /// <param name="remittanceId">Remittance Id</param>
+        /// <param name="newDataRowRecordId">DataRowRecord Id to start from</param>
+        /// <param name="clientId">Client Id</param>
+        /// <param name="schemeName">Scheme name</param>
+        /// <param name="userName">User Id</param>
+        void AddRemittanceInfo(long remittanceId, int newDataRowRecordId, string clientId, string schemeName, string userName);
+
         DataTable Get(int row, string userName, string schemeName, string clientID, string remittanceID);
+        List<ExcelsheetDataVM> Get(string userName);
     }
 }

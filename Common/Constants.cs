@@ -3,6 +3,7 @@
     public static class Constants
     {
         public const int EmployersPortal = 2;    //## API=1, Employers = 2; Admin = 3
+        public const int EndOfYear_March = 3;    //## To cmopare values in Excel sheet, some extra validation check for the month 'March'
         //public const string SessionKeyUserID = "_UserName"; //## used in the 'UserSessionCheckActionFilter' for Authentication
         //Paylocation and Employer both are same.
         public const string SessionKeyPayLocName = "MP3.Employers.PayLocName";       //## used in "MCPhase3.CodeRepository.LoginCheck : ViewComponent"
@@ -44,6 +45,7 @@
         public const string UploadedFilePathKey = "MP3.Employers.UploadedFilePathName";    
         public const string Staging_CSV_FilePathKey = "MP3.Employers.Staging_CSV_FilePathName";    
         public const string FileUploadErrorMessage = "MP3.Employers.FileUploadErrorMessage";    
+        public const string ExcelsheetDataKey = "MP3.Employers.ExcelsheetData";    
         
         public const string CustomErrorDetails = "MP3.Employers.CustomErrorDetails";      //# to show the user a custom error message in a Error500 page
 
@@ -64,7 +66,7 @@
         
         public static string ExcelDataAsString = "ExcelDataAsString";
         public static string CurrentAlertDescription = "CurrentAlertDescription";
-        public static string Excel_DataTableToInsert = "Excel_DataTableToInsert";        
+        public static string ExcelData_ToInsert = "Excel_DataToInsert";        
         public static string ReturnInitialiseCurrentStep = "ReturnInitialiseCurrentStep";        
         public static string EmployerProcessedCount = "EmployerProcessedCount";        
         
@@ -72,12 +74,15 @@
         public static string MFA_MailData = "MFA_MailData";
         public static string MFA_TokenExpiryTime = "MFA_TokenExpiryTime";
         
+        public static string DATA_MODIFY_ADD = "A";
+        public static string STAGING_FILE_PREFIX = "staging-file-";
+        
         
         //public static string Excel_XML_ConfigPath = "Excel_XML_ConfigPath";
 
         public static string RedisKeyList()
         {
-            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoginNameKey},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{Excel_DataTableToInsert},{Excel_DataTableToInsert},{UserRegistrationTokenDetails},{FileUploadErrorMessage}";
+            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoginNameKey},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{ExcelData_ToInsert},{ExcelData_ToInsert},{UserRegistrationTokenDetails},{FileUploadErrorMessage},{ExcelsheetDataKey}";
         }
 
         public enum PostingType

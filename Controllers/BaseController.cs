@@ -150,9 +150,14 @@ namespace MCPhase3.Controllers
         public async Task<string> ApiPost(string apiUrl, object paramList)
         {
             string strJson = Newtonsoft.Json.JsonConvert.SerializeObject(paramList);
-            using var httpClient = new HttpClient();
             var content = new StringContent(JsonConvert.SerializeObject(paramList), Encoding.UTF8, "application/json");
-
+            if (strJson.Length > 150) {
+                strJson = strJson[..150];
+            }
+            string host = HttpContext.Request.Host.ToString();
+            
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("client-id", host);    //## the APi will know who is the Consumer and can log the request accordingly..            
             using var response = await httpClient.PostAsync(apiUrl, content);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
@@ -198,7 +203,7 @@ namespace MCPhase3.Controllers
 
         public async Task<UserDetailsVM> GetUserDetails(string loginName)
         {
-            string cacheKey = $"{loginName}_{Constants.AppUserDetails}";
+            string cacheKey = GetKeyName(Constants.AppUserDetails);
             var appUser = _cache.Get<UserDetailsVM>(cacheKey);
 
             if (appUser is null)
