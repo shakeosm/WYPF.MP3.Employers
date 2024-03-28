@@ -43,7 +43,7 @@ namespace MCPhase3.Controllers
                 eventTypeID = 105,
                 notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
             };
-
+            
             InsertEventDetails(eBO);
 
             return RedirectToAction("Index");
@@ -170,13 +170,15 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async Task<IActionResult> UpdatePassword()
         {
-            var currentUser = await GetUserDetails(CurrentUserId());
+            var loginName = ContextGetValue(Constants.LoginNameKey);
+            var currentUser = await GetUserDetails(loginName);
 
             var login = new LoginBO() { 
                 userName = CurrentUserId(),
                 UserDetails = currentUser,
             };
 
+            LogInfo("UpdatePassword() page..");
             return View(login);
         }
 
@@ -206,6 +208,7 @@ namespace MCPhase3.Controllers
             //    "one or more numbers",
             //    "one or more special characters, for example !,”.#",
             //};
+            LogInfo("User posting UpdatePassword() page.");
 
             ViewBag.isStaff = 1;
             loginBO.userName = ContextGetValue(Constants.LoginNameKey);
@@ -285,6 +288,8 @@ namespace MCPhase3.Controllers
             {
                 HttpContext.Session.Clear();
             }
+
+            //var currrentUser = ContextGetValue(Constants.LoginNameKey);
 
             var paramList = new RemittanceSelectParamBO
             {
@@ -489,7 +494,7 @@ namespace MCPhase3.Controllers
             string apiCallDeleteRemittance = GetApiUrl(_apiEndpoints.DeleteRemittance);
             string userId = CurrentUserId();
 
-            LogInfo($"apiCallDeleteRemittance()-> api: {apiCallDeleteRemittance}");
+            LogInfo($"DeleteRemittance() -> apiCallDeleteRemittance()-> api: {apiCallDeleteRemittance}");
 
             string apiResponse = await ApiGet($"{apiCallDeleteRemittance}{remID}/{userId}");
             string result = JsonConvert.DeserializeObject<string>(apiResponse);
@@ -538,6 +543,7 @@ namespace MCPhase3.Controllers
 
         public List<FileDetails> GetFileList(string folderPath)
         {
+            LogInfo($"GetFileList() -> folderPath: {folderPath}");
             //string uploadFolder = _configuration["FileUploadPath"];
             var fileList = new List<FileDetails>();
 
@@ -589,7 +595,7 @@ namespace MCPhase3.Controllers
             {
                 var contents = System.IO.File.ReadAllText(activityLogFilePath);
                 result.IsSuccess = true;
-                result.Message = contents;
+                result.Message = contents.Replace("\r\n", "<br/>");
             }
 
             return Json(result);

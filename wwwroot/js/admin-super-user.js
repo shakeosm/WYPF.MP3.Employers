@@ -21,7 +21,7 @@ $(function () {
                 
                 if (response.isSuccess === true) {
                     $("#UserActivityLogModalTitle").text(fileName);
-                    $("#UserActivityLogPlaceholderDiv").text(response.message);
+                    $("#UserActivityLogPlaceholderDiv").html(response.message);
                     $("#UserActivityLogPopupModal").modal('show');
                     
                 } else {

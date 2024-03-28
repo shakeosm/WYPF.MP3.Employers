@@ -67,8 +67,8 @@ namespace MCPhase3.CodeRepository
             SpreadSheetChecks.CheckEmptyValues("Surname", excelData.Select(e => e.SURNAME).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckDateValues("DOB", excelData.Select(e => e.DOB).ToList(), ref errorMessage, isMandatoryField: true);
             SpreadSheetChecks.CheckGender(excelData.Select(e => e.GENDER).ToList(), ref errorMessage);
-            SpreadSheetChecks.CheckAddress_Line_1(excelData.Select(e => e.ADDRESS1).ToList(), ref errorMessage);            
-            //SpreadSheetChecks.CheckEmptyValues("Address2", excelData.Select(e => e.ADDRESS2).ToList(), ref errorMessage);
+            SpreadSheetChecks.CheckAddress_Line_1(excelData.Select(e => e.ADDRESS1).ToList(), ref errorMessage);                        
+            //SpreadSheetChecks.CheckEmptyValues("Address4", excelData.Select(e => e.ADDRESS4).ToList(), ref errorMessage);   //## Address_Line_4 = City
             SpreadSheetChecks.CheckPostcode(excelData.Select(e => e.POSTCODE).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckNINO(excelData.Select(e => e.NI_NUMBER).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckEmptyValues("PAYREF", excelData.Select(e => e.PAYREF).ToList(), ref errorMessage);
@@ -80,13 +80,14 @@ namespace MCPhase3.CodeRepository
             SpreadSheetChecks.CheckContractualHoursAgainstFlagTypeLG(excelData, ref errorMessage);            
             SpreadSheetChecks.CheckDateValues("DATE_JOINED_SCHEME", excelData.Select(e => e.DATE_JOINED_SCHEME).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckDateValues("DATE_OF_LEAVING_SCHEME", excelData.Select(e => e.DATE_OF_LEAVING_SCHEME).ToList(), ref errorMessage);
-            SpreadSheetChecks.CheckOptFlag(excelData.Select(e => e.OPTOUT_FLAG).ToList(), ref errorMessage);
+            SpreadSheetChecks.CheckOptoutFlag(excelData.Select(e => e.OPTOUT_FLAG).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckDateValues("OPTOUT_DATE", excelData.Select(e => e.OPTOUT_DATE).ToList(), ref errorMessage);            
+            SpreadSheetChecks.CheckLeaveDateVsOptoutDate(excelData, ref errorMessage);            
             SpreadSheetChecks.CheckDateValues("START_DATE_50_50", excelData.Select(e => e.START_DATE_50_50).ToList(), ref errorMessage);            
             SpreadSheetChecks.CheckDateValues("END_DATE_50_50", excelData.Select(e => e.END_DATE_50_50).ToList(), ref errorMessage);            
             var validEnrollmentTypeValues = _configuration["EnrollmentType_Valid_Values"].Split(",").ToList();            
             SpreadSheetChecks.CheckInvalidValues("ENROLMENT_TYPE", excelData.Select(e => e.ENROLMENT_TYPE).ToList(), validEnrollmentTypeValues, ref errorMessage);
-            SpreadSheetChecks.CheckPayMain(excelData, ref errorMessage);    //## 'PAY_MAIN'
+            SpreadSheetChecks.CheckPayMain(excelData, month, ref errorMessage);    //## 'PAY_MAIN'
             SpreadSheetChecks.CheckNumberValues("EE_CONT_MAIN", excelData.Select(e => e.EE_CONT_MAIN).ToList(), ref errorMessage);            
             SpreadSheetChecks.CheckNumberValues("PAY_50_50", excelData.Select(e => e.PAY_50_50).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckNumberValues("EE_CONT_50_50", excelData.Select(e => e.EE_CONT_50_50).ToList(), ref errorMessage);            

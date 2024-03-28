@@ -60,7 +60,7 @@ namespace MCPhase3.Controllers
         /// <summary>Returns w2User UserId- which is used in all Procedures</summary>
         /// <returns></returns>
         public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKey);   
-        public string SessionInfoKeyName()=> $"{Constants.SessionInfoKeyName}_{CurrentUserId()}";
+        public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
         /// <param name="returnAsEncrypted">Will return an Encrypted value if True, set false to get Number value</param>        
@@ -203,7 +203,7 @@ namespace MCPhase3.Controllers
 
         public async Task<UserDetailsVM> GetUserDetails(string loginName)
         {
-            string cacheKey = GetKeyName(Constants.AppUserDetails);
+            string cacheKey = $"{loginName.ToUpper()}_{Constants.AppUserDetails}";
             var appUser = _cache.Get<UserDetailsVM>(cacheKey);
 
             if (appUser is null)

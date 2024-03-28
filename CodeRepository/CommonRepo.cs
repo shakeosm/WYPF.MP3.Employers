@@ -1,6 +1,4 @@
-﻿using System;
-using System.Data;
-using System.IO;
+﻿using System.Data;
 
 namespace MCPhase3.CodeRepository
 {
@@ -13,25 +11,7 @@ namespace MCPhase3.CodeRepository
             _cache = Cache;
         }
 
-        //copy file to another folder
-        public bool CopyFileToFolder(string sourceFile, string destinationFile, string fileName)
-        {
-            bool result = true;
-            try
-            {
-                if (!Directory.Exists(destinationFile))
-                    Directory.CreateDirectory(destinationFile);
-
-                destinationFile = Path.Combine(destinationFile, fileName);
-                File.Move(sourceFile, destinationFile, true);
-            }
-            catch (IOException ex)
-            {
-                result = false;
-            }
-            return result;
-        }
-        
+                
         public bool CheckEmployerLocCode(DataTable dt, ref string CheckSpreadSheetErrorMsg)
         {
             bool result = true;
@@ -101,9 +81,7 @@ namespace MCPhase3.CodeRepository
     }
 
     public interface ICommonRepo
-    {
-        bool CopyFileToFolder(string sourceFile, string destinationFile, string fileName);
-       
+    {              
         bool CheckEmployerLocCode(DataTable dt, ref string CheckSpreadSheetErrorMsg);
     }
 }

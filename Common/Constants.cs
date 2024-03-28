@@ -42,7 +42,7 @@
         public const string BulkApprovalAlertIdList = "BulkApprovalRecordIdList";    
         
         /// <summary>The complete File path and name of the file uploaded by the Customer</summary>
-        public const string UploadedFilePathKey = "MP3.Employers.UploadedFilePathName";    
+        public const string UploadedExcelFilePathKey = "MP3.Employers.UploadedExcelFilePathName";    
         public const string Staging_CSV_FilePathKey = "MP3.Employers.Staging_CSV_FilePathName";    
         public const string FileUploadErrorMessage = "MP3.Employers.FileUploadErrorMessage";    
         public const string ExcelsheetDataKey = "MP3.Employers.ExcelsheetData";    
@@ -74,15 +74,15 @@
         public static string MFA_MailData = "MFA_MailData";
         public static string MFA_TokenExpiryTime = "MFA_TokenExpiryTime";
         
-        public static string DATA_MODIFY_ADD = "A";
-        public static string STAGING_FILE_PREFIX = "staging-file-";
+        //public static string DATA_MODIFY_ADD = "A";
+        //public static string STAGING_FILE_PREFIX = "staging-file-";
         
         
         //public static string Excel_XML_ConfigPath = "Excel_XML_ConfigPath";
 
         public static string RedisKeyList()
         {
-            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoginNameKey},{ErrorWarningSummaryKeyName},{UploadedFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{ExcelData_ToInsert},{ExcelData_ToInsert},{UserRegistrationTokenDetails},{FileUploadErrorMessage},{ExcelsheetDataKey}";
+            return $"{SessionKeyRemittanceID},{SessionInfoKeyName},{SessionGuidKeyName},{LoginNameKey},{ErrorWarningSummaryKeyName},{UploadedExcelFilePathKey},{UserPayLocationInfo},{MemberMatchingList},{AppUserDetails},{ExcelDataAsString},{ExcelData_ToInsert},{ExcelData_ToInsert},{UserRegistrationTokenDetails},{FileUploadErrorMessage},{ExcelsheetDataKey}";
         }
 
         public enum PostingType
@@ -104,6 +104,15 @@
             IncorrectOldPassword = 0,
             Updated = 1,
             Invalid = 2,
+        }
+
+        public enum EventType
+        {
+            RemitanceSubmitted = 1,
+            BulkDataInsert = 2,
+            FileMovedToDone = 3,
+            AwaitingInitialiseProcess = 4,
+            InitialAssessmentCompleted = 50,
         }
     }
 }

@@ -160,7 +160,7 @@ namespace MCPhase3.CodeRepository
         }
 
 
-        public static void CheckPayMain(List<ExcelsheetDataVM> excelData, ref StringBuilder errorMsg)
+        public static void CheckPayMain(List<ExcelsheetDataVM> excelData, string selectedMonth, ref StringBuilder errorMsg)
         {
             ///////////////////////////////////////////////////////////////////////////
             /////////// Check PAY_MAIN and PAY_50_50 both should not be null///////////
@@ -173,10 +173,14 @@ namespace MCPhase3.CodeRepository
                 {
                     var payMainValue = RemoveCurrency(item.PAY_MAIN);
                     var pay50_50_Value = RemoveCurrency(item.PAY_50_50);
+                    int selectedMonthNumber = DateTime.ParseExact(selectedMonth, "MMMM", CultureInfo.CurrentCulture).Month;
 
                     if (IsEmptyOrZero(payMainValue) && IsEmptyOrZero(pay50_50_Value) ) {
                         //## and if the FT_PT_CS Flag == 'CS' - then exception.. PayMain and Pay_50/50 both can be Zero... OR if the 'DATE_OF_LEAVING_SCHEME' field has a Date- then YES, too
-                        if (item.FT_PT_CS_FLAG != "CS" && ( IsEmpty(item.DATE_OF_LEAVING_SCHEME) && IsEmpty(item.DATE_JOINED_SCHEME) && IsEmpty(item.OPTOUT_DATE) ) ) {  //## for FT/PT scenario- when any of those dates have value- then can have Zero values
+                        //## for FT/PT scenario- when any of those dates have value- then can have Zero values
+                        if (item.FT_PT_CS_FLAG != "CS" && ( 
+                                (IsEmpty(item.DATE_OF_LEAVING_SCHEME) && IsEmpty(item.DATE_JOINED_SCHEME) && IsEmpty(item.OPTOUT_DATE) ) )
+                                || (FlagMonthIsOlderThanPayrollMonth(item.OPTOUT_DATE, selectedMonthNumber)) ) {  
                             //## OptOut_Date if in future- then allow Zero.. if that is in Past- then Error.. 
                             emptyRowsList.Add(rowCounter);
                             //Console.WriteLine($"Member: '{item.SURNAME}', FT_PT_CS_FLAG: '{item.FT_PT_CS_FLAG}', DATE_OF_LEAVING_SCHEME: '{item.DATE_OF_LEAVING_SCHEME}', DATE_JOINED_SCHEME: '{item.DATE_JOINED_SCHEME}'");
@@ -206,7 +210,7 @@ namespace MCPhase3.CodeRepository
                     _ = double.TryParse(item.PAY_MAIN, out double payMain);
                     _ = double.TryParse(item.PAY_50_50, out double pay_50_50);
 
-                    if (payMain > 0 && pay_50_50 > 0 )
+                    if (payMain != 0 && pay_50_50 != 0 )
                     {
                         emptyRowsList.Add(rowCounter);
                     }
@@ -221,12 +225,9 @@ namespace MCPhase3.CodeRepository
 
             }
 
-
-
             ///////////////////////////////////////////////////////////////////////////////////////////////
             ///////// PAY_MAIN and EE_CONT_MAIN both should have values if any of the column has value //
             ///////////////////////////////////////////////////////////////////////////////////////////////
-            bool bothValuesExist = false;
             rowCounter = 1;
             emptyRowsList = new();
             foreach (var item in excelData)
@@ -234,8 +235,8 @@ namespace MCPhase3.CodeRepository
                 _ = double.TryParse(item.PAY_MAIN, out double payMain);
                 _ = double.TryParse(item.EE_CONT_MAIN, out double ee_CONT_MAIN);
 
-                if ( (payMain > 0 && ee_CONT_MAIN < 1)    ||
-                     (payMain < 1 && ee_CONT_MAIN > 0) )
+                if ( (payMain != 0 && ee_CONT_MAIN == 0)    ||
+                     (payMain == 0 && ee_CONT_MAIN > 0) )
                 {
                     emptyRowsList.Add(rowCounter);
                     
@@ -244,10 +245,20 @@ namespace MCPhase3.CodeRepository
                 rowCounter++;
 
             }
-            if (bothValuesExist) {
+            if (emptyRowsList.Any()) {
                 errorMsg.Append("<hr/><h4>Both 'PAY_MAIN' and 'EE_CONT_MAIN'- should have values in the member's record, at row number:</h4>");
                 errorMsg.Append(string.Join(", ", emptyRowsList));
             }
+        }
+
+        private static bool FlagMonthIsOlderThanPayrollMonth(string optoutDate, int selectedMonth)
+        {
+            bool isParsed = DateTime.TryParse(optoutDate, out DateTime optoutDateVal);
+            if (IsEmpty(optoutDate) || !isParsed) return false;
+
+            DateTime payrollMonthDate = new DateTime((optoutDateVal.AddMonths(1)).Year, selectedMonth, 1);  //## if 'optoutDate' has 2023 - DEC month- then this new Date value will be the next month, ie '2024 Jan'.
+            
+            return optoutDateVal < payrollMonthDate;    //## if 'optoutDateVal' = '2023/10/25' and payrollMonthDate = '2023/11/01'- then return TRUE.
         }
 
         /// <summary>This will check whether the parameter is a Non Zero value. If Zero or Empty- it will return false. And TRUE for any Negative or positive Non-zero value</summary>
@@ -268,16 +279,41 @@ namespace MCPhase3.CodeRepository
         }
 
         private static string RemoveCurrency(string currencyValue) => currencyValue;    // currencyValue.Replace("£", "");
-        
 
-        public static void CheckOptFlag(List<string> flagValueList, ref StringBuilder errorMsg)
+
+        internal static void CheckOptoutFlag(List<string> flagValueList, ref StringBuilder errorMsg)
         {
             string[] validEnrolmentTypes = { "AUTO", "CONTRACTUAL" };
             CheckInvalidValues("OPTOUT_FLAG", flagValueList, validEnrolmentTypes.ToList(), ref errorMsg);            
         }
 
+        internal static void CheckLeaveDateVsOptoutDate(List<ExcelsheetDataVM> excelData, ref StringBuilder errorMessage)
+        {
+            if (excelData.Any(e => NotEmpty(e.DATE_OF_LEAVING_SCHEME)))
+            {
+                List<int> rowNumberList = new();
+                int rowNumber = 1;
+
+                //## invalid values found.. list those 
+                foreach (var item in excelData)
+                {
+                    if (NotEmpty(item.DATE_OF_LEAVING_SCHEME) && NotEmpty(item.OPTOUT_DATE))
+                    {
+                        rowNumberList.Add(rowNumber);
+                    }
+                    rowNumber++;
+                }
+
+                if (rowNumberList.Any())
+                {
+                    errorMessage.Append("<hr/><h4>Both 'DATE_OF_LEAVING_SCHEME' and 'OPTOUT_DATE' are present - must be one or the other, at row number:</h4>");
+                    errorMessage.Append(string.Join(", ", rowNumberList));
+                }
+            }
+        }
+
         #endregion
-       
+
         public static void CheckContractualHoursAgainstFlagTypeLG(List<ExcelsheetDataVM> excelData, ref StringBuilder result)
         {
 
@@ -472,5 +508,6 @@ namespace MCPhase3.CodeRepository
             return IsEmpty(dataValue)|| !parseDone || doubleValue == 0;
 
         }
+
     }
 }

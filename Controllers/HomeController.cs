@@ -33,12 +33,8 @@ namespace MCPhase3.Controllers
         private readonly IWebHostEnvironment _host;
         private readonly IConfiguration _Configure;
         private readonly string _customerUploadsLocalFolder;
-        //string remittanceInsertApi = string.Empty;
         string apiBaseUrlForAutoMatch = string.Empty;
         EventDetailsBO eBO = new EventDetailsBO();
-
-        DataTable excelDt;
-        MyModel modelDT = new MyModel();
 
         public ICommonRepo _commonRepo;
         public IValidateExcelFile _validateExcel;
@@ -206,16 +202,6 @@ namespace MCPhase3.Controllers
             string userId = CurrentUserId();
             var currentUser = await GetUserDetails(userId);
             string empName = currentUser.Pay_Location_Name;
-
-            //## malicious script check- 2nd time
-            string fileNamePrefix = $"{empName.Replace(" ", "-")}_{vm.SelectedYear.Replace("/", "-")}_{vm.SelectedMonth}_{vm.SelectedPostType}_";
-            //string filePath = GenerateFilePathNameForUpload(vm.PaymentFile, fileNamePrefix);
-            string filePathValue = _cache.GetString(GetKeyName(UploadedFilePathKey));
-            string filePath = filePathValue.Replace(STAGING_FILE_PREFIX, fileNamePrefix);   //## 'staging-file-01-01-2024.xls' will become - 'Leeds-2024-Nov-1-D_M_Y.xls'
-            _cache.SetString(GetKeyName(UploadedFilePathKey), filePath);
-
-            //TODO: Use NugetPackage for Excel operation: 'https://www.nuget.org/packages/CsvHelper.Excel.Core/'
-            LogInfo($"File copied to local path: {filePath}");
             
             //Add selected name of month into Session, filename and total records in file.
             HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth);
@@ -231,6 +217,7 @@ namespace MCPhase3.Controllers
             //##### Convert the Excel file into CSV and then into Class. Will be required by 'IsA_Valid2ndMonthPosting()'
             var excelSheetData = ConvertExcel_To_CSV_To_ClassObject();
             int numberOfRows = excelSheetData.Count;
+            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, numberOfRows.ToString());
 
             var submissionInfo = new CheckFileUploadedBO
             {
@@ -239,13 +226,13 @@ namespace MCPhase3.Controllers
                 P_EMPID = vm.SelectedPayLocationId  //## actually refering to 'payroll_provider_id' in table. EmployerId: '1003701' and payroll_provider_id: 'BAR0122'
             };
 
-            //check if records were uploaded previously for the SelectedPayLocationId, month and year.
-            string apiCheckFileIsUploadedUrl = GetApiUrl(_apiEndpoints.CheckFileIsUploaded);   //## api/CheckFileUploaded
-            var apiResult = await ApiPost(apiCheckFileIsUploadedUrl, submissionInfo);
-            int fileAlreadyUploaded = JsonConvert.DeserializeObject<int>(apiResult);
-
             if (vm.SelectedPostType == (int)PostingType.First)
             {
+                //check if records were uploaded previously for the SelectedPayLocationId, month and year.
+                string apiCheckFileIsUploadedUrl = GetApiUrl(_apiEndpoints.CheckFileIsUploaded);   //## api/CheckFileUploaded
+                var apiResult = await ApiPost(apiCheckFileIsUploadedUrl, submissionInfo);
+                int fileAlreadyUploaded = Convert.ToInt16(apiResult);
+
                 if (fileAlreadyUploaded == 1)
                 {
                     _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"<h5>File is already uploaded for the month: {vm.SelectedMonth} and payrol period: {vm.SelectedYear} <br/> You can goto Dashboard and start process on file from there.</h5>");
@@ -262,10 +249,8 @@ namespace MCPhase3.Controllers
                     return RedirectToAction("Index", "Home");
                 }
             }
-                        
-            var fileNameForUpload = Path.GetFileName(filePath);
-            HttpContext.Session.SetString(Constants.SessionKeyFileName, fileNameForUpload);
-            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, numberOfRows.ToString());
+                                    
+            
 
             List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
 
@@ -401,13 +386,16 @@ namespace MCPhase3.Controllers
             contributionPost.employerName = ContextGetValue(Constants.SessionKeyEmployerName);
             contributionPost.payrollProviderID = currentUser.Pay_Location_Ref;
             
-            contributionPost.UploadedFileName = ContextGetValue(Constants.SessionKeyFileName);
             //contributionSummaryInfo.ClientID = ContextGetValue(Constants.SessionKeyClientId);
             contributionPost.ClientID = currentUser.Client_Id;
             contributionPost.payrollYear = ContextGetValue(Constants.SessionKeyYears);
             contributionPost.PaymentMonth = ContextGetValue(Constants.SessionKeyMonth);
 
-            //var content = new StringContent(JsonConvert.SerializeObject(contributionSummaryInfo), Encoding.UTF8, "application/json");
+            string fileNamePrefix = $"{contributionPost.employerID}-{contributionPost.employerName.Replace(" ", "-")}-{contributionPost.payrollYear.Replace("/", "-")}-{contributionPost.PaymentMonth}-{DateTime.Now.ToString("dd-MM-yyyy")}-{DateTime.Now.ToString("hh-mm-ss")}";            
+
+            //## Rename the file name.. Replace GUID with 'fileNamePrefix'            
+            contributionPost.UploadedFileName = RenameFileName(fileNamePrefix);
+
             string remittanceInsertApi = GetApiUrl(_apiEndpoints.InsertRemitanceDetails);
 
             //## First Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE'
@@ -420,29 +408,34 @@ namespace MCPhase3.Controllers
                 //## somehow crashed... 
                 string errorMessage = $"Failed to insert Remittance information into database. User: {currentUser.LoginName}, employer: {contributionPost.employerName}, Provider: {contributionPost.payrollProviderID}, Period: {contributionPost.payrollYear}/{contributionPost.PaymentMonth}";
                 TempData["Msg"] = "Failed to insert Remittance information into database. Please contact MP3 support team.";
-                WriteToDBEventLog(-1, errorMessage, 1, 1);
                 LogInfo(errorMessage, true);
                 return View(contributionPost);
 
             }
-            LogInfo($"Remittance successfully inserted into database, Id: {remittanceID}.");
+            //## Insert EventDetails: RemitanceSubmitted =>	New remitance submitted and remitance ID created for the uploaded file
+            EventLog_Add(Convert.ToInt32(remittanceID), $"New remitance submitted and remitance ID created for the uploaded file. employerID: {contributionPost.employerID}, Payroll Period: {contributionPost.PaymentMonth}-{contributionPost.payrollYear}, ", (int)EventType.RemitanceSubmitted, (int)EventType.RemitanceSubmitted);
 
-            TempData["Msg"] = "Remittance summary successfully inserted into the database.";
-
+            LogInfo($"Remittance Summary successfully inserted into database, Id: {remittanceID}.");
 
             //## Now insert the Bulk Data in the Database..            
             LogInfo($"calling- InsertBulkData({remittanceID}).");
+            
             var isInserted = await InsertBulkData(Convert.ToInt32(remittanceID));
-            LogInfo("InsertBulkData finished.");
+
+            LogInfo($"InsertBulkData() finished. Success= {isInserted}");
+
             if (isInserted)
             {
-                //## Once BULK-INSERT to DB is success- we can move our User data file (excel, csv) to the DONE folder...
-                var isMoved = MoveFileToDone(remittanceID);                                
+                int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
+                EventLog_Add(Convert.ToInt32(remittanceID), $"Bulk data is inserted into database. Total records: {totalRecordsInFile}. EmployersEmployeeTotalValue: {contributionPost.EmployersEmployeeTotalValue().ToString("C2")}", (int)EventType.BulkDataInsert, (int)EventType.BulkDataInsert);
+                                
+                _ = MoveFileToDone(remittanceID);   //## This will also insert EventLog for the 'FileMovedToDone' EventType
+                //## we can still work as usual even if the file wasn't moved to 'Done' folder
 
             }
             else {
                 TempData["MsgError"] = $"Remittance Id: {remittanceID}. System has failed inserting records in to the database, Please contact MP3 support.";
-                WriteToDBEventLog(Convert.ToInt32(remittanceID), "FAILED to execute Bulk data insert into database.", 1, 4);
+                EventLog_Add(Convert.ToInt32(remittanceID), "FAILED to execute Bulk data insert into database.", (int)EventType.BulkDataInsert, (int)EventType.BulkDataInsert);
                 LogInfo("FAILED to execute Bulk data insert into database.", true);
                 //## Delete this Temp file.. not needed anymore..
                 DeleteTheExcelFile();
@@ -452,8 +445,7 @@ namespace MCPhase3.Controllers
             remittanceID = EncryptUrlValue(remittanceID);
 
             //## all good- we have checked the Totals and used it from the cache.. now better remove that DataTable variable from cache.. work done
-            string cacheKey = $"{CurrentUserId()}_{Constants.ExcelDataAsString}";
-            _cache.Delete(cacheKey);
+            _cache.Delete(GetKeyName(Constants.ExcelDataAsString));
                             
             //## Pass the RemittanceId via Session cache- to make the Url less Ugly with the Encrypted RemittanceId
             ContextSetValue(Constants.SessionKeyRemittanceID, remittanceID);
@@ -465,7 +457,7 @@ namespace MCPhase3.Controllers
 
         private void DeleteTheExcelFile()
         {
-            string filePathName = _cache.GetString($"{CurrentUserId()}_{Constants.UploadedFilePathKey}");
+            string filePathName = _cache.GetString($"{CurrentUserId()}_{Constants.UploadedExcelFilePathKey}");
 
             if (!Path.Exists(Path.GetFullPath(filePathName)))
             {
@@ -478,52 +470,50 @@ namespace MCPhase3.Controllers
         }
 
 
-        /// <summary>
-        /// following action will move file from uploadedfiles to transferto folder on Web Server.
-        /// 1st step after totals page.
-        /// </summary>
+        /// <summary>This will move our User data file (excel, csv) to the DONE folder...</summary>
         /// <returns></returns>
-        private bool MoveFileToDone(string remittanceId)
+        private bool MoveFileToDone(string remittanceID)
         {
 
-            string filePathName = _cache.GetString($"{CurrentUserId()}_{Constants.UploadedFilePathKey}");
+            string customerFileName = _cache.GetString(GetKeyName(UploadedExcelFilePathKey)); 
+            string sourceFilePath = Path.Combine(_customerUploadsLocalFolder, customerFileName);
 
-            string destPath = ConfigGetValue("FileUploadPath") + ConfigGetValue("FileUploadDonePath");
+            string destinationFolder = _customerUploadsLocalFolder + ConfigGetValue("FileUploadDonePath");
 
-            if (!Path.Exists(Path.GetFullPath(filePathName)))
+            //if (!Path.Exists(Path.GetFullPath(filePathName)))
+            if (!Path.Exists(sourceFilePath))
             {
-                TempData["MsgError"] = $"User File not found/accessible. Please try to upload the file again.";
+                TempData["MsgError"] = $"User File not found/accessible. Please contact MP3 support.";
+                LogInfo($"User File not found/accessible. Please contact MP3 support. sourceFilePath: {sourceFilePath}");
                 return false;
             }
 
-            if (!Path.Exists(destPath))
-            {
-                TempData["MsgError"] = $"Destination file path not found/accessible. Please send an email to support with this screenshot.";
-                return false;
+            if (!Path.Exists(destinationFolder)){
+                Directory.CreateDirectory(destinationFolder);             
             }
 
             try
-            {                               
-                bool fileMovedToDone = _commonRepo.CopyFileToFolder(Path.GetFullPath(filePathName), destPath, Path.GetFileName(filePathName));
-                if (fileMovedToDone)
-                {
-                    string logInfoText = $"Moved user uploaded file to: \\DONE folder";
-                    _logger.LogInformation(logInfoText);
-                    WriteToDBEventLog(Convert.ToInt32(remittanceId), logInfoText);
-                }
+            {
 
-                return fileMovedToDone;
+                string destinationFile = Path.Combine(destinationFolder, customerFileName);
+                System.IO.File.Move(sourceFilePath, destinationFile, true);
+
+                EventLog_Add(Convert.ToInt32(remittanceID), "File is processed and now moved to 'Done' folder.", (int)EventType.FileMovedToDone, (int)EventType.FileMovedToDone);
+                string logInfoText = $"Moved user uploaded file to: 'DONE' folder. destinationFile: {destinationFile}";
+                LogInfo(logInfoText);                                    
+
+                return true;
 
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error at MoveFileForFTP(). Details: {ex}");
-                TempData["MsgError"] = "System failed to process the file, Please contact MP3 support.";
-                WriteToDBEventLog(Convert.ToInt32(remittanceId), $"System failed to process the file. at MoveFileToDone(). Details: {ex.Message}");
+                EventLog_Add(Convert.ToInt32(remittanceID), $"Failed to move the customer upload file in 'Done' folder. Details: {ex.Message}", (int)EventType.FileMovedToDone, (int)EventType.FileMovedToDone);
+                LogInfo($"Error at MoveFileToDone(). Source: '{sourceFilePath}', Destination: '{destinationFolder}', Details: {ex}");
+                TempData["MsgError"] = "System failed to process the file, Please contact MP3 support.";                
             }
 
             return false;   //## shouldn't be  coming here.. something wrong.. return 'false'..
-            //return View(errorAndWarningViewModelWithRecords);
+            
         }
 
         /// <summary>
@@ -596,7 +586,7 @@ namespace MCPhase3.Controllers
             return InsertToDbSuccess;            
         }
 
-        public void WriteToDBEventLog(int remitID, string eventNotes, int remittanceStatus = 1, int eventTypeID = 1)
+        public void EventLog_Add(int remitID, string eventNotes, int remittanceStatus, int eventTypeID)
         {
             //string apiBaseUrlForInsertEventDetails = GetApiUrl(_apiEndpoints.InsertEventDetails);
             var eBO = new EventDetailsBO
@@ -633,13 +623,11 @@ namespace MCPhase3.Controllers
             LogInfo($"\r\nLoading Home/InitialiseProcess page.. RemittanceId: {remttanceId}");
 
             //## Make sure all records are inserted in the DB.Table- before trying to run the Initialise Process.
-            bool isSuccess = await CheckAllRecordsAreInsertedInDB(remttanceId);
+            _ = await CheckAllRecordsAreInsertedInDB(remttanceId);
 
-            //## if there are 7k+ records- add 2 seconds delay in each DB calls... so things will go in block by block- not all at once and clog the App and DB Server
             int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
-            bool shouldAddDelay = totalRecordsInFile >= 7000;
-            
-            //## ReturnInitialise() call.. a big piece of Task- initialising the entire journey, setting values, generating error/warnings, fixing issues and many things... 
+
+            //## Execute_ReturnInitialiseProcess() call.. a big piece of Task- initialising the entire journey, setting values, generating error/warnings, fixing issues and many things... 
             var initialiseProcessResult = await Execute_ReturnInitialiseProcess(userID, remttanceId);
 
             if(initialiseProcessResult.P_STATUSCODE != 0 ) {
@@ -649,7 +637,7 @@ namespace MCPhase3.Controllers
             }
 
             //## Return Check API to call to check if the previous month file is completed.
-            isSuccess = await CheckPreviousMonthFileIsSubmitted(remttanceId);
+            _ = await CheckPreviousMonthFileIsSubmitted(remttanceId);
 
 
             //## Automatch api call
@@ -711,6 +699,7 @@ namespace MCPhase3.Controllers
 
             var employerProcessedCount = ContextGetValue(Constants.EmployerProcessedCount);
             if (IsEmpty(employerProcessedCount)) {
+                EventLog_Add(remttanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
                 employerProcessedCount = "PENDING";
             }
             var returnInitialiseCurrentStep = ContextGetValue(Constants.ReturnInitialiseCurrentStep);
@@ -723,7 +712,7 @@ namespace MCPhase3.Controllers
             initialiseProcessResultVM.TotalRecordsInDatabase = totalRecordsInDatabase.ToString();
             initialiseProcessResultVM.EmployersProcessedRecords = employerProcessedCount;
 
-            initialiseProcessResultVM.CurrentStep = returnInitialiseCurrentStep;
+            initialiseProcessResultVM.CurrentStep = returnInitialiseCurrentStep;           
 
             return View(initialiseProcessResultVM);
         }
@@ -1004,7 +993,6 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<List<PayrollProvidersBO>> GetPayrollProviderListByUser(string w2UserId)
         {
-            //var subPayrollList = new List<PayrollProvidersBO>();
             string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.SubPayrollProvider);
 
             var apiResult = await ApiGet(apiBaseUrlForSubPayrollProvider + w2UserId);
@@ -1012,38 +1000,7 @@ namespace MCPhase3.Controllers
 
             return subPayrollList;
         }
-        /// <summary>
-        /// This functionality is added for Olla's request to allow . sign in title field
-        /// </summary>
-        private DataTable AllowedSigns(DataTable dataTable)
-        {
-            string[] allwedSigns = ConfigGetValue("AllowedSigns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            string[] allowedColumns = ConfigGetValue("AllowedColumns").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            int countRows = dataTable.Rows.Count;
-            for (int i = 0; i < countRows; i++)
-            {
-                foreach (var item in allowedColumns)
-                {
-                    foreach (var sign in allwedSigns)
-                    {
-                        dataTable.Rows[i][item] = dataTable.Rows[i][item].ToString().Replace(sign, "");
-                    }
-                }
-            }
-            try
-            {
-                dataTable.AcceptChanges();
-                return dataTable;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidDataException($"Error at 'sign' in the title field. Description: {ex.ToString()}");
-            }
-            finally
-            {
-                dataTable.Dispose();
-            }
-        }
+
 
         private TaskResults ConvertExcelFileToCsv(string filePathName)
         {
@@ -1062,7 +1019,8 @@ namespace MCPhase3.Controllers
             }
 
             ContextSetValue(Constants.Staging_CSV_FilePathKey, csvFilePath);
-
+            
+            result.IsSuccess = true;
             return result;
 
         }
@@ -1194,39 +1152,63 @@ namespace MCPhase3.Controllers
                 return Json(fileTypeCheck.Message);
             }
 
-            string filePathName = GenerateFilePathNameForUpload(formFile, STAGING_FILE_PREFIX);
+            string fileExt = Path.GetExtension(formFile.FileName);
+            string fileNameForUpload = $"{Guid.NewGuid().ToString()}{fileExt}";
+
+            string filePathName = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
             using (FileStream fileStream = new(filePathName, FileMode.Create))
             {
                 await formFile.CopyToAsync(fileStream);
                 _logger.LogInformation("File is copied to local folder.");
             }
+            
             var convertResult = ConvertExcelFileToCsv(filePathName);
-            var scriptsCheck = CheckMaliciousScripts_And_EmptyRows();
+            if (convertResult.IsSuccess) { 
+                var scriptsCheck = CheckMaliciousScripts_And_EmptyRows();
 
-            //## Now check results for malicious script Validations..
-            if (scriptsCheck.IsSuccess)
-            {
-                _cache.Set(GetKeyName(UploadedFilePathKey), filePathName);
-                return Json("success");
+                //## Now check results for malicious script Validations..
+                if (scriptsCheck.IsSuccess)
+                {
+                    _cache.Set(GetKeyName(UploadedExcelFilePathKey), fileNameForUpload); //## saving the staging Excel file name in Redis.
+                    return Json("success");
+                }
+
+                string errorMessage = convertResult.Message + " " + scriptsCheck.Message;
+                return Json(errorMessage);
             }
-
-            string errorMessage = fileTypeCheck.Message + " " + scriptsCheck.Message;
-            return Json(errorMessage);
-
+            //## the following shouldn't happen.. anyway- not bad to have an error message
+            return Json("Failed to transform the Excel file. Please use another file and try again.");
         }
 
-        private string GenerateFilePathNameForUpload(IFormFile customerFile, string fileNamePrefix)
+
+        private string RenameFileName(string newFileName)
         {
-            //var fileNameForUpload = Path.GetFileNameWithoutExtension(customerFile.FileName);
-            string fileExt = Path.GetExtension(customerFile.FileName);
+            string currentFileName = _customerUploadsLocalFolder + _cache.Get<string>(GetKeyName(Constants.UploadedExcelFilePathKey));
+            string fileExt = Path.GetExtension(currentFileName);
 
-            string fileNameForUpload = $"{fileNamePrefix}{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{fileExt}";
+            string fileNameForUpload = $"{_customerUploadsLocalFolder}{newFileName}{fileExt}";
+            System.IO.File.Move(currentFileName, fileNameForUpload);
 
-            //copy file to local folder
-            string filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
+            LogInfo($"GenerateFileName.fileNameForUpload: '{fileNameForUpload}'");
+            fileNameForUpload = $"{newFileName}{fileExt}";
+            _cache.SetString(GetKeyName(Constants.UploadedExcelFilePathKey), fileNameForUpload);
 
-            return filePath;
+            return fileNameForUpload;
         }
+
+        //private string GenerateFilePathNameForUpload(IFormFile customerFile)
+        //{
+        //    //var fileNameForUpload = Path.GetFileNameWithoutExtension(customerFile.FileName);
+        //    string fileExt = Path.GetExtension(customerFile.FileName);
+
+        //    string fileNameForUpload = $"{Guid.NewGuid().ToString()}{fileExt}";
+
+        //    string filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
+
+        //    LogInfo($"GenerateFilePathNameForUpload.filePath: '{filePath}'");
+
+        //    return filePath;
+        //}
 
         /// <summary>
         /// If “2nd posting for same month“ is selected- then Validate process should check the uploaded excel sheet - there should be records only for the selected Month/Year
@@ -1238,7 +1220,7 @@ namespace MCPhase3.Controllers
         private bool IsA_Valid2ndMonthPosting(string payrollYear, string payrollMonth, string selectedPayLocationId)
         {
             var remittanceRecords = _cache.Get<List<ExcelsheetDataVM>>(GetKeyName(Constants.ExcelData_ToInsert));
-            var xx = remittanceRecords.FirstOrDefault(r => r.PAYROLL_PD != payrollMonth && r.PAYROLL_YR != payrollYear && r.EMPLOYER_LOC_CODE != selectedPayLocationId);
+
             if (remittanceRecords.Any(r => r.PAYROLL_PD.Contains(payrollMonth) == false) || remittanceRecords.Any(r => r.PAYROLL_YR != payrollYear) || remittanceRecords.Any(r => r.EMPLOYER_LOC_CODE != selectedPayLocationId))
             {
                 string fileUploadErrorMessage2ndPosting = _Configure["FileUploadErrorMessage2ndPosting"];
@@ -1249,6 +1231,5 @@ namespace MCPhase3.Controllers
             return true;
         }
 
-
-    }
+        }
 }

@@ -43,10 +43,10 @@ namespace MCPhase3.CodeRepository.ActionFilters
                 //## This current-authenticated Redis session may have been deleted by the Admin- after changing the Password..
                 //## So check- whether we still have a Redis session? If not- we need to Login again
                 string sessionGuid = filterContext.HttpContext.Session.GetString(Constants.SessionGuidKeyName);
-                string sessionInfoKeyName = $"{Constants.SessionInfoKeyName}_{currentUserId}";     //## this must match the Keyname in the BaseController.. Don't change it here
+                string sessionInfoKeyName = $"{currentUserId}_{Constants.SessionInfoKeyName}";     //## this must match the Keyname in the BaseController.. Don't change it here
                 var redisCache = _cache.Get<UserSessionInfoVM>(sessionInfoKeyName);
 
-                if (redisCache == null)
+                if (redisCache is null)
                 {
                     //## can happen- if the RedisCache is restarted/cleared on the Server- then what to do!
                     //## or the Admin has updated password and deleted the current user Redis session

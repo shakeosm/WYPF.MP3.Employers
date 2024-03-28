@@ -76,7 +76,7 @@ namespace MCPhase3.Controllers
                 await LoggedInAs_SuperUser_SetSessionValue(loginVM.UserId);
 
                 //## Check in the Config- whether we should do MFA verification  or not.. we can sometimes disable it- for various reasons..
-                if (await is_MfaEnabled())
+                if (await Is_MfaEnabled())
                 {
                     //### check whether this user needs a Multi-Factor Vreification today again... if yes, then send email with MFA Code and then ask to verify it
                     string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:MFA_IsRequiredForUser"]);
@@ -206,7 +206,7 @@ namespace MCPhase3.Controllers
 
 
 
-        private async Task<bool> is_MfaEnabled()
+        private async Task<bool> Is_MfaEnabled()
         {
             string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:Is_MfaEnabled"]);
             var apiResult = await ApiGet(mfa_Requirement_Check_Url);
@@ -215,6 +215,9 @@ namespace MCPhase3.Controllers
             return mfaEnabled;
         }
 
+        /// <summary>This will get Payroll Provider info for this user</summary>
+        /// <param name="currentUser">Current user object- w2userId will be user here</param>
+        /// <returns></returns>
         private async Task AddPayrollProviderInfo(UserDetailsVM currentUser)
         {
             payrollBO = await GetPayrollProviderInfo(currentUser.UserId);
@@ -225,7 +228,7 @@ namespace MCPhase3.Controllers
             currentUser.Client_Id = payrollBO.client_Id;
 
             //## now set this newly built object in the cache- so we can re-use it faster..
-            string cacheKey = $"{currentUser.UserId}_{Constants.AppUserDetails}";            
+            string cacheKey = $"{currentUser.LoginName}_{Constants.AppUserDetails}";            
             _cache.Set(cacheKey, currentUser);
         }
 
@@ -497,7 +500,7 @@ namespace MCPhase3.Controllers
         /// <summary>
         /// following method will show main payroll provider with login name and id
         /// </summary>
-        /// <param name="userName"></param>
+        /// <param name="userName">w2user Id, NOT InternetLogin Id</param>
         /// <returns></returns>
         private async Task<PayrollProvidersBO> GetPayrollProviderInfo(string userName)
         {
