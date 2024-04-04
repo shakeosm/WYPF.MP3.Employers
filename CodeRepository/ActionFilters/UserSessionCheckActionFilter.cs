@@ -27,7 +27,7 @@ namespace MCPhase3.CodeRepository.ActionFilters
             string urlPath = filterContext.HttpContext.Request.Path.ToString().ToLower();
 
 
-            if (urlPath.Contains("clearredisusersession") || urlPath.Contains("logout") || urlPath.Equals("/") || urlPath.Contains("login"))
+            if (urlPath.Contains("clearredisusersession") || urlPath.Contains("logout") || urlPath.Equals("/") || urlPath.Contains("login") || urlPath.Contains("adminstafftools"))
             {
                 //## do no check....//## VIP pass for these paths 
             }            

@@ -63,18 +63,18 @@ namespace MCPhase3.CodeRepository
 
             List<int> invalidValueRowNumber = new();
 
-            if (addressList.Any(a=> a.Length < 5))
+            if (addressList.Any(a=> a.Length < 4))
             {
-                int rowNumber = 1;
+                int rowNumber = 2;
                 foreach (var item in addressList)
                 {
-                    if (item.Length < 5) {
+                    if (item.Length < 4) {
                         invalidValueRowNumber.Add(rowNumber);
                     }
                     rowNumber++;
                 }
                 if (invalidValueRowNumber.Any()) {
-                    errorMsg.Append("<hr /> <h4>'ADDRESS1' is too short, add more than 4 characters, at row number:</h4>");
+                    errorMsg.Append("<hr /> <h4>'ADDRESS1' is too short, add at least 4 characters, at row number:</h4>");
                     errorMsg.Append(string.Join(", ", invalidValueRowNumber));
                 }
 
@@ -86,7 +86,7 @@ namespace MCPhase3.CodeRepository
             CheckEmptyValues("POSTCODE", postcodeList, ref errorMsg);
 
             List<int> invalidValueRowNumber = new();
-            int rowNumber = 1;
+            int rowNumber= 2;
             foreach (var item in postcodeList)
             {
                 if (!IsPostCode(item))
@@ -111,7 +111,7 @@ namespace MCPhase3.CodeRepository
 
             List<int> invalidValueRowNumber = new();
 
-            int rowNumber = 1;
+            int rowNumber= 2;
             foreach (var item in niList)
             {
                 if (!IsEmpty(item) && !IsNINO(item))
@@ -165,7 +165,7 @@ namespace MCPhase3.CodeRepository
             ///////////////////////////////////////////////////////////////////////////
             /////////// Check PAY_MAIN and PAY_50_50 both should not be null///////////
             ///////////////////////////////////////////////////////////////////////////
-            int rowCounter = 1;
+            int rowCounter= 2;
             List<int> emptyRowsList = new();
 
             if (excelData.Any(e => IsEmptyOrZero(e.PAY_MAIN) && IsEmptyOrZero(e.PAY_50_50)) ) {
@@ -202,7 +202,7 @@ namespace MCPhase3.CodeRepository
             ///////////////////////////////////////////////////////////////////////////
             if (excelData.Any(e => HasNonZeroValue(e.PAY_50_50) ) )
             {
-                rowCounter = 1;
+                rowCounter= 2;
                 emptyRowsList = new();
 
                 foreach (var item in excelData)
@@ -225,30 +225,32 @@ namespace MCPhase3.CodeRepository
 
             }
 
+
+            //## following has been disabled on Req by KatarinaZ on 2024-04-02
             ///////////////////////////////////////////////////////////////////////////////////////////////
             ///////// PAY_MAIN and EE_CONT_MAIN both should have values if any of the column has value //
             ///////////////////////////////////////////////////////////////////////////////////////////////
-            rowCounter = 1;
-            emptyRowsList = new();
-            foreach (var item in excelData)
-            {
-                _ = double.TryParse(item.PAY_MAIN, out double payMain);
-                _ = double.TryParse(item.EE_CONT_MAIN, out double ee_CONT_MAIN);
+            //rowCounter= 2;
+            //emptyRowsList = new();
+            //foreach (var item in excelData)
+            //{
+            //    _ = double.TryParse(item.PAY_MAIN, out double payMain);
+            //    _ = double.TryParse(item.EE_CONT_MAIN, out double ee_CONT_MAIN);
 
-                if ( (payMain != 0 && ee_CONT_MAIN == 0)    ||
-                     (payMain == 0 && ee_CONT_MAIN > 0) )
-                {
-                    emptyRowsList.Add(rowCounter);
+            //    if ( (payMain != 0 && ee_CONT_MAIN == 0)    ||
+            //         (payMain == 0 && ee_CONT_MAIN > 0) )
+            //    {
+            //        emptyRowsList.Add(rowCounter);
                     
-                }
+            //    }
 
-                rowCounter++;
+            //    rowCounter++;
 
-            }
-            if (emptyRowsList.Any()) {
-                errorMsg.Append("<hr/><h4>Both 'PAY_MAIN' and 'EE_CONT_MAIN'- should have values in the member's record, at row number:</h4>");
-                errorMsg.Append(string.Join(", ", emptyRowsList));
-            }
+            //}
+            //if (emptyRowsList.Any()) {
+            //    errorMsg.Append("<hr/><h4>Both 'PAY_MAIN' and 'EE_CONT_MAIN'- should have values in the member's record, at row number:</h4>");
+            //    errorMsg.Append(string.Join(", ", emptyRowsList));
+            //}
         }
 
         private static bool FlagMonthIsOlderThanPayrollMonth(string optoutDate, int selectedMonth)
@@ -292,7 +294,7 @@ namespace MCPhase3.CodeRepository
             if (excelData.Any(e => NotEmpty(e.DATE_OF_LEAVING_SCHEME)))
             {
                 List<int> rowNumberList = new();
-                int rowNumber = 1;
+                int rowNumber= 2;
 
                 //## invalid values found.. list those 
                 foreach (var item in excelData)
@@ -317,7 +319,7 @@ namespace MCPhase3.CodeRepository
         public static void CheckContractualHoursAgainstFlagTypeLG(List<ExcelsheetDataVM> excelData, ref StringBuilder result)
         {
 
-            int rowNumber = 1;
+            int rowNumber= 2;
             List <int> invalidRows = new();
             
             foreach (var row in excelData)
@@ -355,7 +357,7 @@ namespace MCPhase3.CodeRepository
                 return; //## do nothing.. not mandatory and doesn't have any values
             }
 
-            int rowNumber = 1;
+            int rowNumber= 2;
             List<int> invalidRows = new();
             foreach (var item in dateList)
             {
@@ -413,7 +415,7 @@ namespace MCPhase3.CodeRepository
         public static void CheckNumberValues(string fieldName, List<string> values, ref StringBuilder result, bool isMandatory = false)
         {
             List<int> rowNumberList = new();
-            int rowNumber = 1;
+            int rowNumber= 2;
 
             foreach (var item in values)
             {
@@ -448,15 +450,15 @@ namespace MCPhase3.CodeRepository
         public static void CheckInvalidValues(string fieldName, List<string> values, List<string> validValues, ref StringBuilder result)
         {
             List<int> rowNumberList = new();
-            int rowNumber = 1;
+            int rowNumber= 2;
 
             if (values.Any(e => !validValues.Contains(e)))
             {
-                rowNumber = 1;
+                rowNumber= 2;
                 //## invalid values found.. list those 
                 foreach (var item in values)
                 {
-                    if ( !IsEmpty(item) && !validValues.Contains(item, StringComparer.CurrentCultureIgnoreCase))
+                    if ( !IsEmpty(item) && !validValues.Contains(item.Trim(), StringComparer.CurrentCultureIgnoreCase))
                     {
                         rowNumberList.Add(rowNumber);
                     }
@@ -479,7 +481,7 @@ namespace MCPhase3.CodeRepository
         public static void CheckEmptyValues(string fieldName, List<string> values, ref StringBuilder result)
         {
             List<int> rowNumberList = new();
-            int rowNumber = 1;
+            int rowNumber= 2;
 
             //## Check Empty values
             if (values.Any(e => IsEmpty(e)))

@@ -7,7 +7,7 @@ namespace MCPhase3.Models
     {
         public string UserLoginID { get; set; }
         public string UserName { get; set; }
-        public double employerID { get; set; }
+        public string employerID { get; set; }
         public string PaymentMonth { get; set; }
         public string employerName { get; set; }
         public double MemberContrib { get; set; }

@@ -382,7 +382,7 @@ namespace MCPhase3.Controllers
             var currentUser = await GetUserDetails(CurrentUserId());            
             contributionPost.UserLoginID = currentUser.LoginName;
             contributionPost.UserName = currentUser.UserId;
-            contributionPost.employerID = Convert.ToDouble(currentUser.Pay_Location_ID);
+            contributionPost.employerID = currentUser.Pay_Location_ID;
             contributionPost.employerName = ContextGetValue(Constants.SessionKeyEmployerName);
             contributionPost.payrollProviderID = currentUser.Pay_Location_Ref;
             
@@ -1221,7 +1221,7 @@ namespace MCPhase3.Controllers
         {
             var remittanceRecords = _cache.Get<List<ExcelsheetDataVM>>(GetKeyName(Constants.ExcelData_ToInsert));
 
-            if (remittanceRecords.Any(r => r.PAYROLL_PD.Contains(payrollMonth) == false) || remittanceRecords.Any(r => r.PAYROLL_YR != payrollYear) || remittanceRecords.Any(r => r.EMPLOYER_LOC_CODE != selectedPayLocationId))
+            if (remittanceRecords.Any(r => r.PAYROLL_PD.ToUpper().Contains(payrollMonth) == false) || remittanceRecords.Any(r => r.PAYROLL_YR != payrollYear) || remittanceRecords.Any(r => r.EMPLOYER_LOC_CODE != selectedPayLocationId))
             {
                 string fileUploadErrorMessage2ndPosting = _Configure["FileUploadErrorMessage2ndPosting"];
                 _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), fileUploadErrorMessage2ndPosting);

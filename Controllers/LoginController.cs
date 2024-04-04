@@ -706,6 +706,7 @@ namespace MCPhase3.Controllers
         }
 
         [HttpGet]
+        [Obsolete("Use the one in the AdminStaffTools action controller")]
         public IActionResult ClearOlderCustomerFilesNotProcessed(string id)
         {
             string uploadFolder = _configuration["FileUploadPath"];
