@@ -3,6 +3,7 @@
     document.getElementById('passToWYPF').style.display = 'none';
    
     $("#AutoMatchInitiateLink").click(function myfunction() {
+        var thisButton = $(this);
         $.ajax({
             type: "GET",
             url: "/Home/InitialiseAutoMatchProcessByAjax",
@@ -27,8 +28,8 @@
                     );
 
                     $("#ShowDashboardButtonOnAjaxFail").removeClass("d-none");
-                    $(this).slideUp(300);   //## Hide the button on error.. no way to proceed.. so no reason to show it..
-                    $("#ShowMatchingResultContainerDiv").slideUp(300);
+                    $(thisButton).slideUp(300);   //## Hide the button on error.. no way to proceed.. so no reason to show it..
+                    $("#Step2ProcessFailedNotification").removeClass("d-none");
                 }
 
             },

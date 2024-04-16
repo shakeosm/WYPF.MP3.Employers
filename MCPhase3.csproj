@@ -15,12 +15,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="CodeRepository\RefectorUpdateRecord\**" />
+    <Compile Remove="Connected Services\**" />
     <Compile Remove="wwwroot\assets\libs\moment\**" />
     <Content Remove="CodeRepository\RefectorUpdateRecord\**" />
+    <Content Remove="Connected Services\**" />
     <Content Remove="wwwroot\assets\libs\moment\**" />
     <EmbeddedResource Remove="CodeRepository\RefectorUpdateRecord\**" />
+    <EmbeddedResource Remove="Connected Services\**" />
     <EmbeddedResource Remove="wwwroot\assets\libs\moment\**" />
     <None Remove="CodeRepository\RefectorUpdateRecord\**" />
+    <None Remove="Connected Services\**" />
     <None Remove="wwwroot\assets\libs\moment\**" />
   </ItemGroup>
   <ItemGroup>
@@ -657,23 +661,16 @@
   <None Include="wwwroot\dist\js\pages\sparkline\jquery.charts-sparkline.js" />
   <None Include="wwwroot\dist\js\sidebarmenu.js" />
   <None Include="wwwroot\dist\js\waves.js" />
-  <PackageReference Include="CsvHelper" Version="30.0.1" />
-    <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.1" />
+  <PackageReference Include="CsvHelper" Version="31.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.3" />
     <!--<PackageReference Include="HtmlAgilityPack" Version="1.11.37" />-->
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.EventSource" Version="8.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.11" ExcludeAssets="All" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" ExcludeAssets="All" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	<PackageReference Include="NPOI" Version="2.6.2" />
-    <PackageReference Include="Spire.XLS" Version="14.1.0" />
-    <PackageReference Include="System.Data.OleDb" Version="8.0.0" />
+    <PackageReference Include="Spire.XLS" Version="14.3.3" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
     <!--<PackageReference Include="System.ServiceModel.Duplex" Version="4.8.1" />-->
-    <PackageReference Include="System.ServiceModel.Http" Version="6.2.0" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="6.2.0" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="6.2.0" />
     <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
   </ItemGroup>
 

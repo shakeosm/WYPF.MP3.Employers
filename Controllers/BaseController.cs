@@ -138,6 +138,7 @@ namespace MCPhase3.Controllers
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
+                LogInfo($"ApiGet Call '{apiUrl}' -> status: NotFound(). Message: {response.ToString} ");
                 return "";  //## will return empty ... don't fight plz...!
             }
             else
@@ -180,7 +181,7 @@ namespace MCPhase3.Controllers
                 string insertErrorLogApi = GetApiUrl(_apiEndpoints.ErrorLogCreate);
                 await ApiPost(insertErrorLogApi, errorDetails);
 
-                LogInfo($"API-> {apiUrl}, failed, status: {response.StatusCode}, Parameters: {strJson}");
+                LogInfo($"ApiPost()-> {apiUrl}, failed, status: {response.StatusCode}, Parameters: {strJson}");
 
                 return null;
             }
@@ -200,7 +201,9 @@ namespace MCPhase3.Controllers
             await ApiPost(insertErrorLogApi, errorViewModel);
         }
 
-
+        /// <summary>This will take UPM LoginName and match it with w2User and return User details, ie: FullName, Email, Job Title</summary>
+        /// <param name="loginName">UPM LoginName</param>
+        /// <returns>UserDetailsVM object</returns>
         public async Task<UserDetailsVM> GetUserDetails(string loginName)
         {
             string cacheKey = $"{loginName.ToUpper()}_{Constants.AppUserDetails}";

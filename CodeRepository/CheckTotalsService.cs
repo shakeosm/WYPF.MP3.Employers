@@ -53,10 +53,12 @@ namespace MCPhase3.CodeRepository
         private double GetTotal(List<string> valueList)
         {
             double totalValue = 0;
+            double parsedValue = 0;
             foreach (var item in valueList)
             {
                 if (!string.IsNullOrEmpty(item)) { 
-                    totalValue += double.Parse(item.Replace("£", ""));
+                    _ = double.TryParse(item.Replace("£", ""), out parsedValue);
+                    totalValue += parsedValue;
                 }
             }
             return totalValue;

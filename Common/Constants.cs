@@ -69,6 +69,7 @@
         public static string ExcelData_ToInsert = "Excel_DataToInsert";        
         public static string ReturnInitialiseCurrentStep = "ReturnInitialiseCurrentStep";        
         public static string EmployerProcessedCount = "EmployerProcessedCount";        
+        public static string ValidPayrollYears = "ValidPayrollYears";           //## in Redis cache.. Global value
         
         public static string ApiCallParamObjectKeyName = "_ApiCallParamObjects";        
         public static string MFA_MailData = "MFA_MailData";

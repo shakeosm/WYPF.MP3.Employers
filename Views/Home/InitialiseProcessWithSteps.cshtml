@@ -90,6 +90,9 @@
                         else{
                             <a id="AutoMatchInitiateLink_Pending" class="btn btn-outline-primary click-and-wait-button disabled my-2">Start now</a>
                         }
+
+                        <span id="Step2ProcessFailedNotification" class="btn btn-outline-danger d-none"><i class="fas fa-exclamation-triangle h3 mx-2"></i>Process Failed!</span>
+
                         <br /><span class="text-info">Notes: For a large file it can take up to 2 minutes to process.</span>
 
                     </div>
@@ -109,7 +112,7 @@
                     <a href="/Admin/Home/" class="btn btn-danger click-and-wait-button">Dashboard</a>
                 </div>
 
-                <div id="ShowDashboardButtonOnAjaxFail" class="d-none m-3 p-3">
+                <div id="ShowDashboardButtonOnAjaxFail" class="d-none mt-3">
                     @* Just in case Ajax call is failed- we need to show the Back button here.. *@
                     <a href="/Admin/Home/" class="btn btn-danger click-and-wait-button">Dashboard</a>
                 </div>

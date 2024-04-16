@@ -1,7 +1,4 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
-using MC_WService;
-
-namespace MCPhase3.Models
+﻿namespace MCPhase3.Models
 {
     public class InitialiseProcBO
     {

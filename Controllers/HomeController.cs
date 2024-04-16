@@ -200,7 +200,8 @@ namespace MCPhase3.Controllers
             }
 
             string userId = CurrentUserId();
-            var currentUser = await GetUserDetails(userId);
+            string loginName = ContextGetValue(Constants.LoginNameKey);
+            var currentUser = await GetUserDetails(loginName);
             string empName = currentUser.Pay_Location_Name;
             
             //Add selected name of month into Session, filename and total records in file.
@@ -260,7 +261,7 @@ namespace MCPhase3.Controllers
             if (vm.SelectedPostType == (int)PostingType.PreviousMonth)
             {
                 //## if the file has previous months' record- then PayrollYear can be anything.. send the full ValidPayroll Year list.
-                validPayrollYearList = _Configure["ValidPayrollYears"];
+                validPayrollYearList = String.Join(',', GetYears());
             }
 
             string spreadsheetValidationErrors = _validateExcel.Validate(excelSheetData, vm.SelectedMonth, vm.SelectedPostType.ToString(), validPayrollYearList, subPayList);
@@ -974,14 +975,38 @@ namespace MCPhase3.Controllers
 
         
         /// <summary>
-        /// List to show months in dropdown menu
+        /// Populate the Financial Year list and return in a Descending sorted List<String>
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of strings</returns>
         public List<string> GetYears()
         {
-            var validYears = ConfigGetValue("ValidPayrollYears").Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            
-            return validYears.ToList();
+            string cacheKey = Constants.ValidPayrollYears;            
+            var payrollYears = _cache.Get<List<string>>(cacheKey);
+
+            if (payrollYears is null || payrollYears.Count < 1) {
+                payrollYears = new List<string>();
+                int payrollYearsStartFrom = Convert.ToInt16(ConfigGetValue("PayrollYearsStartFrom"));
+
+                for (int i = payrollYearsStartFrom; i <= DateTime.Today.Year; i++)
+                {
+                    var newFinancialYear = $"{i}/{(i - 2000) + 1}";
+                    payrollYears.Add(newFinancialYear);   //## ie: 2023/24
+                }
+                //## this will add the current year as well.. but if we are in Jan/Feb/March 2024 - then we still don't need 2024/25, until current month is >= 4.
+                if (DateTime.Today.Month < 4)
+                {
+                    payrollYears.RemoveAt(payrollYears.Count - 1);
+                }
+                var sortedList = payrollYears.ToArray().Reverse().ToList();
+                _cache.Set(cacheKey, sortedList);
+
+                return sortedList;
+            }
+
+            return payrollYears;
+
+
+
 
         }
 
