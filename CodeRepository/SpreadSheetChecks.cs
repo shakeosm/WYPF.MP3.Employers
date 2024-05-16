@@ -138,7 +138,7 @@ namespace MCPhase3.CodeRepository
         /// <returns></returns>
         public static void CheckAnnualRateOfpay(List<string> annualRateOfpayList, string selectedMonth, ref StringBuilder errorMsg)
         {
-            int monthFromDropDown = DateTime.ParseExact(selectedMonth, "MMMM", CultureInfo.CurrentCulture).Month;
+            int monthFromDropDown = DateTime.ParseExact(selectedMonth.Trim(), "MMMM", CultureInfo.CurrentCulture).Month;
 
             //## if not 'March' and all fields are empty.. then great.. no need to do anything..            
             if (monthFromDropDown != EndOfYear_March && annualRateOfpayList.All(v => IsEmpty(v)))

@@ -91,7 +91,15 @@ function hideOverlaySpinner() {
     }, 500);
 }
 
-                
+
+function ShowHidePassword(inputFieldName) {
+    var x = document.getElementById(inputFieldName);
+    if (x.type === "password") {
+        x.type = "text";
+    } else {
+        x.type = "password";
+    }
+}                
 
 function ShowOverlaySpinner() {
     $("#overlay").fadeIn(300);

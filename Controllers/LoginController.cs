@@ -135,8 +135,12 @@ namespace MCPhase3.Controllers
             }
             else if (loginResult == (int)LoginStatus.Failed)
             {
-                //TempData["Msg1"] = AccountFailedLoginMessage;
                 loginVM.LoginErrorMessage = AccountFailedLoginMessage;
+                return View(loginVM);
+            }
+            else if (loginResult == (int)LoginStatus.InactiveInUpm)
+            {
+                loginVM.LoginErrorMessage = AccountInactiveInUpmMessage;
                 return View(loginVM);
             }
 
@@ -548,7 +552,8 @@ namespace MCPhase3.Controllers
             var loginBO = new LoginBO()
             {
                 userName = userId,
-                password = password
+                password = password,
+                
             };
 
             string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);

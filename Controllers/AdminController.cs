@@ -40,7 +40,7 @@ namespace MCPhase3.Controllers
 
                 remittanceID = Convert.ToInt32(GetRemittanceId(returnAsEncrypted: false)), // we can put variable name with variable value when calling a function to make it more readable                    
                 remittanceStatus = 1,
-                eventTypeID = 105,
+                eventTypeID = (int)RemittanceStatus.PassedToWypf,
                 notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
             };
             
@@ -63,7 +63,7 @@ namespace MCPhase3.Controllers
 
                 remittanceID = currentRemittance,
                 remittanceStatus = 1,
-                eventTypeID = 105,
+                eventTypeID = (int)RemittanceStatus.PassedToWypf,
                 notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
             };
 
@@ -71,6 +71,14 @@ namespace MCPhase3.Controllers
 
             taskResult.IsSuccess = true;
             taskResult.Message = $"The remittance: {currentRemittance} is successfully passed to WYPF for further processing.";
+
+            LogInfo(eBO.notes + "; " + taskResult.Message);
+
+            //## Now try to read the current status- if new Status is '110: Submitted to WYPF'- The Finance Business Partner needs to know a new Submission being pushed for further processing
+            var remitInfo = GetRemittanceInfo(currentRemittance);
+            if (remitInfo.StatusCode == (int)RemittanceStatus.SubmittedToWypf) {
+                _ = InsertNotification_For_SubmittedToWYPF(currentRemittance);  //## we don't need the result.. let this API continue in background and we go back to the Ajax call
+            }
 
             LogInfo($"Finished SubmitForProcessingAjax()");
 
@@ -410,6 +418,8 @@ namespace MCPhase3.Controllers
             rBO.p_REMITTANCE_ID = DecryptUrlValue(rBO.p_REMITTANCE_ID);
             rBO.P_USERID = CurrentUserId();
 
+            _ = Int32.TryParse(rBO.p_REMITTANCE_ID, out int remittanceId);
+
             LogInfo($"Initiating SubmitReturn(), RemittanceID: {rBO.p_REMITTANCE_ID}", true);
 
             var apiResult = await SubmitReturn_UpdateScore(rBO);
@@ -418,6 +428,14 @@ namespace MCPhase3.Controllers
             {
                 TempData["msg1"] = $"Score updated, Remittance: {rBO.p_REMITTANCE_ID}. Status: {apiResult.Message}";
                 TempData["submitReturnMsg"] = apiResult.Message;
+                
+                //## Now try to read the current status- if new Status is '110: Submitted to WYPF'- The Finance Business Partner needs to know a new Submission being pushed for further processing
+                var remitInfo = GetRemittanceInfo(remittanceId);
+                if (remitInfo.StatusCode == (int)RemittanceStatus.SubmittedToWypf)
+                {
+                    _ = InsertNotification_For_SubmittedToWYPF(remittanceId);  //## we don't need the result.. let this API continue in background and we go back to the Ajax call
+                }
+
             }
             else
             {

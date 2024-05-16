@@ -3,6 +3,9 @@
     public static class Constants
     {
         public const int EmployersPortal = 2;    //## API=1, Employers = 2; Admin = 3
+        public const string ThisPortalName = "Employers";
+        public const string PortalNameHttpRequestKey = "portal-name";
+        public const string ClientIdHttpRequestKey = "client-id";
         public const int EndOfYear_March = 3;    //## To cmopare values in Excel sheet, some extra validation check for the month 'March'
         //public const string SessionKeyUserID = "_UserName"; //## used in the 'UserSessionCheckActionFilter' for Authentication
         //Paylocation and Employer both are same.
@@ -52,6 +55,7 @@
         public const string Error403_Page = @"~/Views/Errors/Errror403.cshtml";
         public const string AccountLockedMessage = "Your account is temporarily locked to prevent unauthorized use. Please try again later in 30 minutes, and if you still have trouble, contact WYPF.";
         public const string AccountFailedLoginMessage = "Username or password not correct, please try again";
+        public const string AccountInactiveInUpmMessage = "Inactive user in UPM";
         public const string AccountGenericErrorMessage = "Account error! Please contact Helpdesk.";
         public const string SessionExpiredMessage = "Session is expired. Please log in again.";
         
@@ -74,6 +78,9 @@
         public static string ApiCallParamObjectKeyName = "_ApiCallParamObjects";        
         public static string MFA_MailData = "MFA_MailData";
         public static string MFA_TokenExpiryTime = "MFA_TokenExpiryTime";
+
+        public static string Step1_ReturnInitialise = "Step1";
+        public static string Step2_AutoMatch = "Step2";
         
         //public static string DATA_MODIFY_ADD = "A";
         //public static string STAGING_FILE_PREFIX = "staging-file-";
@@ -98,6 +105,7 @@
             Failed = 0,
             Valid = 1,
             Locked = 2,
+            InactiveInUpm = 3,
         }
 
         public enum Password
@@ -115,5 +123,14 @@
             AwaitingInitialiseProcess = 4,
             InitialAssessmentCompleted = 50,
         }
+
+        public enum RemittanceStatus
+        {
+            /// <summary>Data quality score threshold check skipped, File passedto WYPF by Emp for processing.</summary>
+            PassedToWypf = 105,
+            /// <summary>File has been submitted to WYPF by payroll provider.</summary>
+            SubmittedToWypf = 110
+        }
+
     }
 }

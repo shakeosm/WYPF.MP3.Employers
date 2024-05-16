@@ -1,4 +1,8 @@
-﻿@model MCPhase3.Models.InitialiseProcessResultVM
+﻿@* 
+    Description: this was the initial design- where- ReturnInitialise and Automatch- all were hapenning in the same call and getting long queued and waiting unlimited time..
+    This has been abandoned.. and started to use 'InitialiseProcessWithSteps.cshtml'
+*@
+@model MCPhase3.Models.InitialiseProcessResultVM
 @{
     ViewData["Title"] = "Summary";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";

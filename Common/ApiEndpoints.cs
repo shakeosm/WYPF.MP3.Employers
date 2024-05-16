@@ -10,7 +10,13 @@
         public string ErrorAndWarnings { get; set; }
         public string TotalRecordsInserted { get; set; }
         public string InsertRemitanceDetails { get; set; }
+        
+        /// <summary>This call waits for the process to finish and then comes back with result/status</summary>
         public string AutoMatch { get; set; }
+        /// <summary>this call will initiate the DB Procedure but will not wait for that to finish and just come back.. like kick and hide.. </summary>
+        public string AutoMatch_V2 { get; set; }
+        /// <summary>this API will be called periodically to check the current status of AutoMatch process</summary>
+        public string AutoMatch_CheckProgress_Periodically { get; set; }
 
         public string ErrorAndWarningsApproval { get; set; }
         public string ApproveWarningsBulkList { get; set; }
@@ -20,6 +26,10 @@
         public string GetErrorWarningList { get; set; }
         public string GetRemittanceId { get; set; }
         public string GetRemittanceInfo { get; set; }
+        public string GetPayLocation_With_Finance_Business_Partner { get; set; }
+        public string SubmissionNotification_CreateNew { get; set; }
+        public string SubmissionNotification_GetByUser { get; set; }
+
         public string GetEventDetails { get; set; }
         public string InsertEventDetails { get; set; }
         public string PayrollProvider { get; set; }
@@ -37,7 +47,15 @@
         public string DashboardScoreHist { get; set; }
         public string CheckFileIsUploaded { get; set; }
         public string DetailEmpList { get; set; }
+
+        /// <summary>This call waits for the process to finish and then comes back with result/status</summary>
         public string InitialiseProc { get; set; }
+        /// <summary>This call will initiate the DB Procedure but will not wait for that to finish and just come back.. like kick and hide.. </summary>
+        public string InitialiseProc_v2 { get; set; }
+        /// <summary>this API will be called periodically to check the current status of InitialiseProc process</summary>
+        public string GetProgressForReturnInitialise { get; set; }
+        public string GetProgressForAutoMatch { get; set; }
+
         public string ReturnCheckProc { get; set; }
         public string SubmitReturn { get; set; }
         public string InsertData { get; set; }

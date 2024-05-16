@@ -1,4 +1,5 @@
-﻿using MCPhase3.CodeRepository;
+﻿using MC3StaffAdmin.Models;
+using MCPhase3.CodeRepository;
 using MCPhase3.Common;
 using MCPhase3.Models;
 using MCPhase3.ViewModels;
@@ -125,15 +126,18 @@ namespace MCPhase3.Controllers
         public async Task<string> ApiGet(string apiUrl)
         {
             string host = HttpContext.Request.Host.ToString();
-            LogInfo($"api: {apiUrl}, host: {host}");
+            LogInfo($"api: {apiUrl}");
 
             //HttpContext.Response.Headers.Add("client-id", host);    //## the APi will know who is the Consumer and can log the request accordingly..
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("client-id", host);
+
             using var response = await httpClient.GetAsync(apiUrl);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 string responseContent = await response.Content.ReadAsStringAsync();
+                string outputString = responseContent.Length > 200 ? responseContent[..200] : responseContent;
+                LogInfo($"ApiGet() -> responseContent: {outputString}");
                 return responseContent;
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -147,7 +151,31 @@ namespace MCPhase3.Controllers
             }
         }
 
+        public string ApiGet_NonAsync(string apiUrl)
+        {
+            string host = HttpContext.Request.Host.ToString();
+            LogInfo($"ApiGet_NonAsync(): {apiUrl}");
 
+
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("client-id", host);
+
+            var webRequest = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            //{
+            //    Content = new StringContent("{ 'some': 'value' }", Encoding.UTF8, "application/json")
+            //};
+
+            var response = client.Send(webRequest);
+
+            using var reader = new StreamReader(response.Content.ReadAsStream());
+            string outputString = reader.ReadToEnd();
+
+            LogInfo("ApiGet_NonAsync() -> StreamReader: " + outputString);
+
+            return outputString;
+        }
+
+  
         public async Task<string> ApiPost(string apiUrl, object paramList)
         {
             string strJson = Newtonsoft.Json.JsonConvert.SerializeObject(paramList);
@@ -158,7 +186,8 @@ namespace MCPhase3.Controllers
             string host = HttpContext.Request.Host.ToString();
             
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("client-id", host);    //## the APi will know who is the Consumer and can log the request accordingly..            
+            httpClient.DefaultRequestHeaders.Add(Constants.ClientIdHttpRequestKey, host);    //## the APi will know who is the Consumer and can log the request accordingly..            
+            httpClient.DefaultRequestHeaders.Add(Constants.PortalNameHttpRequestKey, Constants.ThisPortalName);    //## the APi will know who is the Consumer and can log the request accordingly..            
             using var response = await httpClient.PostAsync(apiUrl, content);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
@@ -193,6 +222,34 @@ namespace MCPhase3.Controllers
                 throw new Exception($"Failed to connect to: {apiUrl}, Status: {response.StatusCode}");
                 
             }
+        }
+
+        public async Task<bool> ApiPost_NonAsync(string apiUrl, object paramList)
+        {
+            string strJson = Newtonsoft.Json.JsonConvert.SerializeObject(paramList);
+            var content = new StringContent(JsonConvert.SerializeObject(paramList), Encoding.UTF8, "application/json");
+            if (strJson.Length > 150) {
+                strJson = strJson[..150];
+            }
+            string host = HttpContext.Request.Host.ToString();
+            
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("client-id", host);    //## the APi will know who is the Consumer and can log the request accordingly..            
+            
+            //HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+            //using var response = httpClient.Send(req);
+
+            using var response = await httpClient.PostAsync(apiUrl, content);
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                LogInfo("Got result from api: " + apiUrl + ", >> Json Object: " + strJson);
+            }           
+            else
+            {
+                LogInfo($"ERROR >>>>> ApiPost_NonAsync() API-> {apiUrl}, Unhandled exception- status: {response.StatusCode}, Parameters: {strJson}");                               
+            }
+
+            return true;
         }
 
         public async Task ErrorLog_Insert(ErrorViewModel errorViewModel)
@@ -325,6 +382,30 @@ namespace MCPhase3.Controllers
                 }
             }
         }
+
+        public async Task InsertNotification_For_SubmittedToWYPF(int currentRemittance)
+        {
+            LogInfo($"InsertNotification_For_SubmittedToWYPF()-> Remittance ID: {currentRemittance}. Current Status: 110.");
+            //## Now insert a notification for this Submission- If the Status = '110: Submitted to WYPF'.. The Finance Business Partner needs to know a new Submission being pushed for further processing
+            var notifToFBP = new EventDetailsBO() { remittanceID = currentRemittance };
+            string apirUrl = GetApiUrl(_apiEndpoints.SubmissionNotification_CreateNew);
+            _ = await ApiPost(apirUrl, notifToFBP); //## no need to wait/know the result.. just go back to the UI and take the json result..
+        }
+
+
+
+        
+        public RemittanceStatusAndScoreVM GetRemittanceInfo(int currentRemittance)
+        {            
+            //## Now insert a notification for this Submission- If the Status = '110: Submitted to WYPF'.. The Finance Business Partner needs to know a new Submission being pushed for further processing
+            string apirUrl = GetApiUrl(_apiEndpoints.GetRemittanceInfo);
+            var apiResult = ApiGet_NonAsync($"{apirUrl}{currentRemittance}");
+            var remittanceInfoVM = JsonConvert.DeserializeObject<RemittanceStatusAndScoreVM>(apiResult);
+
+            return remittanceInfoVM;            
+        }
+
+
     }
 
 }

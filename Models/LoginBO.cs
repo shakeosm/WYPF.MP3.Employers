@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MCPhase3.Common;
+using System.ComponentModel.DataAnnotations;
 
 namespace MCPhase3.Models
 {
@@ -26,6 +27,7 @@ namespace MCPhase3.Models
         public int result { get; set; }
 
         public UserDetailsVM  UserDetails { get; set; }
+        public string PortalName { get; set; } = Constants.ThisPortalName;
     }
 
 }

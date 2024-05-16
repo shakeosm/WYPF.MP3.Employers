@@ -328,7 +328,7 @@ namespace MCPhase3.Controllers
             }
 
             result.IsSuccess = IsEmpty(result.Message);
-            LogInfo($"IsFileValid() > result: {result}, Message: {result.Message}, File: {file.Name}, Length: {file.Length}, type: {file.ContentType}, extension: {Path.GetExtension(file.FileName)}");
+            LogInfo($"IsFileValid() > result: {result}, Message: {result.Message}, File: {file.Name}, Length: {file.Length/1024} KB, type: {file.ContentType}, extension: {Path.GetExtension(file.FileName)}");
 
 
             return result;
@@ -380,7 +380,8 @@ namespace MCPhase3.Controllers
         [ValidateAntiForgeryToken] 
         public async Task<IActionResult> CheckTotals(MonthlyContributionBO contributionPost)
         {
-            var currentUser = await GetUserDetails(CurrentUserId());            
+            //var userLoginName = ContextGetValue(Constants.LoginNameKey);
+            var currentUser = await GetUserDetails(ContextGetValue(Constants.LoginNameKey));            
             contributionPost.UserLoginID = currentUser.LoginName;
             contributionPost.UserName = currentUser.UserId;
             contributionPost.employerID = currentUser.Pay_Location_ID;
@@ -400,7 +401,7 @@ namespace MCPhase3.Controllers
             string remittanceInsertApi = GetApiUrl(_apiEndpoints.InsertRemitanceDetails);
 
             //## First Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE'
-            LogInfo($"Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE. {currentUser.Pay_Location_Ref}-{contributionPost.employerName}, {contributionPost.PaymentMonth}{contributionPost.payrollYear}");
+            LogInfo($"Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE. {currentUser.Pay_Location_Ref}-{contributionPost.employerName}, {contributionPost.PaymentMonth}-{contributionPost.payrollYear}");
 
             var apiResult = await ApiPost(remittanceInsertApi, contributionPost);
             string remittanceID = JsonConvert.DeserializeObject<string>(apiResult);            
@@ -672,7 +673,40 @@ namespace MCPhase3.Controllers
             return View(initialiseProcessResultVM);
         }
 
+        /// <summary>
+        /// This new page will prompt the user to initiate the tasks one by one, therefore will have a smooth journey end-to-end.
+        /// user will be able to see the progress of the each step- and will not be timed-out- as we can see previously API call timesoout after 100 seconds.
+        /// </summary>
+        /// <returns></returns>
+        //[HttpGet]
+        //public IActionResult InitialiseProcessWithProgress()
+        //{
+        //    var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
+        //    int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+        //    int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
+        //    var totalRecordsInDatabase = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecordsInDB));
+        //    //string errorMessage = TempData["InitialiseProcessError"]?.ToString();
 
+        //    LogInfo($"Loading Home/InitialiseProcessWithProgress() .. RemittanceId: {remittanceId}");
+        //    LogInfo($"TotalRecordsInFile: {totalRecordsInFile}, totalRecordsInDatabase: {totalRecordsInDatabase}");
+
+        //    var initialiseProcessResultVM = new InitialiseProcessResultVM()
+        //    {
+        //        EncryptedRemittanceId = encryptedRemittanceId,
+        //        EmployeeName = ContextGetValue(Constants.SessionKeyEmployerName),
+        //        ErrorMessage = "",
+        //    };
+
+        //    //EventLog_Add(remittanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
+            
+        //    initialiseProcessResultVM.TotalRecordsInFile = totalRecordsInFile.ToString();
+        //    initialiseProcessResultVM.TotalRecordsInDatabase = totalRecordsInDatabase.ToString();
+        //    initialiseProcessResultVM.EmployersProcessedRecords = "PENDING";
+
+        //    initialiseProcessResultVM.CurrentStep = "ReturnInitialise";
+
+        //    return View(initialiseProcessResultVM);
+        //}
 
         /// <summary>
         /// This is an alternative page for InitialiseProcess()- which has a big workload- all at once..
@@ -682,13 +716,21 @@ namespace MCPhase3.Controllers
         [HttpGet]
         public IActionResult InitialiseProcessWithSteps()
         {
+            #region Only For TEST
+            string encRmitId = EncryptUrlValue("260230");
+            ContextSetValue(Constants.SessionKeyTotalRecords, "8517");
+            ContextSetValue(SessionKeyTotalRecordsInDB, "8517");
+            ContextSetValue(Constants.SessionKeyRemittanceID, encRmitId);
+            #endregion
+
             var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-            int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+            int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
             int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
             var totalRecordsInDatabase = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecordsInDB));
+            
             string errorMessage = TempData["InitialiseProcessError"]?.ToString();
 
-            LogInfo($"Loading Home/InitialiseProcessWithSteps() .. RemittanceId: {remttanceId}");
+            LogInfo($"Loading Home/InitialiseProcessWithSteps() .. RemittanceId: {remittanceId}");
             LogInfo($"TotalRecordsInFile: {totalRecordsInFile}, totalRecordsInDatabase: {totalRecordsInDatabase}");
 
             var initialiseProcessResultVM = new InitialiseProcessResultVM()
@@ -699,10 +741,14 @@ namespace MCPhase3.Controllers
             };
 
             var employerProcessedCount = ContextGetValue(Constants.EmployerProcessedCount);
-            if (IsEmpty(employerProcessedCount)) {
-                EventLog_Add(remttanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
+
+            if (IsEmpty(employerProcessedCount))
+            {
+                //TODO: Enable is for deployment
+                //EventLog_Add(remittanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
                 employerProcessedCount = "PENDING";
             }
+
             var returnInitialiseCurrentStep = ContextGetValue(Constants.ReturnInitialiseCurrentStep);
             if (IsEmpty(returnInitialiseCurrentStep))
             {
@@ -713,12 +759,117 @@ namespace MCPhase3.Controllers
             initialiseProcessResultVM.TotalRecordsInDatabase = totalRecordsInDatabase.ToString();
             initialiseProcessResultVM.EmployersProcessedRecords = employerProcessedCount;
 
-            initialiseProcessResultVM.CurrentStep = returnInitialiseCurrentStep;           
+            initialiseProcessResultVM.CurrentStep = returnInitialiseCurrentStep;
 
-            return View(initialiseProcessResultVM);
+            //## if there are less than XXX records- then dont show the UI with progress bar.. Return initialise will be done in 5 seconds..
+            _ = int.TryParse(_Configure["RecordCountToSkipProgressiveDisplay"], out int recordCountToSkipProgressiveDisplay);
+            if (totalRecordsInFile <= recordCountToSkipProgressiveDisplay)
+            {
+                return View(initialiseProcessResultVM);
+            }
+            return View("~/Views/Home/InitialiseProcessWithProgress.cshtml", initialiseProcessResultVM);
         }
 
 
+        /// <summary>
+        /// This will make the call and come back from API.. will not wait for the result..
+        /// we will soon send another request after on every 10 seconds to see the proogress.
+        /// We will get the RemittanceId from Session Cache
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]        
+        public IActionResult InitialiseProcessCallOnly_Ajax(string id)
+        {
+            //string userID = CurrentUserId();            
+            int remittanceId = Convert.ToInt32(DecryptUrlValue(id));
+            int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
+
+            var initialiseProcBO = new InitialiseProcBO
+            {
+                P_REMITTANCE_ID = remittanceId,
+                P_USERID = CurrentUserId()
+            };
+
+            LogInfo($"InitialiseProcessCallOnly_Ajax()-> api: " + _apiEndpoints.InitialiseProc_v2);
+
+            //## ReturnInitialise() call.. a big piece of Task- initialising the entire journey, setting values, generating error/warnings, fixing issues and many things...            
+            _ = ApiPost(GetApiUrl(_apiEndpoints.InitialiseProc_v2), initialiseProcBO);        //## api/InitialiseProc_v2
+
+            int recordProcessedInitialValue = 10;  //## this is a initial value for the progress bar.. assuming we have processed already 10 records since it has started.. minimum value to keep the Employers happy..
+            double percentProcessed = (recordProcessedInitialValue * 1.00 / totalRecordsInFile) * 100;  
+
+            LogInfo($"InitialiseProcessCallOnly_Ajax() call finished.. working in background! totalRecordsInFile: {totalRecordsInFile}, recordsProcessed: {recordProcessedInitialValue}, Processed %: {percentProcessed}");
+            var processingProgress = new RemittanceProcessingProgressVM() {
+                Name = Constants.Step1_ReturnInitialise,
+                TotalRecords = totalRecordsInFile,
+                ProcessedRecords = recordProcessedInitialValue, //## just an initial value                              
+            };
+
+            return PartialView("_progressbar", processingProgress);
+
+        }
+
+        /// <summary>This will be called when there are 2000+ records and via ajax,
+        /// on every 10 seconds to get the latest progress on record processing- for both 'ReturnInitialise' and 'AutoMatch' processes
+        /// </summary>
+        /// <returns>A partial view with progress bar and related progression values</returns>
+        [HttpGet, Route("Home/CheckProgress_Periodically_ReturnInitialise_Ajax/{stepName}")]
+        public IActionResult CheckProgress_Periodically_ReturnInitialise_Ajax(string stepName)
+        {
+            string encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
+            int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));            
+
+            LogInfo($"Home/CheckProgress_Periodically_ReturnInitialise_Ajax(), processName: {stepName}");
+            
+            string progressCheckApiUrl = stepName.ToLower().Equals("step1") ? _apiEndpoints.GetProgressForReturnInitialise: _apiEndpoints.GetProgressForAutoMatch;
+            
+            var apiResult = ApiGet_NonAsync(GetApiUrl(progressCheckApiUrl + remittanceId));        //## api/GetProgressForReturnInitialise
+            LogInfo($"stepName: {stepName}, apiResult: {apiResult}");
+
+            var processingProgress = JsonConvert.DeserializeObject<List<RemittanceProcessingProgressVM>>(apiResult);
+            
+            if(processingProgress is null || !processingProgress.Any() )
+            {
+                //## ONLY FOR TEST / DEMO- WHILE WE HAVE SET SLOW/DELAY IN HE SQL - WE WILL NOT GET ANY RESULT FOR THE FIRST CALL FOR Auto_Match.. Known case..
+                if (stepName == Constants.Step2_AutoMatch) {
+
+                    var initialProgress = GetInitialProgress();
+                    return PartialView("_progressbar", initialProgress);
+                }
+
+                LogInfo($"error while fetching process status for: " + stepName);
+                return Json("error while fetching process status for: " + stepName);
+            }
+
+            var currentProgress = processingProgress.First();
+
+            LogInfo($"{stepName} => totalRecordsInFile: {currentProgress.TotalRecords}, recordsProcessed: {currentProgress.ProcessedRecords}");
+
+            currentProgress.Name = stepName;
+            //## Return_Check Process- once Return_Initialise process is completed successfully
+            if (stepName == Constants.Step1_ReturnInitialise) {
+                if (currentProgress.IsCompleted()){                   
+                    LogInfo($"Step1-> Return_Initialise is complete. {currentProgress.ProcessedRecords} / {currentProgress.TotalRecords}. Start 'Return_Check()' process now.");
+                    _ = Execute_Return_Check_Process(remittanceId, CurrentUserId());    //## intentionally calling as Non-async.. so- it will stay in ASP.net and not go back to UI to AJAX...
+                }
+            }
+
+            if(stepName == Constants.Step2_AutoMatch)
+            {
+                ClearRemittance_SessionCookies();
+                if (currentProgress.IsCompleted()) {
+                    LogInfo($"Step2-> Auto_Match is complete. {currentProgress.ProcessedRecords} / {currentProgress.TotalRecords}, Member matched: {currentProgress.Members_Matched}, Folder Matched: {currentProgress.Folders_Matched}");
+                }
+            }
+
+            return PartialView("_progressbar", currentProgress);
+
+        }
+
+
+        /// <summary>This POST method will only be called when there are less than 2000 records.. otherwise another process will be called by Ajax</summary>
+        /// <param name="remittanceId"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> InitialiseProcessWithSteps(string remittanceId)
         {
@@ -756,26 +907,63 @@ namespace MCPhase3.Controllers
             return RedirectToAction("InitialiseProcessWithSteps");
         }
 
+
+        /// <summary>The following will be used/called from the "InitialiseProcessWithProgress" page.. where Total records are > 2000. Will show a progress bar while processing a large file..</summary>
+        /// <returns></returns>
         [HttpGet,HttpPost]
+        public ActionResult InitialiseAutoMatchProcess_CallOnly_Ajax()
+        {
+            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
+            int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+
+            apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch_V2);    //## api/AutoMatchRecords_V2
+            LogInfo($"InitialiseAutoMatchProcessByAjax() -> Calling Automatch api: {apiBaseUrlForAutoMatch}{remittanceId}");
+
+            //## lets not make a async/await call. we make the call and move forward without waiting for the result...
+            _ = ApiGet($"{apiBaseUrlForAutoMatch}{remittanceId}");  //## we are not waiting here for the result.. let it continue in the background
+
+            int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
+
+            int recordProcessedInitialValue = 10;  //## this is a initial value for the progress bar.. assuming we have processed already 10 records since it has started.. minimum value to keep the Employers happy..
+            double percentProcessed = (recordProcessedInitialValue * 1.00 / totalRecordsInFile) * 100;
+
+            LogInfo($"AutoMatch_V2 call finished.. working in background! totalRecordsInFile: {totalRecordsInFile}, recordsProcessed: {recordProcessedInitialValue}, Processed %: {percentProcessed}");
+            var processingProgress = new RemittanceProcessingProgressVM()
+            {
+                Name = Constants.Step2_AutoMatch,                
+                TotalRecords = totalRecordsInFile,
+                ProcessedRecords = recordProcessedInitialValue, //## just an initial value                              
+            };
+
+            return PartialView("_progressbar", processingProgress);
+
+        }
+
+
+        /// <summary>The following will be used/called from the "InitialiseProcessWithSteps" page.. where Total records are < 2000</summary>
+        [HttpGet, HttpPost]
         public async Task<ActionResult> InitialiseAutoMatchProcessByAjax()
         {
             var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
             int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
 
             var autoMatchResult = await Execute_AutoMatchProcess(remttanceId);
-            var taskResult = new TaskResults() { 
+            var taskResult = new TaskResults()
+            {
                 IsSuccess = autoMatchResult.L_STATUS_CODE == 0,
-                Message =  $"<i class='fas fa-users mx-2 mx-2'></i> Persons Matched: {autoMatchResult.personMatchCount}<br />" 
+                Message = $"<i class='fas fa-users mx-2 mx-2'></i> Persons Matched: {autoMatchResult.personMatchCount}<br />"
                     + $"<i class='fas fa-folder-open mx-2'></i> Folders Matched: {autoMatchResult.folderMatchCount}<br />"
             };
 
-            if (autoMatchResult.L_STATUS_CODE != 0) {
+            if (autoMatchResult.L_STATUS_CODE != 0)
+            {
                 taskResult.Message = $"Error: {autoMatchResult.L_STATUS_CODE} - {autoMatchResult.L_STATUS_TEXT}";
             }
 
             return Json(taskResult);
         }
 
+        [Obsolete("We will not need this anymore.. UI has changed..")]
         private async Task<AutoMatchBO> Execute_AutoMatchProcess(int remittanceId)
         {
             apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch);    //## api/AutoMatchRecords
@@ -804,7 +992,6 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<bool> Execute_Return_Check_Process(int remttanceId, string userID)
         {
-            //result = await callApi.ReturnCheckAPICall(result, apiBaseUrlForCheckReturn);
             //Return Check API to call to check if the previous month file is completed ppse
             ReturnCheckBO result = new()
             {
@@ -906,7 +1093,7 @@ namespace MCPhase3.Controllers
             //return initialiseProcBO.P_STATUSCODE == 0;  //## value '0' means all good ('Records updated').. returned by Packagerocedure in DB
             return initialiseProcBO;
         }
-
+      
 
         /// <summary>Make sure all records are inserted in the DB.Table- before trying to run the Initialise Process.
         /// </summary>
@@ -1256,5 +1443,32 @@ namespace MCPhase3.Controllers
             return true;
         }
 
+        /// <summary>
+        /// Once we are at Step2->Auto_Match process-> Remove the session values.. so no data conflict with next submission. 
+        /// </summary>
+        private void ClearRemittance_SessionCookies()
+        {
+            ContextRemoveValue(Constants.ReturnInitialiseCurrentStep);
+            ContextRemoveValue(Constants.EmployerProcessedCount);
+            ContextRemoveValue(Constants.SessionKeyTotalRecords);
+            ContextRemoveValue(Constants.SessionKeyTotalRecordsInDB);
         }
+
+
+        private RemittanceProcessingProgressVM GetInitialProgress()
+        {
+            var totalRecordsInDatabase = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecordsInDB));
+
+            var initialProgress = new RemittanceProcessingProgressVM()
+            {
+                TotalRecords = totalRecordsInDatabase,
+                ProcessedRecords = 1,
+                Folders_Matched = 0,
+                Members_Matched = 0,   
+                Name = "Step2",               
+            };
+
+            return initialProgress;
+        }
+    }
 }

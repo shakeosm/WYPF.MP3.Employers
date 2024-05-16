@@ -1,0 +1,45 @@
+﻿@model MCPhase3.ViewModels.RemittanceProcessingProgressVM
+@{
+
+    double processedPercent = (Model.ProcessedRecords * 1.00)/ Model.TotalRecords * 100;
+    var processingWidth = $"{processedPercent}%";
+    var statusDivName = Model.Name + "_StatusDiv";
+    var matchingResult = Model.Name + "_MatchingResult";
+    var errorMessageDivName = Model.Name + "_ErrorMessageDiv";
+
+    Model.ProcessedRecords = Model.Message is null ? Model.ProcessedRecords : 0;
+
+    var progresStatus = Model.Message is null ? Model.Status : "Failed";    //## Auto_Match can fail- Status-50 or 54 (Record locked, Abandoned, or Prev month File missing/incomplete)
+}
+
+<div class="progress row">
+    @if (Model.Message is null){
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-label="Return initialise Progressbar" style="width: @processingWidth;" aria-valuenow="@processingWidth" aria-valuemin="0" aria-valuemax="100">@processedPercent.ToString("##.00") %</div>
+    }
+    else{
+        <div class="progress-bar progress-bar-striped bg-danger" role="progressbar" aria-label="Return initialise Progressbar" style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"> 0% </div>
+    }
+    
+</div>
+
+<div class="row">
+    <div class="col-4">Processing:  <span class="text-danger">@Model.ProcessedRecords</span> / <span class="TotalRecordCount text-primary fw-bold">@Model.TotalRecords</span>
+    </div>
+    <div class="col-4 text-center">Last updated: @Model.LastUpdated</div>
+    <div class="col-4 text-end text-danger">Status: <span id="@statusDivName">@progresStatus</span></div>
+</div>
+
+@if (Model.Message != null)
+{
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="fas fa-exclamation-triangle mx-2"></i>
+        <div>
+            @progresStatus : @Model.Message
+        </div>
+    </div>
+}
+<div id="@matchingResult" class="d-none">
+    <i class='fas fa-users mx-2 mx-2'></i> Persons Matched: @Model.Members_Matched<br />
+    <i class='fas fa-folder-open mx-2'></i> Folders Matched: @Model.Folders_Matched<br />
+</div>
+<div id="@errorMessageDivName" class="d-none alert alert-danger" value="@Model.Message" />
