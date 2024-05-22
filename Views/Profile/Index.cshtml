@@ -1,0 +1,107 @@
+﻿@model MCPhase3.Models.UserDetailsVM
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    var appUser = Model;
+}
+
+<div class="border p-4 my-4 bg-white">
+    <div class="container">
+        @if (TempData["UpdateMessage"] != null)
+        {
+            <div class="alert alert-dismissible alert-danger">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <b>@TempData["UpdateMessage"].ToString()</b> <br>
+            </div>
+
+        }
+
+        <div class="row">
+
+            @* My Profile information *@
+            <div class="col-6">
+                <div class="card border shadow">
+                    <h5 class="card-header">
+                        <i class="far fa-address-card fa-lg mr-2 text-primary"></i>
+                        User profile
+                    </h5>
+                    <div class="card-body">
+                        @*<h5 class="card-title">Profile data</h5>*@
+                        <dl class="row">
+                            <dt class="col-sm-3">FullName</dt>
+                            <dd class="col-sm-9">@appUser.FullName</dd>
+                            <dt class="col-sm-3">LoginId</dt>
+                            <dd class="col-sm-9">@appUser.LoginName</dd>
+                            <dt class="col-sm-3">UserId</dt>
+                            <dd class="col-sm-9">@appUser.UserId</dd>
+                            <dt class="col-sm-3">JobTitle</dt>
+                            <dd class="col-sm-9">@appUser.JobTitle</dd>
+                            <dt class="col-sm-3">Email</dt>
+                            <dd class="col-sm-9">@appUser.Email</dd>
+                            <dt class="col-sm-3">Mobile</dt>
+                            <dd class="col-sm-9">@appUser.Mobile</dd>
+                            <dt class="col-sm-3">Pay Location</dt>
+                            <dd class="col-sm-9">@appUser.Pay_Location_Name</dd>
+                            <dt class="col-sm-3">Location ref</dt>
+                            <dd class="col-sm-9">@appUser.Pay_Location_Ref</dd>
+                            <dt class="col-sm-3">Location Id</dt>
+                            <dd class="col-sm-9">@appUser.Pay_Location_ID</dd>
+                            <dt class="col-sm-3">Client Id</dt>
+                            <dd class="col-sm-9">@appUser.Client_Id</dd>
+                        </dl>
+
+                        <div>
+                            <a class="btn btn-outline-primary disabled" href="#">Edit Profile</a>
+                            <a class="btn btn-outline-primary mx-3" href="/Profile/UpdatePassword/">Change Password</a>
+                        </div>
+                    </div>
+                </div>
+
+                @* Super User Card Display *@
+                @if (Model.IsSuperUser)
+                {
+                    <div class="card border shadow mt-3">
+                        <h5 class="card-header text-danger">
+                            <i class="fas fa-user-secret fa-lg mr-2 "></i>
+                            Super User Menu
+                        </h5>
+                        <div class="card-body text-center">
+                            <h4>Logged as Super User!</h4>
+                            <a href="~/Admin/CPanel" class="btn btn-primary" alt="Go to Super User Panel">Go to Super User Panel</a>
+                        </div>
+                    </div>
+                }
+
+
+            </div>
+
+            @* Remittance Summary Info for this User *@
+            <div class="col-6">
+                <div class="card border shadow">
+
+                    <h5 class="card-header">
+                        <i class="fas fa-edit fa-lg mr-2 text-success"></i>
+                        User Activity Summary
+                    </h5>
+                    <div class="card-body">
+                        No recent activity found! 
+
+
+                    </div>
+                </div>
+
+
+
+            </div>
+
+
+            
+        </div>
+
+
+    </div>
+</div>
+
+@section scripts {
+    
+}

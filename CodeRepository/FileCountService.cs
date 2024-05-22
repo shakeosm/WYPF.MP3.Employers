@@ -139,14 +139,8 @@ namespace MCPhase3.CodeRepository
         public void Log_ClearOlderCustomerFilesNotProcessed(string message)
         {
             //var logMessageText = $"{DateTime.Now.ToLongTimeString()}> {message}";
-
-#if DEBUG
-            Console.WriteLine(message);
-#endif
-
             if (_configuration["Log_ClearOlderCustomerFilesNotProcessed"].ToString().ToLower() == "yes")
             {
-                var line = Environment.NewLine + Environment.NewLine;
                 //logMessageText = $"{DateTime.Now.ToLongTimeString()}> {message}";
                 try
                 {

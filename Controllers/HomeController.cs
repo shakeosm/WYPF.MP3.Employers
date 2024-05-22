@@ -209,6 +209,7 @@ namespace MCPhase3.Controllers
             HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear);
             HttpContext.Session.SetString(Constants.SessionKeyPosting, vm.SelectedPostType.ToString());
             HttpContext.Session.SetString(Constants.SessionKeySchemeName, SessionSchemeNameValue);
+            HttpContext.Session.SetString(Constants.SessionKeyPayLocId, vm.SelectedPayLocationId);
 
             //## store the user selection in the cache- so we can set the as Seleted once the user goes back to the page
             TempData["SelectedYear"] = vm.SelectedYear;  //## TempData[] is to transfer data between Actions in a controller- while on the same call..
@@ -393,7 +394,13 @@ namespace MCPhase3.Controllers
             contributionPost.payrollYear = ContextGetValue(Constants.SessionKeyYears);
             contributionPost.PaymentMonth = ContextGetValue(Constants.SessionKeyMonth);
 
-            string fileNamePrefix = $"{contributionPost.employerID}-{contributionPost.employerName.Replace(" ", "-")}-{contributionPost.payrollYear.Replace("/", "-")}-{contributionPost.PaymentMonth}-{DateTime.Now.ToString("dd-MM-yyyy")}-{DateTime.Now.ToString("hh-mm-ss")}";            
+            //## Get the 'PayLocation Ref'. PayLocation id and Ref can be different, and both are type: VARCHAR..ie: BAR0001
+            string payrollProvider = HttpContext.Session.GetString(Constants.SessionKeyPayLocId);
+
+            //## Get the Finance Business Partner Id- to be added to the Filename..
+            string fbpUserId = await Get_Finance_Business_Partner_By_PayLocation(payrollProvider);  //## api/GetPayLocation_With_Finance_Business_Partner
+
+            string fileNamePrefix = $"{fbpUserId}-{payrollProvider}-{contributionPost.employerName.Replace(" ", "-")}-{contributionPost.payrollYear.Replace("/", "-")}-{contributionPost.PaymentMonth}-{DateTime.Now:dd-MM-yyyy}-{DateTime.Now:hh-mm-ss}";            
 
             //## Rename the file name.. Replace GUID with 'fileNamePrefix'            
             contributionPost.UploadedFileName = RenameFileName(fileNamePrefix);
@@ -412,8 +419,9 @@ namespace MCPhase3.Controllers
                 TempData["Msg"] = "Failed to insert Remittance information into database. Please contact MP3 support team.";
                 LogInfo(errorMessage, true);
                 return View(contributionPost);
-
             }
+
+
             //## Insert EventDetails: RemitanceSubmitted =>	New remitance submitted and remitance ID created for the uploaded file
             EventLog_Add(Convert.ToInt32(remittanceID), $"New remitance submitted and remitance ID created for the uploaded file. employerID: {contributionPost.employerID}, Payroll Period: {contributionPost.PaymentMonth}-{contributionPost.payrollYear}, ", (int)EventType.RemitanceSubmitted, (int)EventType.RemitanceSubmitted);
 
@@ -717,10 +725,10 @@ namespace MCPhase3.Controllers
         public IActionResult InitialiseProcessWithSteps()
         {
             #region Only For TEST
-            string encRmitId = EncryptUrlValue("260230");
-            ContextSetValue(Constants.SessionKeyTotalRecords, "8517");
-            ContextSetValue(SessionKeyTotalRecordsInDB, "8517");
-            ContextSetValue(Constants.SessionKeyRemittanceID, encRmitId);
+            //string encRmitId = EncryptUrlValue("260230");
+            //ContextSetValue(Constants.SessionKeyTotalRecords, "8517");
+            //ContextSetValue(SessionKeyTotalRecordsInDB, "8517");
+            //ContextSetValue(Constants.SessionKeyRemittanceID, encRmitId);
             #endregion
 
             var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
@@ -745,7 +753,7 @@ namespace MCPhase3.Controllers
             if (IsEmpty(employerProcessedCount))
             {
                 //TODO: Enable is for deployment
-                //EventLog_Add(remittanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
+                EventLog_Add(remittanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
                 employerProcessedCount = "PENDING";
             }
 
@@ -1408,19 +1416,6 @@ namespace MCPhase3.Controllers
             return fileNameForUpload;
         }
 
-        //private string GenerateFilePathNameForUpload(IFormFile customerFile)
-        //{
-        //    //var fileNameForUpload = Path.GetFileNameWithoutExtension(customerFile.FileName);
-        //    string fileExt = Path.GetExtension(customerFile.FileName);
-
-        //    string fileNameForUpload = $"{Guid.NewGuid().ToString()}{fileExt}";
-
-        //    string filePath = Path.Combine(_customerUploadsLocalFolder, fileNameForUpload);
-
-        //    LogInfo($"GenerateFilePathNameForUpload.filePath: '{filePath}'");
-
-        //    return filePath;
-        //}
 
         /// <summary>
         /// If “2nd posting for same month“ is selected- then Validate process should check the uploaded excel sheet - there should be records only for the selected Month/Year

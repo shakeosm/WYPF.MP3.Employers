@@ -9,6 +9,7 @@
         public string JobTitle { get; set; }
         public string Type { get; set; }
         public string Email { get; set; }
+        public string Mobile { get; set; }
 
         /* Followings will be inserted from another API call.. "_apiEndpoints.PayrollProvider -> PayrollProvidersBO" */
         public string Pay_Location_Name { get; set; }

@@ -8,7 +8,7 @@ namespace MCPhase3.ViewModels
         public string UserId { get; set; }
 
         [Required(ErrorMessage = "Password is required")]
-        [RegularExpression(@"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{9,}$", ErrorMessage = "Password doesn't match the criteria.")]
+        [RegularExpression(@"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[`!@$%^&*(){}[\];'#:@~<>?/|\-\=\+]).{12,}$", ErrorMessage = "Password doesn't match the criteria.")]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 

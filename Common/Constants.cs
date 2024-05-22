@@ -10,6 +10,7 @@
         //public const string SessionKeyUserID = "_UserName"; //## used in the 'UserSessionCheckActionFilter' for Authentication
         //Paylocation and Employer both are same.
         public const string SessionKeyPayLocName = "MP3.Employers.PayLocName";       //## used in "MCPhase3.CodeRepository.LoginCheck : ViewComponent"
+        public const string SessionKeyPayLocId= "MP3.Employers.PayLocationId";       //## Selected PayLocation Ref. ie-> Id: '1003701' and Ref: 'BAR0122'
         //public const string SessionKeyPayLocId = "_Id";
         public const string SessionKeyPaylocFileID = "MP3.Employers.PaylocFileID";
         public const string SessionKeyPassword = "_Password";
@@ -19,7 +20,7 @@
         //public const string SessionKeyPayrollProvider = "_payrollProvider";
 
         public const string NewUserRegistrationVerification = "_NewUserVerifiedToken";
-        public static string UserRegistrationTokenDetails = "UserRegistrationTokenVM";
+        public static string UserRegistrationTokenDetails = "_UserRegistrationToken";
 
         public const string SessionKeyMonth = "_month";
         public const string SessionKeyYears = "_years";

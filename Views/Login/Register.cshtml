@@ -11,15 +11,22 @@
     </a>
 </div>
 
-
-<div class="border p-4 my-4 bg-white">    
+@if (string.IsNullOrEmpty(Model.UserId))
+{
+    <div class="pt-5 text-center">
+        <div class="alert alert-warning">Invalid user details.... Please use the link provided in the email.</div>
+    </div>
+}
+else
+{
+    <div class="border p-4 my-4 bg-white">
         <div class="container">
             <div class="alert alert-info h3">
-            <i class="fa-solid fa-user-tag mr-2"></i>
-            New User Registration
+                <i class="fa-solid fa-user-tag mr-2"></i>
+                New User Registration
             </div>
 
-            @if ( string.IsNullOrEmpty(Model.RegistationMessage) == false)
+            @if (string.IsNullOrEmpty(Model.RegistationMessage) == false)
             {
                 string alertClass = Model.RegistationMessage.StartsWith("Success") ? "alert-success" : "alert-danger";
                 <div class="alert alert-dismissible @alertClass">
@@ -28,130 +35,145 @@
                 </div>
 
             }
-        @if (Model.UserDetails is null)
-        {
-            <div class="card border shadow">
-                <div class="alert alert-dismissible alert-warning h4 m-3 text-danger">
-                    Error: Invalid link. <br/>User id or Token value is incorrect. Please contact your <i>Finance Business Partner</i> for a valid registration link.
-                    </div>
-            </div>
-            <div class="row mt-3 p-3">
-                <a href="/login" class="btn btn-primary col-2">Back</a>
-            </div>
-        }
-        else
-        {
-            <div class="row">
-                <div class="col-6">
+            @if (Model.UserDetails is null)
+            {
                 <div class="card border shadow">
-
-
-                        <h5 class="card-header">
-                        <i class="far fa-address-card fa-lg mr-2 text-primary"></i>
-                            User profile</h5>
-                        <div class="card-body">
-                            @*<h5 class="card-title">Profile data</h5>*@
-                            <dl class="row">
-                                <dt class="col-sm-3">FullName</dt>
-                                <dd class="col-sm-9">@appUser.FullName</dd>
-                                <dt class="col-sm-3">LoginId</dt>
-                                <dd class="col-sm-9">@appUser.LoginName</dd>
-                                <dt class="col-sm-3">UserId</dt>
-                                <dd class="col-sm-9">@appUser.UserId</dd>
-                                <dt class="col-sm-3">JobTitle</dt>
-                                <dd class="col-sm-9">@appUser.JobTitle</dd>
-                                <dt class="col-sm-3">Email</dt>
-                                <dd class="col-sm-9">@appUser.Email</dd>
-                                <dt class="col-sm-3">Pay Location</dt>
-                                <dd class="col-sm-9">@appUser.Pay_Location_Name</dd>
-                                <dt class="col-sm-3">Location ref</dt>
-                                <dd class="col-sm-9">@appUser.Pay_Location_Ref</dd>
-                                <dt class="col-sm-3">Location Id</dt>
-                                <dd class="col-sm-9">@appUser.Pay_Location_ID</dd>
-                                <dt class="col-sm-3">Client Id</dt>
-                                <dd class="col-sm-9">@appUser.Client_Id</dd>
-                            </dl>
-                            
-                        </div>
+                    <div class="alert alert-dismissible alert-warning h4 m-3 text-danger">
+                        Error: Invalid link. <br />User id or Token value is incorrect. Please contact your <i>Finance Business Partner</i> for a valid registration link.
                     </div>
                 </div>
+                <div class="row mt-3 p-3">
+                    <a href="/login" class="btn btn-primary col-2">Back</a>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card border shadow">
 
-                <div class="col-6">
-                <div class="card border shadow">
-                    
-                    <h5 class="card-header">
-                            <i class="fa-solid fa-lock fa-lg text-success"></i>
-                            Password
-                    </h5>
-                    <div id="UserRegistrationDiv" class="card-body">
-                        <form id="RegisterUserForm">
-                            <div class="mb-3">
-                                <label for="password" class="form-label">New Password</label>
 
-                                <i class="mdi mdi-information me-1 ms-1 h4 ab-b-l" id="ShowPasswordPolicyModalIcon"></i>
+                            <h5 class="card-header">
+                                <i class="far fa-address-card fa-lg mr-2 text-primary"></i>
+                                User profile
+                            </h5>
+                            <div class="card-body">
+                                @*<h5 class="card-title">Profile data</h5>*@
+                                <dl class="row">
+                                    <dt class="col-sm-3">FullName</dt>
+                                    <dd class="col-sm-9">@appUser.FullName</dd>
+                                    <dt class="col-sm-3">LoginId</dt>
+                                    <dd class="col-sm-9">@appUser.LoginName</dd>
+                                    <dt class="col-sm-3">UserId</dt>
+                                    <dd class="col-sm-9">@appUser.UserId</dd>
+                                    <dt class="col-sm-3">JobTitle</dt>
+                                    <dd class="col-sm-9">@appUser.JobTitle</dd>
+                                    <dt class="col-sm-3">Email</dt>
+                                    <dd class="col-sm-9">@appUser.Email</dd>
+                                    <dt class="col-sm-3">Pay Location</dt>
+                                    <dd class="col-sm-9">@appUser.Pay_Location_Name</dd>
+                                    <dt class="col-sm-3">Location ref</dt>
+                                    <dd class="col-sm-9">@appUser.Pay_Location_Ref</dd>
+                                    <dt class="col-sm-3">Location Id</dt>
+                                    <dd class="col-sm-9">@appUser.Pay_Location_ID</dd>
+                                    <dt class="col-sm-3">Client Id</dt>
+                                    <dd class="col-sm-9">@appUser.Client_Id</dd>
+                                </dl>
 
-                                <input asp-for="Password" type="password" class="form-control" id="Password" autocomplete="off">
-                                <span id="spanePassword1" class="text-danger font-weight-bold"></span>
-                                <span asp-validation-for="Password" class="text-danger"></span>
                             </div>
-                            <div class="mb-3">
-                                <label for="ConFirmPassword" class="form-label">Confirm Password</label>
-                                    <input asp-for="ConFirmPassword" type="password" class="form-control" autocomplete="off">
-                                <span asp-validation-for="ConFirmPassword" class="text-danger"></span>
-                            </div>
+                        </div>
+                    </div>
 
-                            <input type="hidden" asp-for="UserId" value="@Model.UserId">
-                            @* <button type="submit" class="btn btn-primary d-none">Submit</button> *@
-                            <a id="SubmitFormButton" class="btn btn-primary" href="#">
-                                    <i class="far fa-paper-plane mr-2" alt="Click to register"></i>
-                                    Submit
-                                </a>
-                                <span id="LoadingSpinnerDiv" class="d-none">
-                                    <span class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
+                    <div class="col-6">
+                        <div class="card border shadow">
+
+                            <h5 class="card-header">
+                                <i class="fa-solid fa-lock fa-lg text-success"></i>
+                                Password
+                            </h5>
+                            <div id="UserRegistrationDiv" class="card-body">
+                                <form id="RegisterUserForm">
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">New Password</label>
+
+                                        <i class="mdi mdi-information me-1 ms-1 h4 ab-b-l" id="ShowPasswordPolicyModalIcon"></i>
+
+                                        <div class="input-group mb-3">
+                                            <input asp-for="Password" type="password" class="form-control" id="Password" autocomplete="off" data-api-url="/Login/CheckPasswordStrength">
+
+                                            <div class="input-group-text" id="ShowHidePasswordButton" data-target-input-box="Password">
+                                                <i class="fas fa-eye"></i>
+                                            </div>
+                                        </div>
+                                        @* <span id="spanePassword1" class="text-danger font-weight-bold"></span> *@
+                                        <span asp-validation-for="Password" class="text-danger"></span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="ConFirmPassword" class="form-label">Confirm Password</label>
+                                        <input asp-for="ConFirmPassword" type="password" class="form-control" autocomplete="off">
+                                        <span asp-validation-for="ConFirmPassword" class="text-danger"></span>
+                                    </div>
+
+                                    <input type="hidden" asp-for="UserId" value="@Model.UserId">
+                                    @* <button type="submit" class="btn btn-primary d-none">Submit</button> *@
+                                    <a id="SubmitFormButton" class="btn btn-primary" href="#">
+                                        <i class="far fa-paper-plane mr-2" alt="Click to register"></i>
+                                        Submit
+                                    </a>
+                                    <span id="LoadingSpinnerDiv" class="d-none">
+                                        <span class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </span>
+                                        Please wait while we set up your account...
                                     </span>
-                                    Please wait while we set up your account... 
-                                </span>
-                        </form>
 
-                        <div class="alert alert-info mt-3">
-                            <h5>Password policy:</h5>
-                            <ul>
-                                <li>at least nine characters,</li>
-                                <li>one or more capital letters,</li>
-                                <li>one or more lower case letters,</li>
-                                <li>one or more numbers,</li>
-                                <li>one or more special characters, for example !,”.#</li>
-                                <li>should not contain the user name</li>
-                                <li>not have 3 or more of the same characters together, e.g. aaa or 111  </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div id="UserRegistrationSuccessDiv" class="card-body d-none">
-                        <div class="alert alert-primary h3">
-                                <i class="fas fa-user-check"></i>
-                            Registration complete!
-                        </div>
-                        <div id="RegistrationSuccessMessageDiv" class="alert alert-success h5">
-                            @* Here we will dump success message from th controller *@
-                        </div>
-                        <div>
-                            <a class="btn btn-primary offset-4 col-4" href="~/login">Back to Log in</a>
+                                    <div class="col fw-bold d-flex">
+                                        <span class="">Password strength:</span>
+                                        <span id="PasswordStrengthMeter" class="px-2 col-3">
+                                            @* Here we will dump '_PasswordMeter.cshtml' PartialView using Ajax call.. *@
+                                        </span>
+                                    </div>
 
+                                </form>
+
+
+                                <div class="alert alert-info mt-3">
+                                    @{
+                                        await Html.RenderPartialAsync("/Views/Profile/_PasswordPolicy.cshtml");
+                                    }
+                                </div>
+                            </div>
+                            <div id="UserRegistrationSuccessDiv" class="card-body d-none">
+                                <div class="alert alert-primary h3">
+                                    <i class="fas fa-user-check"></i>
+                                    Registration complete!
+                                </div>
+                                <div id="RegistrationSuccessMessageDiv" class="alert alert-success h5">
+                                    @* Here we will dump success message from th controller *@
+                                </div>
+                                <div>
+                                    <a class="btn btn-primary offset-4 col-4" href="~/login">Back to Log in</a>
+
+                                </div>
+
+                            </div>
                         </div>
+
+
 
                     </div>
                 </div>
 
-
-
-                </div>
-            </div>
-
-        }
+            }
+        </div>
     </div>
-</div>
 
-@section scripts{
-    <script src="~/login/UpdatePassword.js"></script>
+}
+
+
+
+
+@section scripts {
+    <script src="~/js/password-management.js"></script>
+    <script src="~/js/login/UpdatePassword.js"></script>
 }

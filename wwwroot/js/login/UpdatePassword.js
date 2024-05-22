@@ -10,21 +10,36 @@
 
         event.preventDefault();
 
+        var strengthMeterText = $("#PasswordStrengthText").text().toLowerCase();
+        if (strengthMeterText.indexOf('strong') < 0) {
+            console.log("Strength: " + strengthMeterText + " >> " + strengthMeterText.indexOf('strong'))
+            Swal.fire(
+                'Invalid Password!',
+                "The new password must be at least 'Strong' category. Please try another password.",
+                'error'
+            );
+
+            //event.preventDefault();
+            return false;
+        }
+
+
         var form = $("#RegisterUserForm");
         form.validate();
+
         if (form.valid()) {
             $("#LoadingSpinnerDiv").removeClass("d-none");
             $(this).addClass("disabled");
 
             //## add a delay.. then POST the form...
-            console.log(".. adding a 2 sec delay...");
+
             setTimeout(
                 function () {
                     PostRegisterUserForm();
                 }, 2000);
 
-        } else {
-            alert("Error -> form.valid()");
+        } else {    //## Invalid Form Data
+            
             return;
         }
 
@@ -49,7 +64,7 @@ function PostRegisterUserForm()
         contentType: false,
         success: function (response) {
             $("#SubmitFormButton").removeClass("disabled");
-            console.log("ajax result: " + response);
+            //console.log("ajax result: " + response);
             if (response.isSuccess === true) {
                 //## show success Div
                 $("#RegistrationSuccessMessageDiv").html(response.message);

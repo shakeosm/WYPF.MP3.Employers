@@ -4,7 +4,11 @@
     {
         public string Environment { get; set; }
         public string WebApiBaseUrl { get; set; }
-        public string PasswordChange { get; set; }
+        
+        public string PasswordChange { get; set; }        
+        public string ValidatePassword { get; set; }
+        public string GeneratePassword { get; set; }
+
         public string ErrorAndWarningsSelection { get; set; }
         public string AlertDetailsPLNextSteps { get; set; }
         public string ErrorAndWarnings { get; set; }
@@ -27,6 +31,8 @@
         public string GetRemittanceId { get; set; }
         public string GetRemittanceInfo { get; set; }
         public string GetPayLocation_With_Finance_Business_Partner { get; set; }
+        public string GetFinanceBusinessPartnerByPayLocation { get; set; }
+
         public string SubmissionNotification_CreateNew { get; set; }
         public string SubmissionNotification_GetByUser { get; set; }
 

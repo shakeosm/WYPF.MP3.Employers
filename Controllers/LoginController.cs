@@ -393,6 +393,10 @@ namespace MCPhase3.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Register(string id1, string id2)
         {
+            if (IsEmpty(id1) || IsEmpty(id2)) {
+                return View("Register", new UserRegistrationVM());
+            }
+
             string verifyUserRegistrationCodeApi = GetApiUrl(_apiEndpoints.VerifyUserRegistrationCode); //##: api/VerifyUserRegistrationCode
             var userToken = new UserRegistrationTokenVM() { 
                 SessionToken = id2,
@@ -404,7 +408,7 @@ namespace MCPhase3.Controllers
 
             ContextSetValue(Constants.LoginNameKey, id1);
 
-            string cacheKey = $"{id1}_{Constants.UserRegistrationTokenDetails}";
+            string cacheKey = $"{id1}{Constants.UserRegistrationTokenDetails}";
             _cache.Set(cacheKey, userToken);
 
             if (isVerified)
@@ -435,13 +439,13 @@ namespace MCPhase3.Controllers
 
             if (!ModelState.IsValid) {
 
-                result.IsSuccess = true;
+                result.IsSuccess = false;
                 result.Message = "Error: Please enter a valid password and confirm it.";
 
                 return Json(result);
             }
 
-            string cacheKey = $"{vm.UserId}_{Constants.UserRegistrationTokenDetails}";
+            string cacheKey = $"{vm.UserId}{Constants.UserRegistrationTokenDetails}";
             var userToken = _cache.Get<UserRegistrationTokenVM>(cacheKey);
             vm.SessionToken = userToken.SessionToken;
 
@@ -523,48 +527,23 @@ namespace MCPhase3.Controllers
         }
 
 
-        /// <summary>
-        /// Check if username and password correct
-        /// </summary>
-        /// <param name="loginBO"></param>
-        /// <returns></returns>
-        [Obsolete("Do not use this one.. Instead use- LoginCheckMethod(string userId, string password)")]
-        private async Task<int> LoginCheckMethod(LoginBO loginBO)
-        {
-            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);
-
-            using (var httpClient = new HttpClient())
-            {
-                StringContent content = new StringContent(JsonConvert.SerializeObject(loginBO), Encoding.UTF8, "application/json");
-
-                using var response = await httpClient.PostAsync(apiBaseUrlForLoginCheck, content);
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string result = await response.Content.ReadAsStringAsync();
-                    loginBO.result = JsonConvert.DeserializeObject<int>(result);
-                }
-            }
-            return loginBO.result;
-        }
-
         private async Task<int> LoginCheckMethod(string userId, string password)
         {
-            var loginBO = new LoginBO()
+            var loginParams = new LoginPostVM()
             {
-                userName = userId,
-                password = password,
-                
+                UserName = userId,
+                Password = password,                
             };
 
-            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);
-            var apiResult = await ApiPost(apiBaseUrlForLoginCheck, loginBO);
+            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);   ///## api/CheckLogin
+            var apiResult = await ApiPost(apiBaseUrlForLoginCheck, loginParams);
             if (IsEmpty(apiResult)) {
                 return (int)LoginStatus.Failed;
             }
 
-            loginBO.result = JsonConvert.DeserializeObject<int>(apiResult);
+            loginParams.Result = JsonConvert.DeserializeObject<int>(apiResult);
 
-            return loginBO.result;
+            return loginParams.Result;
         }
 
 
@@ -779,6 +758,23 @@ namespace MCPhase3.Controllers
             LogInfo($"maskedEmail: {maskedEmail}");
 
             return maskedEmail;
+        }
+
+        /// <summary>This will be called via ajax to check a password strength so user will know about its validity</summary>
+        /// <returns>A number indicating strength, between 0-100. A score of 70 is a pass mark</returns>        
+        [HttpGet, Route("/Login/CheckPasswordStrength/{passwordToCheck}"), AllowAnonymous]
+        public async Task<IActionResult> CheckPasswordStrength(string passwordToCheck)
+        {
+            string passwordMeterResult = "Weak;0;70";    //## Format: $"{scoreText};{currentScore};{scoreToPass}";
+            if (!PaswordPolicyMatched(passwordToCheck))
+            {
+                return PartialView("/Views/Profile/_PasswordMeter.cshtml", passwordMeterResult);
+            }
+
+            passwordMeterResult = await GetPasswordMeterValue(passwordToCheck);
+            Console.WriteLine($"CheckPasswordStrength() -> apiResult: {passwordMeterResult}");
+
+            return PartialView("/Views/Profile/_PasswordMeter.cshtml", passwordMeterResult);
         }
     }
 }

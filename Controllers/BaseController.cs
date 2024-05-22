@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace MCPhase3.Controllers
@@ -61,6 +62,7 @@ namespace MCPhase3.Controllers
         /// <summary>Returns w2User UserId- which is used in all Procedures</summary>
         /// <returns></returns>
         public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKey);   
+        public string CurrentUserLoginId() => HttpContext.Session.GetString(Constants.LoginNameKey);   
         public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
@@ -297,14 +299,7 @@ namespace MCPhase3.Controllers
         public void LogInfo(string message, bool addNewLine = false)
         {
             var logMessageText = $"{DateTime.Now.ToLongTimeString()}> {CurrentUserId()} > {message}";
-
-            #if DEBUG
-                if (addNewLine) {
-                    Console.WriteLine("");
-                }
-                Console.WriteLine(logMessageText);
-            #endif
-            
+           
             if (_configuration["LogDebugInfo"].ToString().ToLower() == "yes")
             {
                 var line = Environment.NewLine + Environment.NewLine;
@@ -348,9 +343,7 @@ namespace MCPhase3.Controllers
         {
             //var logMessageText = $"{DateTime.Now.ToLongTimeString()}> {message}";
 
-#if DEBUG
-            Console.WriteLine(message);
-#endif
+            LogInfo("Log_ClearOlderCustomerFilesNotProcessed()" + message);
 
             if (_configuration["Log_ClearOlderCustomerFilesNotProcessed"].ToString().ToLower() == "yes")
             {
@@ -405,6 +398,37 @@ namespace MCPhase3.Controllers
             return remittanceInfoVM;            
         }
 
+        public async Task<string> Get_Finance_Business_Partner_By_PayLocation(string payLocationRef)
+        {
+            string apiUrl = GetApiUrl(_apiEndpoints.GetFinanceBusinessPartnerByPayLocation);    //## api/Get_Finance_Business_Partner_By_PayLocation
+            var apiResult = await ApiGet($"{apiUrl}{payLocationRef}");
+            var fbpDetails = JsonConvert.DeserializeObject<PayLocationWithFinBusPartnerVM>(apiResult);
+
+            return fbpDetails.FBP_UserId;
+        }
+
+        public bool PaswordPolicyMatched(string userPassword)
+        {
+            string loginName = ContextGetValue(Constants.LoginNameKey);
+            if (IsEmpty(userPassword) || userPassword.Contains(loginName))
+            {
+                return false;
+            }
+
+            string passwordPattern = @"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[`!@$%^&*(){}[\];'#:@~<>?/|\-\=\+]).{12,}$";
+            var passwordStrength = Regex.Match(userPassword, passwordPattern);
+
+            return passwordStrength.Success;
+        }
+
+
+        public async Task<string> GetPasswordMeterValue(string passwordToCheck)
+        {
+            var apiResult = await ApiGet(GetApiUrl(_apiEndpoints.ValidatePassword) + passwordToCheck);
+            var passwordMeterResult = JsonConvert.DeserializeObject<string>(apiResult);
+
+            return passwordMeterResult;
+        }
 
     }
 

@@ -37,6 +37,7 @@
   <ItemGroup>
     <Content Remove="wwwroot\dist\css\materialdesignicons.min.css.map" />
     <Content Remove="wwwroot\img\countdown-timer.gif" />
+    <Content Remove="wwwroot\js\bootstrap.min.js" />
   </ItemGroup>
 
   <ItemGroup>
