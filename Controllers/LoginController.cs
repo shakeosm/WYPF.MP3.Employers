@@ -79,7 +79,7 @@ namespace MCPhase3.Controllers
                 if (await Is_MfaEnabled())
                 {
                     //### check whether this user needs a Multi-Factor Vreification today again... if yes, then send email with MFA Code and then ask to verify it
-                    string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:MFA_IsRequiredForUser"]);
+                    string mfa_Requirement_Check_Url = GetApiUrl(_apiEndpoints.MFA_IsRequiredForUser);// _configuration["ApiEndpoints:MFA_IsRequiredForUser"]);
 
                     var apiResult = await ApiGet(mfa_Requirement_Check_Url + loginVM.UserId);
 
@@ -171,7 +171,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         private async Task<string> SendMFA_VerificationCode()
         {
-            string mfa_SendVerificationCodeUrl = GetApiUrl(_configuration["ApiEndpoints:MFA_SendToEmployer"]);
+            string mfa_SendVerificationCodeUrl = GetApiUrl(_apiEndpoints.MFA_SendToEmployer);// _configuration["ApiEndpoints:MFA_SendToEmployer"]);
             var mailData = _cache.Get<MailDataVM>(GetKeyName(Constants.MFA_MailData));  //## we did set this value after Log in - Success.. it must be there..
             if (mailData is null) {
                 LogInfo("SendMFA_VerificationCode() => _cache.mailData is null");
@@ -212,7 +212,7 @@ namespace MCPhase3.Controllers
 
         private async Task<bool> Is_MfaEnabled()
         {
-            string mfa_Requirement_Check_Url = GetApiUrl(_configuration["ApiEndpoints:Is_MfaEnabled"]);
+            string mfa_Requirement_Check_Url = GetApiUrl(_apiEndpoints.Is_MfaEnabled);// _configuration["ApiEndpoints:Is_MfaEnabled"]);
             var apiResult = await ApiGet(mfa_Requirement_Check_Url);
             bool mfaEnabled = bool.Parse(apiResult);
             LogInfo($"is_MfaEnabled() >> calling: {mfa_Requirement_Check_Url}, mfaEnabled: {mfaEnabled}");
@@ -277,7 +277,7 @@ namespace MCPhase3.Controllers
             }
 
             //## Check the VerificationToken is Valid
-            var tokenVerificationUrl = GetApiUrl(_configuration["ApiEndpoints:MFA_Verify"]);
+            var tokenVerificationUrl = GetApiUrl(_apiEndpoints.MFA_Verify);// _configuration["ApiEndpoints:MFA_Verify"]);
             var apiResult = await ApiPost(tokenVerificationUrl, tokenDetails);
             var verification = JsonConvert.DeserializeObject<TaskResults>(apiResult);
 

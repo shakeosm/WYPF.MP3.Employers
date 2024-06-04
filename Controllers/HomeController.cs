@@ -230,7 +230,15 @@ namespace MCPhase3.Controllers
 
             if (vm.SelectedPostType == (int)PostingType.First)
             {
-                //check if records were uploaded previously for the SelectedPayLocationId, month and year.
+                //## First check if the user is trying to post some garbage.. stop if the file has an invalid month...
+                var invalidPeriodFound = excelSheetData.Any(e => e.PAYROLL_PD != vm.SelectedMonth[..3] || e.PAYROLL_YR != vm.SelectedYear);
+                if (invalidPeriodFound)
+                {
+                    _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"<h5>Invalid Month/Year values in the Excel file. For the '1st Posting' all values in 'Payroll_PD' column must be '{vm.SelectedMonth}' and 'PAYROLL_YR': '{vm.SelectedYear}'.</h5>");
+                    return RedirectToAction("Index", "Home");
+                }
+
+                //## now check if records were uploaded previously for the SelectedPayLocationId, month and year.
                 string apiCheckFileIsUploadedUrl = GetApiUrl(_apiEndpoints.CheckFileIsUploaded);   //## api/CheckFileUploaded
                 var apiResult = await ApiPost(apiCheckFileIsUploadedUrl, submissionInfo);
                 int fileAlreadyUploaded = Convert.ToInt16(apiResult);

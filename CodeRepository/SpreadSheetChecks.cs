@@ -324,25 +324,24 @@ namespace MCPhase3.CodeRepository
             
             foreach (var row in excelData)
             {
-                if (!IsEmpty(row.CONTRACTUAL_HRS)) { 
-                    double.TryParse(row.CONTRACTUAL_HRS, out double contractualHours);
+                if (!IsEmpty(row.CONTRACTUAL_HRS)) {
+                    _ = double.TryParse(row.CONTRACTUAL_HRS, out double contractualHours);
                     string flagTypes = row.FT_PT_CS_FLAG;
+                    string requiredFlagValues = "ft,pt";
 
-                    if (    (contractualHours == 0 && !flagTypes.Trim().ToLower().Equals("cs")    )
-                         || (contractualHours != 0 && flagTypes.Trim().ToLower().Equals("cs")))
+                    if ( (flagTypes.Trim().ToLower() == "cs" && contractualHours != 0)              //## When Flag value is 'CS' then Contract_Hours MUST be 0.
+                       || (requiredFlagValues.Contains(flagTypes.Trim().ToLower()) && contractualHours == 0 ))      //## When Flag value is 'FT/PT' then Contract_Hours MUST NOT be 0.
                     {
                         invalidRows.Add(rowNumber);                    
-
                     }
                 
                 }
-
                 rowNumber++;
             }
 
             if (invalidRows.Any()) {
-                result.Append("<hr/><h4>Invalid 'CONTRACTUAL_HRS', should be 0.00 hour if ‘CS’ flag present in 'FT_PT_CS_FLAG', at row number:</h4> ");
-                result.Append(string.Join(", ", rowNumber));
+                result.Append("<hr/><h4>Invalid 'CONTRACTUAL_HRS', should be 0.00 hour if ‘CS’ flag present in 'FT_PT_CS_FLAG'.<br/>Also, if 'FT/PT' flag is present then 'CONTRACTUAL_HRS' cannot be 0.00 hours, at row number:</h4> ");
+                result.Append(string.Join(", ", invalidRows));
             }
         }
 

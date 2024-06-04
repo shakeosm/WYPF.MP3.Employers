@@ -41,7 +41,8 @@
         public string PayrollProvider { get; set; }
         public string SubPayrollProvider { get; set; }
         public string LoginCheck { get; set; }
-        public string MFA_IsRequired { get; set; }
+        public string MFA_IsRequiredForUser { get; set; }
+        public string Is_MfaEnabled { get; set; }
         public string MFA_SendToEmployer { get; set; }
         public string MFA_Verify { get; set; }
 
