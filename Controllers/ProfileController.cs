@@ -97,17 +97,17 @@ namespace MCPhase3.Controllers
             ViewBag.isStaff = 1;
             passwordParams.UserName = CurrentUserId();
 
-            var result = (Password)await UpdatePasswordMethod(passwordParams);
+            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.PasswordChange);   //## api/ChangePassword
+            var result = (Password)await UpdatePasswordMethod(passwordParams, apiBaseUrlForLoginCheck);
             if (result == Password.Updated)
             {
-                TempData["Msg1"] = "Password updated successfully, please login using the new password.";
-                LogInfo("Password updated successfully, please login using the new password.");
+                TempData["UpdateMessage"] = "Password updated successfully, please login using the new password.";
+                LogInfo("Password updated successfully, will logout the user to login back with new password.");
                 return RedirectToAction("Logout", "Login");
             }
             if (result == Password.Invalid)     //## this will not happen.. as we already have verified against RegEx.Match()
             {
                 TempData["UpdateMessage"] = "Password does not meet our complexity requirements: ";
-                TempData["PasswordRequ"] = 1;
                 return RedirectToAction("UpdatePassword", "Admin");
             }
             else if (result == Password.IncorrectOldPassword)
@@ -123,19 +123,6 @@ namespace MCPhase3.Controllers
         }
 
        
-        /// <summary>This will POST the Password and User name to the API and get the Update result</summary>
-        /// <param name="passwordParams">Login parameters with UserId and Password</param>
-        /// <returns>Update result in Numeric value</returns>
-        private async Task<int> UpdatePasswordMethod(PasswordUpdateVM passwordParams)
-        {
-            string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.PasswordChange);   //## api/ChangePassword
-            string apiResponse = await ApiPost(apiBaseUrlForLoginCheck, passwordParams);
-            passwordParams.Result = JsonConvert.DeserializeObject<int>(apiResponse);
-
-            return passwordParams.Result;
-
-        }
-
         /// <summary>This will be called via ajax to load more Password suggestions by the user</summary>
         /// <returns>List of suggested passwords</returns>
         [HttpGet, Route("/Profile/LoadSuggestedPassword")]

@@ -15,7 +15,7 @@ namespace MCPhase3.ViewModels
 
         [Required(ErrorMessage = "Confirm password is required")]
         [Compare("Password", ErrorMessage = "Confirm password doesn't match.")]
-        public string ConFirmPassword { get; set; }
+        public string ConfirmPassword { get; set; }
 
         public UserDetailsVM UserDetails { get; set; }
 
@@ -30,8 +30,8 @@ namespace MCPhase3.ViewModels
         public string Password { get; set; }
         
         public string SessionToken { get; set; }
-
-
     }
+
+
 
 }

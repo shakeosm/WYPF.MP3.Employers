@@ -21,6 +21,8 @@
 
         public const string NewUserRegistrationVerification = "_NewUserVerifiedToken";
         public static string UserRegistrationTokenDetails = "_UserRegistrationToken";
+        
+        public static string PasswordResetTokenKey = "PasswordResetTokenKey";
 
         public const string SessionKeyMonth = "_month";
         public const string SessionKeyYears = "_years";

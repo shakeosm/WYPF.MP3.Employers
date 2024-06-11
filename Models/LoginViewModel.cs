@@ -4,6 +4,7 @@ namespace MCPhase3.Models
 {
     public class LoginViewModel
     {
+        /// <summary>This will be the 'UPM Login ID' for this User</summary>
         [Required(ErrorMessage = "User Id is required")]
         public string UserId { get; set; }
 

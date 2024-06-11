@@ -5,6 +5,9 @@
         public string Environment { get; set; }
         public string WebApiBaseUrl { get; set; }
         
+        public string PasswodResetLinkRequest { get; set; }        
+        public string PasswodResetVerifyRequest { get; set; }        
+        public string EmployerForgottenPasswordupdate { get; set; }        
         public string PasswordChange { get; set; }        
         public string ValidatePassword { get; set; }
         public string GeneratePassword { get; set; }

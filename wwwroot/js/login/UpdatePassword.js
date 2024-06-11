@@ -51,14 +51,20 @@ function PostRegisterUserForm()
 {
     var userId = $("#UserId").val();
     var password = $("#Password").val();
-    
+    var formType = $("#RegisterUserForm").attr("data-form-type");  //## This can be either NewUserRegistration or ResetPassword form..
+
     var formData = new FormData();
     formData.append('UserId', userId);
     formData.append('Password', password);
 
+    var apiUrl = "/Login/RegisterUserWithNewPassword"
+    if (formType === "password-reset-form") {
+        apiUrl = "/Login/ForgottenPasswordResetPost_Ajax"
+    }
+
     $.ajax({
         type: "POST",
-        url: "/Login/RegisterUserWithNewPassword",
+        url: apiUrl,
         data: formData,
         processData: false,
         contentType: false,

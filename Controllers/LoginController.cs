@@ -776,5 +776,126 @@ namespace MCPhase3.Controllers
 
             return PartialView("/Views/Profile/_PasswordMeter.cshtml", passwordMeterResult);
         }
+
+        
+        
+        [HttpGet, Route("/Login/SendResetRequestLink/{userId}"), AllowAnonymous]
+        public async Task<IActionResult> SendResetRequestLink(string userId)
+        {
+            var mailData = new MailDataVM() {         
+                UserId = userId
+            };
+
+            var apiUrl = GetApiUrl(_apiEndpoints.PasswodResetLinkRequest);
+            var apiResult = await ApiPost(apiUrl, mailData);
+            
+            var isResetLinkSent = JsonConvert.DeserializeObject<bool>(apiResult);
+            var taskResult = new TaskResults() { 
+                IsSuccess = isResetLinkSent,
+            };
+
+            Console.WriteLine($"Reset Link sent to the user: {userId}, result: {isResetLinkSent}");
+
+            return Json(taskResult);
+        }
+        
+        
+        /// <summary>
+        /// This link is created from the API- user will get a Password Reset link- which will bring the user to this page and allow to change their password upon successful verification
+        /// </summary>
+        /// <param name="userId">User Id</param>
+        /// <param name="sessionToken">Session Token for this request</param>
+        [HttpGet, Route("/Login/ForgottenPasswordReset/{userId}/{sessionToken}"), AllowAnonymous]
+        public async Task<IActionResult> ForgottenPasswordReset(string userId, string sessionToken)
+        {
+            var vm = new ForgottenPasswordResetVM();
+            var param = new TokenDataVerifyVM()
+            {
+                UserId = userId,
+                SessionToken = sessionToken
+            };
+
+            var apiUrl = GetApiUrl(_apiEndpoints.PasswodResetVerifyRequest);    //## api/PasswodResetVerifyRequest
+            var apiResult = await ApiPost(apiUrl, param);
+
+            var isValidResetRequest = JsonConvert.DeserializeObject<bool>(apiResult);
+            if(apiResult is null || !isValidResetRequest)
+            {
+                return View(vm);    //## sending an empty ViewModel.. which will show error.. saying 'invalid link'
+            }
+
+            //## keep this SessionToken in Session.. and compare it again in POST.. to make sure- no tempering is done..
+            ContextSetValue(Constants.PasswordResetTokenKey, sessionToken);
+
+            Console.WriteLine($"ForgottenPasswordReset: {userId}, sessionToken: {sessionToken}");
+            vm.UserId = userId;   //## at least feeding the UserId- so- it knows that a valid request has initiated this Journey..
+            
+            ContextSetValue(Constants.LoginNameKey, userId); //## putting the UserId in the Session.. so we can retrieve it and see- the Password does not contain the user name
+
+            return View(vm);
+        }
+
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgottenPasswordResetPost_Ajax(ForgottenPasswordResetPostVM vm)
+        {
+            var result = new TaskResults();
+
+            if (!ModelState.IsValid)
+            {
+                result.Message = "Error: Please enter a valid password and confirm it.";
+
+                return Json(result);
+            }
+
+            if (!PaswordPolicyMatched(vm.Password))
+            {               
+                result.Message = "Error: Invalid password. Please follow the Password policy.";
+
+                return Json(result);
+            }
+
+            //## Get the SessionToken from Session.. and compare it again in now.. to make sure- no tempering is done..
+            //var browserSessionToken = ContextGetValue(Constants.PasswordResetTokenKey);
+            //Console.WriteLine($"ForgottenPasswordResetPost_Ajax: {vm.UserId}, sessionToken: {browserSessionToken}");
+
+            //if (IsEmpty(browserSessionToken)  || browserSessionToken != vm.SessionToken) {
+            //    result.Message = "Error: Invalid password reset link is used. Please use the link provided in your email.";
+
+            //    return Json(result);
+            //}
+            
+            string apiResetPasswordUrl = GetApiUrl(_apiEndpoints.EmployerForgottenPasswordupdate);   //## api/EmployerForgottenPasswordupdate
+            var passwordUpdateResult = (Password)await UpdatePasswordMethod(vm, apiResetPasswordUrl);
+
+            if (passwordUpdateResult == Password.Updated)
+            {
+                result.IsSuccess = true;
+                result.Message = "Success: Password updated successfully, please login using the new password.";
+
+                return Json(result);
+            }
+            if (passwordUpdateResult == Password.Invalid)     //## this will not happen.. as we already have verified against RegEx.Match()
+            {                
+                result.Message = "Error: Password does not meet our complexity requirements.";
+
+                return Json(result);
+            }
+            else if (passwordUpdateResult == Password.IncorrectOldPassword)
+            {
+                result.Message = "Error: Old Password is not correct, please try again.";
+
+                return Json(result);
+            }
+            else
+            {
+                result.Message = "Error: Failed to updated password, please try again.";
+
+                return Json(result);
+            }
+        }
+
+
     }
 }

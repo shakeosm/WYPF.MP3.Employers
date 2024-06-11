@@ -179,7 +179,7 @@ namespace MCPhase3.Controllers
 
   
         public async Task<string> ApiPost(string apiUrl, object paramList)
-        {
+        {            
             string strJson = Newtonsoft.Json.JsonConvert.SerializeObject(paramList);
             var content = new StringContent(JsonConvert.SerializeObject(paramList), Encoding.UTF8, "application/json");
             if (strJson.Length > 150) {
@@ -428,6 +428,34 @@ namespace MCPhase3.Controllers
             var passwordMeterResult = JsonConvert.DeserializeObject<string>(apiResult);
 
             return passwordMeterResult;
+        }
+
+        /// <summary>This will POST the Password and User Id to the API and get the Update result- From User Profile</summary>
+        /// <param name="passwordParams">Login parameters with UserId and Password</param>
+        /// <param name="apiUrl">Api Url to Update the Password</param>
+        /// <returns>Update result in Numeric value</returns>
+        public async Task<int> UpdatePasswordMethod(PasswordUpdateVM passwordParams, string apiUrl)
+        {            
+            //public async Task<int> UpdatePasswordMethod(IPasswordUpdate passwordParams, string apiBaseUrlForLoginCheck)
+            string apiResponse = await ApiPost(apiUrl, passwordParams);
+            passwordParams.Result = JsonConvert.DeserializeObject<int>(apiResponse);
+
+            return passwordParams.Result;
+
+        }
+
+        /// <summary>This will POST the Password and User ID to the API and get the Update result. From Forgotten Password Reset Form</summary>
+        /// <param name="passwordParams">Login parameters with UserId and Password</param>
+        /// /// <param name="apiUrl">Api Url to Update the Password</param>
+        /// <returns>Update result in Numeric value</returns>
+        public async Task<int> UpdatePasswordMethod(ForgottenPasswordResetPostVM passwordParams, string apiUrl)
+        {
+            passwordParams.UserName = passwordParams.UserId;
+            string apiResponse = await ApiPost(apiUrl, passwordParams);
+            passwordParams.Result = JsonConvert.DeserializeObject<int>(apiResponse);
+
+            return passwordParams.Result;
+
         }
 
     }
