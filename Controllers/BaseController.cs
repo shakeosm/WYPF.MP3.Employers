@@ -190,7 +190,9 @@ namespace MCPhase3.Controllers
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add(Constants.ClientIdHttpRequestKey, host);    //## the APi will know who is the Consumer and can log the request accordingly..            
             httpClient.DefaultRequestHeaders.Add(Constants.PortalNameHttpRequestKey, Constants.ThisPortalName);    //## the APi will know who is the Consumer and can log the request accordingly..            
+
             using var response = await httpClient.PostAsync(apiUrl, content);
+
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 string result = await response.Content.ReadAsStringAsync();
@@ -299,7 +301,9 @@ namespace MCPhase3.Controllers
         public void LogInfo(string message, bool addNewLine = false)
         {
             var logMessageText = $"{DateTime.Now.ToLongTimeString()}> {CurrentUserId()} > {message}";
-           
+
+            //Console.WriteLine(logMessageText );
+
             if (_configuration["LogDebugInfo"].ToString().ToLower() == "yes")
             {
                 var line = Environment.NewLine + Environment.NewLine;

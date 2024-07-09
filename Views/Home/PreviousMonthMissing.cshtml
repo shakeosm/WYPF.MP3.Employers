@@ -1,0 +1,75 @@
+﻿@model MCPhase3.Models.PreviousMonthMissingInfoVM
+@{
+    ViewData["Title"] = "Previous Month Missing";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+
+    string customMessage = "";
+}
+
+<div class="border shadow-lg p-4 mb-4 bg-white">
+    <div class="container">
+        <div class="container text-center p-0">
+            <div class="card">
+
+                 progressbar 
+                <ul id="progressbar">
+                    <li class="active" id="account"><strong>File Upload</strong></li>
+                    <li class="active" id="personal"><strong>Check Totals</strong></li>
+                    <li class="active" id="personal"><strong>Data Processing</strong></li>
+                    <li id="personal"><strong>Error and Warning Summary</strong></li>
+                    <li id="personal"><strong>Bulk Approval</strong></li>
+                    <li id="payment"><strong>Submit to Database</strong></li>
+                    <li id="confirm"><strong>Finish</strong></li>
+                </ul>
+
+
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="jumbotron">
+
+            <div class="table-bordered">
+                <div class="alert alert-success">
+                    <h3>Employer: @Model.EmployerName</h3><br />
+                    @if (Model.MissingPeriodStatus.ToLower() == "missing"){
+                        customMessage = "uploaded and processed";
+                        <h4 class="text-danger">Status: Previous month file missing.</h4>
+                    }
+                    else{
+                        customMessage = "completely processed by WYPF";
+                        <h4 class="text-danger">Status: Pending processing. Previous month file still being processed.</h4>
+                    }
+                    <br />
+
+                    <div id="ShowProcessedInfoDiv">
+                        <i class="fas fa-check-circle mx-2"></i> Total records in uploaded file are: <b>@Model.TotalRecordsInFile</b><br />
+                        <i class="fas fa-check-circle mx-2"></i> Total number of records inserted successfully into database are: <b>@Model.TotalRecordsInFile</b><br />
+
+                        <span id="PendingProcessedIcon"><i class="fas fa-exclamation-circle mx-2 text-danger"></i></span>
+                        Members records processed: <span id="PendingProcessedCount" class="text-danger fw-bold">@Model.TotalRecordsInFile</span><br />
+                    </div>
+                </div>
+
+            </div>
+            <div>
+                <h4 class="text-danger">File submission requires the previous month file to be uploaded and processed first.</h4>
+                <p>
+                    Thank you for your submission for <span class="text-primary"> @Model.SubmissionPeriodName</span>. However, due to the previous month submission is at <span class="text-danger fw-bold">@Model.MissingPeriodStatus</span> status- we are not able to process this file at the moment.
+                </p>
+                <p>
+                    Once the required previous month <span class="text-danger">(@Model.MissingPeriodName)</span> submission is @customMessage, you can then continue with this file from the Dashboard.
+                </p>
+
+            </div>
+
+            <div class="alert alert-warning h5 text-center my-3">
+                Do not Refresh or Reload this page
+            </div>
+            <a href="/Admin/Home" class="btn btn-danger">Dashboard</a>
+        </div>
+        <hr />
+
+    </div>
+</div>

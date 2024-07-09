@@ -786,14 +786,17 @@ namespace MCPhase3.Controllers
                 UserId = userId
             };
 
+            var taskResult = new TaskResults();
+
             var apiUrl = GetApiUrl(_apiEndpoints.PasswodResetLinkRequest);
             var apiResult = await ApiPost(apiUrl, mailData);
-            
-            var isResetLinkSent = JsonConvert.DeserializeObject<bool>(apiResult);
-            var taskResult = new TaskResults() { 
-                IsSuccess = isResetLinkSent,
-            };
 
+            if (IsEmpty(apiResult)) {
+                taskResult.Message = "Failed to invoke API.";
+            }
+            var isResetLinkSent = JsonConvert.DeserializeObject<bool>(apiResult);
+            taskResult.IsSuccess = isResetLinkSent;
+            
             Console.WriteLine($"Reset Link sent to the user: {userId}, result: {isResetLinkSent}");
 
             return Json(taskResult);

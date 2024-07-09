@@ -82,4 +82,18 @@ namespace MCPhase3.Models
         public string UploadedFileName { get; set; }
         public string payrollYear { get; set; }
     }
+
+    public class PreviousMonthMissingInfoVM
+    {
+        public double EmployerID { get; set; }
+        public string EmployerName { get; set; }
+        public string SubmissionPeriodName { get; set; }                
+        
+        public string MissingPeriodName { get; set; }
+        /// <summary>Missing period status- either: Missing or Pending.. We are not dealing with 'Completed' cases here</summary>
+        public string MissingPeriodStatus { get; set; }
+
+        public int TotalRecordsInFile { get; set; }
+
+    }
 }

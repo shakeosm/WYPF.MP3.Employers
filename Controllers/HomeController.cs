@@ -40,6 +40,7 @@ namespace MCPhase3.Controllers
         public IValidateExcelFile _validateExcel;
         private readonly IExcelData _excelData;
         private readonly ICheckTotalsService _checkTotalsService;
+        private readonly string[] financeMonthNames;
 
         public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints, ICommonRepo CommonRepo, IValidateExcelFile ValidateExcelFile, IExcelData InsertDataTable, ICheckTotalsService CheckTotalsService) : base(configuration, Cache, Provider, ApiEndpoints)
         {
@@ -51,7 +52,7 @@ namespace MCPhase3.Controllers
             _excelData = InsertDataTable;
             _checkTotalsService = CheckTotalsService;
             _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
-
+            financeMonthNames = _Configure["FinanceMonthNames"].Split(',').ToArray();   //## All Financial Month names are kept in a Zero index based Array.
         }
 
         /// <summary>
@@ -231,10 +232,12 @@ namespace MCPhase3.Controllers
             if (vm.SelectedPostType == (int)PostingType.First)
             {
                 //## First check if the user is trying to post some garbage.. stop if the file has an invalid month...
-                var invalidPeriodFound = excelSheetData.Any(e => e.PAYROLL_PD != vm.SelectedMonth[..3] || e.PAYROLL_YR != vm.SelectedYear);
+                var invalidPeriodFound = excelSheetData.Any(e => !e.PAYROLL_PD.ToLower().StartsWith(vm.SelectedMonth[..3].ToLower()) || e.PAYROLL_YR != vm.SelectedYear);
+
                 if (invalidPeriodFound)
                 {
-                    _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"<h5>Invalid Month/Year values in the Excel file. For the '1st Posting' all values in 'Payroll_PD' column must be '{vm.SelectedMonth}' and 'PAYROLL_YR': '{vm.SelectedYear}'.</h5>");
+                    _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"<h5>Invalid Month/Year values in the Excel file. For the '1st Posting' all values in 'Payroll_PD' column must be '{vm.SelectedMonth}' and 'PAYROLL_YR': '{vm.SelectedYear}.</h5>");
+                    //_cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), $"<h5>Invalid Month/Year values in the Excel file. For the '1st Posting' all values in 'Payroll_PD' column must be '{vm.SelectedMonth}', 'PAYROLL_YR': '{vm.SelectedYear}' and PayLocation: {vm.SelectedPayLocationId}.</h5>");
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -429,9 +432,9 @@ namespace MCPhase3.Controllers
                 return View(contributionPost);
             }
 
-
+            var postingType = HttpContext.Session.GetString(Constants.SessionKeyPosting);
             //## Insert EventDetails: RemitanceSubmitted =>	New remitance submitted and remitance ID created for the uploaded file
-            EventLog_Add(Convert.ToInt32(remittanceID), $"New remitance submitted and remitance ID created for the uploaded file. employerID: {contributionPost.employerID}, Payroll Period: {contributionPost.PaymentMonth}-{contributionPost.payrollYear}, ", (int)EventType.RemitanceSubmitted, (int)EventType.RemitanceSubmitted);
+            EventLog_Add(Convert.ToInt32(remittanceID), $"New remitance submitted and remitance ID created for the uploaded file. employerID: {contributionPost.employerID}, Payroll Period: {contributionPost.PaymentMonth}-{contributionPost.payrollYear}, PostingType: {postingType}", (int)EventType.RemitanceSubmitted, (int)EventType.RemitanceSubmitted);
 
             LogInfo($"Remittance Summary successfully inserted into database, Id: {remittanceID}.");
 
@@ -442,9 +445,10 @@ namespace MCPhase3.Controllers
 
             LogInfo($"InsertBulkData() finished. Success= {isInserted}");
 
+            int totalRecordsInFile = 0;
             if (isInserted)
             {
-                int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
+                totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
                 EventLog_Add(Convert.ToInt32(remittanceID), $"Bulk data is inserted into database. Total records: {totalRecordsInFile}. EmployersEmployeeTotalValue: {contributionPost.EmployersEmployeeTotalValue().ToString("C2")}", (int)EventType.BulkDataInsert, (int)EventType.BulkDataInsert);
                                 
                 _ = MoveFileToDone(remittanceID);   //## This will also insert EventLog for the 'FileMovedToDone' EventType
@@ -460,18 +464,91 @@ namespace MCPhase3.Controllers
                 return View(contributionPost);
             }
 
-            remittanceID = EncryptUrlValue(remittanceID);
+            
+            string encryptedRemitId = EncryptUrlValue(remittanceID);
 
             //## all good- we have checked the Totals and used it from the cache.. now better remove that DataTable variable from cache.. work done
             _cache.Delete(GetKeyName(Constants.ExcelDataAsString));
                             
             //## Pass the RemittanceId via Session cache- to make the Url less Ugly with the Encrypted RemittanceId
-            ContextSetValue(Constants.SessionKeyRemittanceID, remittanceID);
+            ContextSetValue(Constants.SessionKeyRemittanceID, encryptedRemitId);
 
-            LogInfo("Exiting Home/CheckTotals page..");
-            return RedirectToAction("InitialiseProcessWithSteps");
+            //## Return Check API to call to check if the previous month file is completed.            
+            var submissionCheckResult = await CheckPreviousMonthFileIsSubmitted();
+
+            if (submissionCheckResult.IsSuccess)
+            {
+                LogInfo("Exiting Home/CheckTotals page..");
+                return RedirectToAction("InitialiseProcessWithSteps");
+            }
+            else {
+                int remittance_ID = Convert.ToInt32(remittanceID);
+                LogInfo("CheckPreviousMonthFileIsSubmitted() has returned FALSE. Will notify the user and run the Return_Initialise() in background- while user can go home and sleep.");
+
+                //## lets run the Return_Initialise() here which runs silently in background without waiting it to finish...
+                var initialiseProcBO = new InitialiseProcBO
+                {
+                    P_REMITTANCE_ID = remittance_ID,
+                    P_USERID = CurrentUserId()
+                };
+
+                LogInfo($"-> api: " + _apiEndpoints.InitialiseAndCheckReturn);
+
+                //## ReturnInitialise() call.. a big piece of Task- initialising the entire journey, setting values, generating error/warnings, fixing issues and many things...            
+                Console.WriteLine($"{DateTime.Now} -> calling api: " + _apiEndpoints.InitialiseAndCheckReturn);
+                _ = ApiPost(GetApiUrl(_apiEndpoints.InitialiseAndCheckReturn), initialiseProcBO);        //## api/initialise-and-check-return               
+                Console.WriteLine($"{DateTime.Now} -> API completed...");
+
+                string missingPeriodName = GetPreviousPeriodName();
+
+                var previousMonthMissingInfoVM = new PreviousMonthMissingInfoVM()
+                { 
+                    EmployerName = contributionPost.employerName,
+                    TotalRecordsInFile = totalRecordsInFile,
+                    SubmissionPeriodName = $"{contributionPost.PaymentMonth} - {contributionPost.payrollYear}",
+                    MissingPeriodName = missingPeriodName,
+                    MissingPeriodStatus = submissionCheckResult.Message
+                };
+
+                return View("PreviousMonthMissing", previousMonthMissingInfoVM);
+            }
 
         }
+
+        private string GetPreviousPeriodName()
+        {
+            string financialYear = ContextGetValue(Constants.SessionKeyYears);  //## ie: "2023/24"
+            string financialMonth = ContextGetValue(Constants.SessionKeyMonth); //## ie: 'April'
+            
+            /* Get the Previous Month Name */            
+            int currentMonthNumber = FinancialMonthNameToNumber(financialMonth);
+            string previousMonthName = financeMonthNames[currentMonthNumber - 1];   //## For any other month rather than April- just minus 1 from that month will give u previous finance month for that year
+
+            financialYear = GetPreviousYearPeriod(currentMonthNumber, financialYear);
+
+            return $"{previousMonthName} - {financialYear}".ToUpper();
+        }
+
+        private string GetPreviousYearPeriod(int currentMonthNumber, string currentFinancialYear)
+        {
+            if (currentMonthNumber == 1)   
+            {
+                //## If Current Finance Month is April- then Previous month will be March, but for the previous Finance Year, which will make the month number to 12, and Previous year
+                int financeYearPart = Convert.ToInt16(currentFinancialYear[..4]);    //## take the 4 letters from Left, ie: '2024'
+
+                return $"{financeYearPart-1}/{financeYearPart - 2000}"; //## For 'April 2023/24' -> Previous month will be 'March 2022/23'- Year will change, too
+            }
+
+
+            return currentFinancialYear;
+        }
+
+        private int FinancialMonthNameToNumber(string financialMonth)
+        {
+            int currentMonthNumber = Array.IndexOf(financeMonthNames, financialMonth[..3].ToLower());
+            return currentMonthNumber;
+        }
+
 
         private void DeleteTheExcelFile()
         {
@@ -570,7 +647,7 @@ namespace MCPhase3.Controllers
             var excelDataTransformedInClass = _excelData.Get(userName);
 
             //#### INSERT BULK DATA
-            string bulkDataInsertApi = GetApiUrl(_apiEndpoints.InsertData);
+            string bulkDataInsertApi = GetApiUrl(_apiEndpoints.InsertData); //## api/InsertData_v2
             LogInfo($"calling-> {bulkDataInsertApi}. Total records in excelData: {excelDataTransformedInClass.Count}");
             apiResult = await ApiPost(bulkDataInsertApi, excelDataTransformedInClass);
 
@@ -655,7 +732,7 @@ namespace MCPhase3.Controllers
             }
 
             //## Return Check API to call to check if the previous month file is completed.
-            _ = await CheckPreviousMonthFileIsSubmitted(remttanceId);
+            _ = await CheckPreviousMonthFileIsSubmitted();
 
 
             //## Automatch api call
@@ -689,40 +766,6 @@ namespace MCPhase3.Controllers
             return View(initialiseProcessResultVM);
         }
 
-        /// <summary>
-        /// This new page will prompt the user to initiate the tasks one by one, therefore will have a smooth journey end-to-end.
-        /// user will be able to see the progress of the each step- and will not be timed-out- as we can see previously API call timesoout after 100 seconds.
-        /// </summary>
-        /// <returns></returns>
-        //[HttpGet]
-        //public IActionResult InitialiseProcessWithProgress()
-        //{
-        //    var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-        //    int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
-        //    int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
-        //    var totalRecordsInDatabase = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecordsInDB));
-        //    //string errorMessage = TempData["InitialiseProcessError"]?.ToString();
-
-        //    LogInfo($"Loading Home/InitialiseProcessWithProgress() .. RemittanceId: {remittanceId}");
-        //    LogInfo($"TotalRecordsInFile: {totalRecordsInFile}, totalRecordsInDatabase: {totalRecordsInDatabase}");
-
-        //    var initialiseProcessResultVM = new InitialiseProcessResultVM()
-        //    {
-        //        EncryptedRemittanceId = encryptedRemittanceId,
-        //        EmployeeName = ContextGetValue(Constants.SessionKeyEmployerName),
-        //        ErrorMessage = "",
-        //    };
-
-        //    //EventLog_Add(remittanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
-            
-        //    initialiseProcessResultVM.TotalRecordsInFile = totalRecordsInFile.ToString();
-        //    initialiseProcessResultVM.TotalRecordsInDatabase = totalRecordsInDatabase.ToString();
-        //    initialiseProcessResultVM.EmployersProcessedRecords = "PENDING";
-
-        //    initialiseProcessResultVM.CurrentStep = "ReturnInitialise";
-
-        //    return View(initialiseProcessResultVM);
-        //}
 
         /// <summary>
         /// This is an alternative page for InitialiseProcess()- which has a big workload- all at once..
@@ -732,12 +775,6 @@ namespace MCPhase3.Controllers
         [HttpGet]
         public IActionResult InitialiseProcessWithSteps()
         {
-            #region Only For TEST
-            //string encRmitId = EncryptUrlValue("260230");
-            //ContextSetValue(Constants.SessionKeyTotalRecords, "8517");
-            //ContextSetValue(SessionKeyTotalRecordsInDB, "8517");
-            //ContextSetValue(Constants.SessionKeyRemittanceID, encRmitId);
-            #endregion
 
             var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
             int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
@@ -760,7 +797,6 @@ namespace MCPhase3.Controllers
 
             if (IsEmpty(employerProcessedCount))
             {
-                //TODO: Enable is for deployment
                 EventLog_Add(remittanceId, "Waiting for employer to initiate 'ReturnInitialise' Process.", (int)EventType.AwaitingInitialiseProcess, (int)EventType.AwaitingInitialiseProcess);
                 employerProcessedCount = "PENDING";
             }
@@ -1028,31 +1064,51 @@ namespace MCPhase3.Controllers
         }
 
 
-        /// <summary>Return Check API to call to check if the previous month file is completed.</summary>
-        /// <param name="remttanceId"></param>
+        /// <summary>Return Check API to call to check if the previous month file is completed.</summary>0
+        /// <param name="employerId"></param>
         /// <returns></returns>
-        private async Task<bool> CheckPreviousMonthFileIsSubmitted(int remttanceId)
+        private async Task<TaskResults> CheckPreviousMonthFileIsSubmitted()
         {
-            LogInfo($"Skipping  'Task<bool> CheckPreviousMonthFileIsSubmitted', as this have no followup action, means- this check is useless. remttanceId {remttanceId}");
-            return true;
+            var checkResult = new TaskResults();
+            
+            var excelDataTransformedInClass = _excelData.Get(CurrentUserId());
 
-            ReturnCheckBO result = new()
+            string payLocationRef = excelDataTransformedInClass.First().EMPLOYER_LOC_CODE ;
+            string currentMonthName = excelDataTransformedInClass.First().PAYROLL_PD;
+            int currentMonthNumber = FinancialMonthNameToNumber(currentMonthName);
+            int previousMonthNumber = currentMonthNumber == 1 ? 12 : currentMonthNumber - 1;
+
+            SubmissionCheckParamVM queryParam = new()
             {
-                p_REMITTANCE_ID = remttanceId,
-                P_USERID = CurrentUserId(),
-                P_PAYLOC_FILE_ID = 0
+                PayLocationCode = payLocationRef,
+                MonthNumber = previousMonthNumber,  /* This is what we are checking for existance in the DB. We are uploading for July.. so= check do we have a submission for June? */
+                FinancialYear = GetPreviousYearPeriod(currentMonthNumber, ContextGetValue(Constants.SessionKeyYears))
             };
 
-            LogInfo($"apiBaseUrlForCheckReturn - remttanceId {remttanceId}");
+            LogInfo($"CheckPreviousMonthFileIsSubmitted - payLocationRef {payLocationRef}, MonthNumber: {queryParam.MonthNumber}, FinancialYear: {queryParam.FinancialYear}.");
 
-            string apiBaseUrlForCheckReturn = GetApiUrl(_apiEndpoints.ReturnCheckProc);      //## Get 'status of a file'
-            string apiResult = await ApiPost(apiBaseUrlForCheckReturn, result);
-            result = JsonConvert.DeserializeObject<ReturnCheckBO>(apiResult);   //## we get StatusCode and StatusText back, ie: 1 = Record Not Found.. 
+            string apiUrl = GetApiUrl(_apiEndpoints.SubmissionStatusForPreviousMonth);      //## Get 'status of a file'- 'missing' or 'pending', => api/submission-status-previous-month
+            string apiResult = await ApiPost(apiUrl, queryParam);
 
-            LogInfo($"apiBaseUrlForCheckReturn Finished, status: {result.L_STATUSTEXT}");
+            string submissionStatus;
+            if (IsEmpty(apiResult))
+            {   //## looks like crashed.. so- take it as we have the Submission in 'work-in-progress' status
+                LogInfo($"CheckPreviousMonthFileIsSubmitted => IsEmpty(apiResult) => looks like API failed .. so- take it as we have the Submission in 'work-in-progress' status");
+                checkResult.Message = "pending";
+                checkResult.IsSuccess = false;
+                return checkResult;
+            }
+            else {
+                submissionStatus = JsonConvert.DeserializeObject<string>(apiResult);            
+            }
+            
+            LogInfo($"CheckPreviousMonthFileIsSubmitted, status: {submissionStatus}");
 
-            return true;
-            //Add functionality here to restrict file if the previous month file is still pending.
+            checkResult.Message = submissionStatus;   //## whatever we get from API.. View page will decide what message to show
+            checkResult.IsSuccess = submissionStatus.ToLower() == Constants.SubmissionStatus.ToLower();
+
+            return checkResult;
+
         }
 
 

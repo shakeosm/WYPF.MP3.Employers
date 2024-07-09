@@ -36,6 +36,7 @@
         public string GetPayLocation_With_Finance_Business_Partner { get; set; }
         public string GetFinanceBusinessPartnerByPayLocation { get; set; }
 
+        public string SubmissionStatusForPreviousMonth { get; set; }
         public string SubmissionNotification_CreateNew { get; set; }
         public string SubmissionNotification_GetByUser { get; set; }
 
@@ -62,6 +63,8 @@
         public string InitialiseProc { get; set; }
         /// <summary>This call will initiate the DB Procedure but will not wait for that to finish and just come back.. like kick and hide.. </summary>
         public string InitialiseProc_v2 { get; set; }
+        /// <summary>This is to call both Return_Initialise and Check_Return in a single API request- while the user can exit from MP3 UI and the Process will still continue in background</summary>
+        public string InitialiseAndCheckReturn { get; set; }
         /// <summary>this API will be called periodically to check the current status of InitialiseProc process</summary>
         public string GetProgressForReturnInitialise { get; set; }
         public string GetProgressForAutoMatch { get; set; }

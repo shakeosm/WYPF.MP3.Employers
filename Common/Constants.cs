@@ -85,6 +85,8 @@
         public static string Step1_ReturnInitialise = "Step1";
         public static string Step2_AutoMatch = "Step2";
         
+        public static string SubmissionStatus = "Complete";
+        
         //public static string DATA_MODIFY_ADD = "A";
         //public static string STAGING_FILE_PREFIX = "staging-file-";
         
@@ -134,6 +136,14 @@
             /// <summary>File has been submitted to WYPF by payroll provider.</summary>
             SubmittedToWypf = 110
         }
+
+        //public enum SubmissionStatus
+        //{
+        //    Missing = 0,
+        //    Pending = 1,
+        //}
+
+
 
     }
 }
