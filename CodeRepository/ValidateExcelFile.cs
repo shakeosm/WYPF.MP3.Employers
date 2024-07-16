@@ -13,11 +13,13 @@ namespace MCPhase3.CodeRepository
     {
         private readonly ICommonRepo _commonRepo;
         private readonly IConfiguration _configuration;
+        private readonly string[] _financeMonthNames;
 
         public ValidateExcelFile(ICommonRepo CommonRepo, IConfiguration Configuration)
         {
             _commonRepo = CommonRepo;
             _configuration = Configuration;
+            _financeMonthNames = _configuration["FinanceMonthNames"].Split(',').ToArray();   //## All Financial Month names are kept in a Zero index based Array.
         }
 
         /// <summary>This is the actual Field/Data validation on the Excel file- which is now in a DataSet.
@@ -104,7 +106,94 @@ namespace MCPhase3.CodeRepository
 
             return errorMessage.ToString();
         }
-        
+
+
+
+        public string GetPreviousPeriodName(string financialYear, string financialMonth)
+        {            
+            /* Get the Previous Month Name */
+            int currentMonthNumber = FinancialMonthNameToNumber(financialMonth);
+            string previousMonthName = _financeMonthNames[currentMonthNumber - 1];   //## For any other month rather than April- just minus 1 from that month will give u previous finance month for that year
+
+            financialYear = GetPreviousYearPeriod(currentMonthNumber, financialYear);
+
+            return $"{previousMonthName} - {financialYear}".ToUpper();
+        }
+
+
+        public TaskResults FutureMonthRecordFound(List<ExcelsheetDataVM> excelSheetData, string selectedFinancialYear, string selectedMonth)
+        {
+            //public TaskResults FutureMonthRecordFound(List<ExcelsheetDataVM> excelSheetData, int selectedFinancialYear, int monthNumber)
+            StringBuilder invalidRecords = new();
+            var result = new TaskResults();
+            int selectedYear = GetYear(selectedFinancialYear);
+            int monthNumber = FinancialMonthNameToNumber(selectedMonth);
+
+            int rowNumber = 1;
+
+            try
+            {
+                foreach (var item in excelSheetData)
+                {
+                    if (GetYear(item.PAYROLL_YR) > selectedYear)
+                    {
+                        invalidRecords.Append($"{rowNumber}, ");
+                    }
+                    else if (GetYear(item.PAYROLL_YR) == selectedYear && FinancialMonthNameToNumber(item.PAYROLL_PD) > monthNumber)
+                    {
+                        invalidRecords.Append($"{rowNumber}, ");
+                    }
+
+                    rowNumber++;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"<h5>Invalid Month/Year values found at row: {rowNumber}. File validation aborted! Please check all Month/Year values are valid and try again.</h5>";                
+                return result;
+            }
+
+            result.IsSuccess = invalidRecords.Length < 1;
+
+            if (!result.IsSuccess)
+            {                
+                result.Message = $"<h5>Invalid records found. Submissions for a future month is not allowed.</h5>Rows at: {invalidRecords}";
+            }
+
+            return result;
+        }
+
+        public string GetPreviousYearPeriod(int currentMonthNumber, string currentFinancialYear)
+        {
+            if (currentMonthNumber == 1)
+            {
+                //## If Current Finance Month is April- then Previous month will be March, but for the previous Finance Year, which will make the month number to 12, and Previous year
+                int financeYearPart = GetYear(currentFinancialYear);    //## take the first part of the Fin-Year
+
+                return $"{financeYearPart - 1}/{financeYearPart - 2000}"; //## For 'April 2023/24' -> Previous month will be 'March 2022/23'- Year will change, too
+            }
+
+
+            return currentFinancialYear;
+        }
+
+
+        public int FinancialMonthNameToNumber(string financialMonth)
+        {
+            int currentMonthNumber = Array.IndexOf(_financeMonthNames, financialMonth[..3].ToLower());
+            return currentMonthNumber;
+        }
+
+
+        /// <summary>This will return the Year Part from the Financial Year value</summary>
+        /// <param name="financialYear">Financial Year value, ie: 2023/24</param>
+        /// <returns>Returns the First part, ie: 2023</returns>
+        private int GetYear(string financialYear)
+        {
+            int financeYearPart = Convert.ToInt16(financialYear[..4]);    //## take the 4 letters from Left, ie: '2024'
+            return financeYearPart;
+        }
+
 
 
         /// <summary>
@@ -377,5 +466,9 @@ namespace MCPhase3.CodeRepository
         string Validate(List<ExcelsheetDataVM> excelData, string month, string posting, string validPayrollYr, List<PayrollProvidersBO> validPayLocations);
 
         string CheckSpreadsheetValuesFire(DataTable dt, string month, string posting, string validPayrollYr, string[] validTitles, string[] invalidSigns, ref string CheckSpreadSheetErrorMsg);
+        TaskResults FutureMonthRecordFound(List<ExcelsheetDataVM> excelSheetData, string selectedFinancialYear, string selectedMonth);
+        string GetPreviousPeriodName(string financialYear, string financialMonth);
+        int FinancialMonthNameToNumber(string financialMonth);
+        string GetPreviousYearPeriod(int currentMonthNumber, string currentFinancialYear);
     }
 }

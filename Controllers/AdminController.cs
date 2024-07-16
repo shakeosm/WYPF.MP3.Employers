@@ -74,9 +74,9 @@ namespace MCPhase3.Controllers
 
             LogInfo(eBO.notes + "; " + taskResult.Message);
 
-            //## Now try to read the current status- if new Status is '110: Submitted to WYPF'- The Finance Business Partner needs to know a new Submission being pushed for further processing
+            //## Now try to read the current status- if new Status is '105: Data quality score threshold check skipped, File passed to WYPF by Emp for processing.'- The Finance Business Partner needs to know a new Submission being pushed for further processing
             var remitInfo = GetRemittanceInfo(currentRemittance);
-            if (remitInfo.StatusCode == (int)RemittanceStatus.SubmittedToWypf) {
+            if (remitInfo.StatusCode == (int)RemittanceStatus.PassedToWypf) {
                 _ = InsertNotification_For_SubmittedToWYPF(currentRemittance);  //## we don't need the result.. let this API continue in background and we go back to the Ajax call
             }
 

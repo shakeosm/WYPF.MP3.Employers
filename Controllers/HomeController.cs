@@ -40,7 +40,7 @@ namespace MCPhase3.Controllers
         public IValidateExcelFile _validateExcel;
         private readonly IExcelData _excelData;
         private readonly ICheckTotalsService _checkTotalsService;
-        private readonly string[] financeMonthNames;
+        
 
         public HomeController(ILogger<HomeController> logger, IWebHostEnvironment host, IConfiguration configuration, IRedisCache Cache, IDataProtectionProvider Provider, IOptions<ApiEndpoints> ApiEndpoints, ICommonRepo CommonRepo, IValidateExcelFile ValidateExcelFile, IExcelData InsertDataTable, ICheckTotalsService CheckTotalsService) : base(configuration, Cache, Provider, ApiEndpoints)
         {
@@ -51,8 +51,7 @@ namespace MCPhase3.Controllers
             _validateExcel = ValidateExcelFile;
             _excelData = InsertDataTable;
             _checkTotalsService = CheckTotalsService;
-            _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");
-            financeMonthNames = _Configure["FinanceMonthNames"].Split(',').ToArray();   //## All Financial Month names are kept in a Zero index based Array.
+            _customerUploadsLocalFolder = ConfigGetValue("FileUploadPath");            
         }
 
         /// <summary>
@@ -229,9 +228,22 @@ namespace MCPhase3.Controllers
                 P_EMPID = vm.SelectedPayLocationId  //## actually refering to 'payroll_provider_id' in table. EmployerId: '1003701' and payroll_provider_id: 'BAR0122'
             };
 
+  
+            //## validate- no submission should have any future month record
+            string financialYear = ContextGetValue(Constants.SessionKeyYears);  //## ie: "2023/24"
+            string financialMonth = ContextGetValue(Constants.SessionKeyMonth); //## ie: 'April'
+            var futurePeriod = _validateExcel.FutureMonthRecordFound(excelSheetData, financialYear, financialMonth);
+
+            if (!futurePeriod.IsSuccess)
+            {
+                _cache.SetString(GetKeyName(Constants.FileUploadErrorMessage), futurePeriod.Message);
+
+                return RedirectToAction("Index", "Home");
+            }
+
             if (vm.SelectedPostType == (int)PostingType.First)
             {
-                //## First check if the user is trying to post some garbage.. stop if the file has an invalid month...
+                //## check if the user is trying to post some garbage.. stop if the file has an invalid month...
                 var invalidPeriodFound = excelSheetData.Any(e => !e.PAYROLL_PD.ToLower().StartsWith(vm.SelectedMonth[..3].ToLower()) || e.PAYROLL_YR != vm.SelectedYear);
 
                 if (invalidPeriodFound)
@@ -241,7 +253,7 @@ namespace MCPhase3.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                //## now check if records were uploaded previously for the SelectedPayLocationId, month and year.
+                //## check if records were uploaded previously for the SelectedPayLocationId, month and year.
                 string apiCheckFileIsUploadedUrl = GetApiUrl(_apiEndpoints.CheckFileIsUploaded);   //## api/CheckFileUploaded
                 var apiResult = await ApiPost(apiCheckFileIsUploadedUrl, submissionInfo);
                 int fileAlreadyUploaded = Convert.ToInt16(apiResult);
@@ -262,9 +274,7 @@ namespace MCPhase3.Controllers
                     return RedirectToAction("Index", "Home");
                 }
             }
-                                    
             
-
             List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
 
             //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
@@ -294,6 +304,7 @@ namespace MCPhase3.Controllers
 
         }
 
+       
         /// <summary>We already have converted that Excel file into a CSV file while checking for malacious tags. We can get the path from Session cookie and start using it for further processing
         /// </summary>
         private List<ExcelsheetDataVM> ConvertExcel_To_CSV_To_ClassObject()
@@ -340,7 +351,7 @@ namespace MCPhase3.Controllers
             }
 
             result.IsSuccess = IsEmpty(result.Message);
-            LogInfo($"IsFileValid() > result: {result}, Message: {result.Message}, File: {file.Name}, Length: {file.Length/1024} KB, type: {file.ContentType}, extension: {Path.GetExtension(file.FileName)}");
+            LogInfo($"IsFileValid() > success: {result.IsSuccess}, Message: {result.Message}, File: {file.Name}, Length: {file.Length/1024} KB, type: {file.ContentType}, extension: {Path.GetExtension(file.FileName)}");
 
 
             return result;
@@ -499,7 +510,7 @@ namespace MCPhase3.Controllers
                 _ = ApiPost(GetApiUrl(_apiEndpoints.InitialiseAndCheckReturn), initialiseProcBO);        //## api/initialise-and-check-return               
                 Console.WriteLine($"{DateTime.Now} -> API completed...");
 
-                string missingPeriodName = GetPreviousPeriodName();
+                string missingPeriodName = _validateExcel.GetPreviousPeriodName(contributionPost.payrollYear, contributionPost.PaymentMonth);
 
                 var previousMonthMissingInfoVM = new PreviousMonthMissingInfoVM()
                 { 
@@ -513,40 +524,6 @@ namespace MCPhase3.Controllers
                 return View("PreviousMonthMissing", previousMonthMissingInfoVM);
             }
 
-        }
-
-        private string GetPreviousPeriodName()
-        {
-            string financialYear = ContextGetValue(Constants.SessionKeyYears);  //## ie: "2023/24"
-            string financialMonth = ContextGetValue(Constants.SessionKeyMonth); //## ie: 'April'
-            
-            /* Get the Previous Month Name */            
-            int currentMonthNumber = FinancialMonthNameToNumber(financialMonth);
-            string previousMonthName = financeMonthNames[currentMonthNumber - 1];   //## For any other month rather than April- just minus 1 from that month will give u previous finance month for that year
-
-            financialYear = GetPreviousYearPeriod(currentMonthNumber, financialYear);
-
-            return $"{previousMonthName} - {financialYear}".ToUpper();
-        }
-
-        private string GetPreviousYearPeriod(int currentMonthNumber, string currentFinancialYear)
-        {
-            if (currentMonthNumber == 1)   
-            {
-                //## If Current Finance Month is April- then Previous month will be March, but for the previous Finance Year, which will make the month number to 12, and Previous year
-                int financeYearPart = Convert.ToInt16(currentFinancialYear[..4]);    //## take the 4 letters from Left, ie: '2024'
-
-                return $"{financeYearPart-1}/{financeYearPart - 2000}"; //## For 'April 2023/24' -> Previous month will be 'March 2022/23'- Year will change, too
-            }
-
-
-            return currentFinancialYear;
-        }
-
-        private int FinancialMonthNameToNumber(string financialMonth)
-        {
-            int currentMonthNumber = Array.IndexOf(financeMonthNames, financialMonth[..3].ToLower());
-            return currentMonthNumber;
         }
 
 
@@ -1075,14 +1052,14 @@ namespace MCPhase3.Controllers
 
             string payLocationRef = excelDataTransformedInClass.First().EMPLOYER_LOC_CODE ;
             string currentMonthName = excelDataTransformedInClass.First().PAYROLL_PD;
-            int currentMonthNumber = FinancialMonthNameToNumber(currentMonthName);
+            int currentMonthNumber = _validateExcel.FinancialMonthNameToNumber(currentMonthName);
             int previousMonthNumber = currentMonthNumber == 1 ? 12 : currentMonthNumber - 1;
 
             SubmissionCheckParamVM queryParam = new()
             {
                 PayLocationCode = payLocationRef,
                 MonthNumber = previousMonthNumber,  /* This is what we are checking for existance in the DB. We are uploading for July.. so= check do we have a submission for June? */
-                FinancialYear = GetPreviousYearPeriod(currentMonthNumber, ContextGetValue(Constants.SessionKeyYears))
+                FinancialYear = _validateExcel.GetPreviousYearPeriod(currentMonthNumber, ContextGetValue(Constants.SessionKeyYears))
             };
 
             LogInfo($"CheckPreviousMonthFileIsSubmitted - payLocationRef {payLocationRef}, MonthNumber: {queryParam.MonthNumber}, FinancialYear: {queryParam.FinancialYear}.");
@@ -1299,6 +1276,7 @@ namespace MCPhase3.Controllers
             if (isConverted == false)
             {
                 result.Message = "File format error. Please try another file.";
+                LogInfo(result.Message);
                 return result;
             }
 
