@@ -58,6 +58,8 @@
         public string DashboardScoreHist { get; set; }
         public string CheckFileIsUploaded { get; set; }
         public string DetailEmpList { get; set; }
+        
+        public string Pass_To_WYPF { get; set; }
 
         /// <summary>This call waits for the process to finish and then comes back with result/status</summary>
         public string InitialiseProc { get; set; }

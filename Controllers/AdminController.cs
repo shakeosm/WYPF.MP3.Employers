@@ -32,19 +32,16 @@ namespace MCPhase3.Controllers
 
         /// <summary>This will only be used to pass to WYPF by Emp for processing</summary>
         /// <returns></returns>
-        public IActionResult SubmitForProcessing()
+        public async Task<IActionResult> SubmitForProcessing()
         {
 
             EventDetailsBO eBO = new()
             {
-
                 remittanceID = Convert.ToInt32(GetRemittanceId(returnAsEncrypted: false)), // we can put variable name with variable value when calling a function to make it more readable                    
-                remittanceStatus = 1,
-                eventTypeID = (int)RemittanceStatus.PassedToWypf,
-                notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
             };
-            
-            InsertEventDetails(eBO);
+
+            string apiLink = GetApiUrl(_apiEndpoints.Pass_To_WYPF); //## api/pass-to-wypf
+            _ = await ApiPost(apiLink, eBO);
 
             return RedirectToAction("Index");
         }
@@ -159,7 +156,6 @@ namespace MCPhase3.Controllers
 
             return PartialView("_ScoreHistory", dashboardScoreHistBO);
         }
-
 
         /// <summary>
         /// staff is not in use. 
