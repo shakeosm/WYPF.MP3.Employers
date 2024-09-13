@@ -96,8 +96,7 @@ namespace MCPhase3.CodeRepository
             SpreadSheetChecks.CheckNumberValues("PRCHS_OF_SRV", excelData.Select(e => e.PRCHS_OF_SRV).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckNumberValues("ARC_CONTS", excelData.Select(e => e.ARC_CONTS).ToList(), ref errorMessage);
             SpreadSheetChecks.CheckNumberValues("EE_APC_CONTS", excelData.Select(e => e.EE_APC_CONTS).ToList(), ref errorMessage);
-            SpreadSheetChecks.CheckNumberValues("ER_APC_CONTS", excelData.Select(e => e.ER_APC_CONTS).ToList(), ref errorMessage);
-            SpreadSheetChecks.CheckNumberValues("ER_CONTS", excelData.Select(e => e.ER_CONTS).ToList(), ref errorMessage);
+            SpreadSheetChecks.CheckNumberValues("ER_CONTS", excelData.Select(e => e.ER_CONTS).ToList(), ref errorMessage, isMandatory: true);
             SpreadSheetChecks.CheckNumberValues("ANNUAL_RATE_OF_PAY", excelData.Select(e => e.ANNUAL_RATE_OF_PAY).ToList(), ref errorMessage);
             //// that should only be for the last month of the Year, ie: March
             SpreadSheetChecks.CheckAnnualRateOfpay(excelData.Select(e => e.ANNUAL_RATE_OF_PAY).ToList(), month, ref errorMessage);

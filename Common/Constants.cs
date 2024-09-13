@@ -56,7 +56,7 @@
         public const string CustomErrorDetails = "MP3.Employers.CustomErrorDetails";      //# to show the user a custom error message in a Error500 page
 
         public const string Error403_Page = @"~/Views/Errors/Errror403.cshtml";
-        public const string AccountLockedMessage = "Your account is temporarily locked to prevent unauthorized use. Please try again later in 30 minutes, and if you still have trouble, contact WYPF.";
+        public const string AccountLockedMessage = "Your account is temporarily locked to prevent unauthorized use. Please try again later in 10 minutes, and if you still have trouble, contact WYPF.";
         public const string AccountFailedLoginMessage = "Username or password not correct, please try again";
         public const string AccountInactiveInUpmMessage = "Inactive user in UPM";
         public const string AccountGenericErrorMessage = "Account error! Please contact Helpdesk.";

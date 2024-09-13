@@ -385,6 +385,9 @@ namespace MCPhase3.CodeRepository
             if(postcode.Length < 6)
                 return false;
 
+            if (!postcode.Contains(" "))
+                return false;
+
             return (
                 Regex.IsMatch(postcode, "(^[A-PR-UWYZa-pr-uwyz][0-9][ ]*[0-9][ABD-HJLNP-UW-Zabd-hjlnp-uw-z]{2}$)") ||
                 Regex.IsMatch(postcode, "(^[A-PR-UWYZa-pr-uwyz][0-9][0-9][ ]*[0-9][ABD-HJLNP-UW-Zabd-hjlnp-uw-z]{2}$)") ||
@@ -419,14 +422,18 @@ namespace MCPhase3.CodeRepository
             foreach (var item in values)
             {
                 var numberValue = RemoveCurrency(item);    //## if not replacing the currency symbol- then double.TryParse() fails.
-                if (isMandatory && IsEmptyOrZero(numberValue))
+                //if (isMandatory &&  IsEmptyOrZero(numberValue))
+                if (isMandatory &&  !numberValue.IsNumeric() )
                 {
                     //## create a list of Row numbers where values are Mandatory, but empty.. 
                     rowNumberList.Add(rowNumber);
+                    Console.WriteLine($"fieldName: {fieldName}, numberValue: {numberValue}, isMandatory && IsEmptyOrZero()");
                 }
-                else if ( !IsEmpty(numberValue) && double.TryParse(numberValue, CultureInfo.CurrentCulture, out double value) == false)
+                else if (!IsEmpty(numberValue) && double.TryParse(numberValue, CultureInfo.CurrentCulture, out double value) == false)
                 {
+                //else if ( !IsEmpty(numberValue) && !numberValue.IsNumeric() )
                     //## NOT Mandatory, but has values.. then check the value is valid
+                    Console.WriteLine($"fieldName: {fieldName}, numberValue: {numberValue}, Not Empty() && Not Number()");
                     rowNumberList.Add(rowNumber);
                 }
 
@@ -435,7 +442,7 @@ namespace MCPhase3.CodeRepository
 
             if (rowNumberList.Any())
             {
-                result.Append($"<hr/><h4>Invalid values for '{fieldName}', at row number: </h4>");
+                result.Append($"<hr/><h4>Invalid or Empty value for '{fieldName}', at row number: </h4>");
                 result.Append(string.Join(", ", rowNumberList));
             }
 

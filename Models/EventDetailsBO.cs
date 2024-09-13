@@ -9,5 +9,6 @@ namespace MCPhase3.Models
         public int remittanceStatus { get; set; }
         public DateTime eventDate { get; set; }
         public string notes { get; set; }
+        public string UserLoginId { get; set; }
     }
 }

@@ -48,32 +48,32 @@ namespace MCPhase3.Controllers
 
         /// <summary>This will only be used to pass to WYPF by Emp for processing</summary>
         /// <returns></returns>
-        public IActionResult SubmitForProcessingAjax()
+        public async Task<IActionResult> SubmitForProcessingAjax()
         {            
-            var taskResult = new TaskResults();
             var currentRemittance = Convert.ToInt32(GetRemittanceId(returnAsEncrypted: false)); // we can put variable name with variable value when calling a function to make it more readable                    
-            
+            var taskResult = new TaskResults();
+
             LogInfo($"Loading SubmitForProcessingAjax(), remittanceId: {currentRemittance}", true);
 
             EventDetailsBO eBO = new()
             {
-
                 remittanceID = currentRemittance,
-                remittanceStatus = 1,
-                eventTypeID = (int)RemittanceStatus.PassedToWypf,
-                notes = "Data quality score threshold check skipped, File passed to WYPF by Emp for processing."
+                UserLoginId = CurrentUserLoginId()
             };
 
-            InsertEventDetails(eBO);
+            string apiLink = GetApiUrl(_apiEndpoints.Pass_To_WYPF); //## api/pass-to-wypf
+            var apiResponse = await ApiPost(apiLink, eBO);
+            if(IsEmpty(apiResponse))
+            {
+                taskResult.Message = "Failed to pass this Submission to WYPF. Please speak to your Finance Business Partner.";
+                LogInfo(taskResult.Message);
+                return Json(taskResult + "..   remittanceID = " + currentRemittance );
+            }
+            taskResult = JsonConvert.DeserializeObject<TaskResults>(apiResponse);
 
-            taskResult.IsSuccess = true;
-            taskResult.Message = $"The remittance: {currentRemittance} is successfully passed to WYPF for further processing.";
-
-            LogInfo(eBO.notes + "; " + taskResult.Message);
-
-            //## Now try to read the current status- if new Status is '105: Data quality score threshold check skipped, File passed to WYPF by Emp for processing.'- The Finance Business Partner needs to know a new Submission being pushed for further processing
-            var remitInfo = GetRemittanceInfo(currentRemittance);
-            if (remitInfo.StatusCode == (int)RemittanceStatus.PassedToWypf) {
+            LogInfo($"Pass_To_WYPF.TaskResults=> '{eBO.notes}'; '{taskResult.Message}'");
+                       
+            if (taskResult.IsSuccess) {
                 _ = InsertNotification_For_SubmittedToWYPF(currentRemittance);  //## we don't need the result.. let this API continue in background and we go back to the Ajax call
             }
 
@@ -344,7 +344,7 @@ namespace MCPhase3.Controllers
                 TempData["submitReturnMsg"] = apiResult.Message;
                 
                 //## Now try to read the current status- if new Status is '110: Submitted to WYPF'- The Finance Business Partner needs to know a new Submission being pushed for further processing
-                var remitInfo = GetRemittanceInfo(remittanceId);
+                var remitInfo = await GetRemittanceInfo(remittanceId);
                 if (remitInfo.StatusCode == (int)RemittanceStatus.SubmittedToWypf)
                 {
                     _ = InsertNotification_For_SubmittedToWYPF(remittanceId);  //## we don't need the result.. let this API continue in background and we go back to the Ajax call

@@ -120,6 +120,7 @@ namespace MCPhase3.Controllers
         /// <returns></returns>
         public async void InsertEventDetails(EventDetailsBO eBO)
         {
+            eBO.UserLoginId = CurrentUserLoginId();
             string apiLink = GetApiUrl(_apiEndpoints.InsertEventDetails);
             var apiResult = await ApiPost(apiLink, eBO);           
         }
@@ -274,6 +275,10 @@ namespace MCPhase3.Controllers
             {
                 string getUserDetailsApi = GetApiUrl(_apiEndpoints.GetUserDetails);
                 var apiResult = await ApiGet(getUserDetailsApi + loginName);
+                if (IsEmpty(apiResult)) {
+                    LogInfo("This user details couldn't be found, GetUserDetails()=> " + loginName);
+                    return new UserDetailsVM();
+                }
                 appUser = JsonConvert.DeserializeObject<UserDetailsVM>(apiResult);
 
                 appUser.IsSuperUser = I_Am_A_SuperUser();
@@ -384,7 +389,7 @@ namespace MCPhase3.Controllers
         {
             LogInfo($"InsertNotification_For_SubmittedToWYPF()-> Remittance ID: {currentRemittance}. Current Status: 110.");
             //## Now insert a notification for this Submission- If the Status = '110: Submitted to WYPF'.. The Finance Business Partner needs to know a new Submission being pushed for further processing
-            var notifToFBP = new EventDetailsBO() { remittanceID = currentRemittance };
+            var notifToFBP = new EventDetailsBO() { remittanceID = currentRemittance, UserLoginId = CurrentUserLoginId() };
             string apirUrl = GetApiUrl(_apiEndpoints.SubmissionNotification_CreateNew);
             _ = await ApiPost(apirUrl, notifToFBP); //## no need to wait/know the result.. just go back to the UI and take the json result..
         }
@@ -392,11 +397,11 @@ namespace MCPhase3.Controllers
 
 
         
-        public RemittanceStatusAndScoreVM GetRemittanceInfo(int currentRemittance)
+        public async Task<RemittanceStatusAndScoreVM> GetRemittanceInfo(int currentRemittance)
         {            
-            //## Now insert a notification for this Submission- If the Status = '110: Submitted to WYPF'.. The Finance Business Partner needs to know a new Submission being pushed for further processing
-            string apirUrl = GetApiUrl(_apiEndpoints.GetRemittanceInfo);
-            var apiResult = ApiGet_NonAsync($"{apirUrl}{currentRemittance}");
+            string apirUrl = GetApiUrl(_apiEndpoints.GetRemittanceInfo);    //## api/GetRemittanceInfo
+            //var apiResult = ApiGet_NonAsync($"{apirUrl}{currentRemittance}");
+            var apiResult = await ApiGet($"{apirUrl}{currentRemittance}");
             var remittanceInfoVM = JsonConvert.DeserializeObject<RemittanceStatusAndScoreVM>(apiResult);
 
             return remittanceInfoVM;            
