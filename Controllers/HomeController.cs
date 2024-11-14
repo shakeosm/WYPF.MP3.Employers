@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
 using static MCPhase3.Common.Constants;
@@ -77,9 +78,9 @@ namespace MCPhase3.Controllers
                 return RedirectToAction("IndexFire", "Home");
             }
 
-            List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(loginId);
+            List<PayrollProvidersBO> subPayList = await GetPayLocationsAccessibleByUser(loginId);
 
-            subPayList = subPayList.Where(x => x.pay_location_ID != null).ToList();
+            subPayList = subPayList.Where(x => x.Pay_Location_ID != null).ToList();
 
             //## do we have an error message from previous FileUpload attempt? This page maybe loading after a Index_POST() call failed and redirected back here..
             string fileUploadErrorMessage = _cache.GetString(GetKeyName(Constants.FileUploadErrorMessage));
@@ -116,7 +117,7 @@ namespace MCPhase3.Controllers
             string yearSelected = ContextGetValue(Constants.SessionKeyYears) ?? string.Empty;
             string postSelected = ContextGetValue(Constants.SessionKeyPosting) ?? string.Empty;
 
-            List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
+            List<PayrollProvidersBO> subPayList = await GetPayLocationsAccessibleByUser(userId);
 
             return View();
         }
@@ -202,30 +203,38 @@ namespace MCPhase3.Controllers
             string userId = CurrentUserId();
             string loginName = ContextGetValue(Constants.LoginNameKey);
             var currentUser = await GetUserDetails(loginName);
-            string empName = currentUser.Pay_Location_Name;
+            //string empName = currentUser.Pay_Location_Name;
+
+            //##### Convert the Excel file into CSV and then into Class. Will be required by 'IsA_Valid2ndMonthPosting()'
+            var excelSheetData = ConvertExcel_To_CSV_To_ClassObject();
             
-            //Add selected name of month into Session, filename and total records in file.
-            HttpContext.Session.SetString(Constants.SessionKeyMonth, vm.SelectedMonth);
-            HttpContext.Session.SetString(Constants.SessionKeyYears, vm.SelectedYear);
-            HttpContext.Session.SetString(Constants.SessionKeyPosting, vm.SelectedPostType.ToString());
-            HttpContext.Session.SetString(Constants.SessionKeySchemeName, SessionSchemeNameValue);
-            HttpContext.Session.SetString(Constants.SessionKeyPayLocId, vm.SelectedPayLocationId);
+            //## ONLY read the EmployerLocationRef from the File, but not the EmployerName- coz not all the Files have EmployerName in them..
+            var authPayLocationList = await GetPayLocationsAccessibleByUser(userId);
+            string excelData_FirstPayLocationCode = excelSheetData.First().EMPLOYER_LOC_CODE;
+            var excelData_FirstPayLocationId = authPayLocationList.First(p => p.Pay_Location_Ref == excelData_FirstPayLocationCode).Pay_Location_ID;
+            var excelData_FirstPayLocationName = authPayLocationList.First(p => p.Pay_Location_Ref == excelData_FirstPayLocationCode).Pay_Location_Name;
+
+            ContextSetValue(SessionKeyPayLocId, excelData_FirstPayLocationId);
+            ContextSetValue(ExcelData_FirstPayLocationCode, excelData_FirstPayLocationCode);
+            ContextSetValue(ExcelData_FirstPayLocationName, excelData_FirstPayLocationName);            
+            ContextSetValue(SessionKeyMonth, vm.SelectedMonth);
+            ContextSetValue(SessionKeyYears, vm.SelectedYear);
+            ContextSetValue(SessionKeyPosting, vm.SelectedPostType.ToString());
+            ContextSetValue(SessionKeySchemeName, SessionSchemeNameValue);            
 
             //## store the user selection in the cache- so we can set the as Seleted once the user goes back to the page
             TempData["SelectedYear"] = vm.SelectedYear;  //## TempData[] is to transfer data between Actions in a controller- while on the same call..
             TempData["SelectedMonth"] = vm.SelectedMonth;
             TempData["SelectedPostType"] = vm.SelectedPostType;
-
-            //##### Convert the Excel file into CSV and then into Class. Will be required by 'IsA_Valid2ndMonthPosting()'
-            var excelSheetData = ConvertExcel_To_CSV_To_ClassObject();
+            
             int numberOfRows = excelSheetData.Count;
-            HttpContext.Session.SetString(Constants.SessionKeyTotalRecords, numberOfRows.ToString());
+            ContextSetValue(SessionKeyTotalRecords, numberOfRows.ToString());
 
             var submissionInfo = new CheckFileUploadedBO
             {
                 P_Month = vm.SelectedMonth,
                 P_Year = vm.SelectedYear,
-                P_EMPID = vm.SelectedPayLocationId  //## actually refering to 'payroll_provider_id' in table. EmployerId: '1003701' and payroll_provider_id: 'BAR0122'
+                P_EMPID = excelData_FirstPayLocationId
             };
 
   
@@ -275,7 +284,6 @@ namespace MCPhase3.Controllers
                 }
             }
             
-            List<PayrollProvidersBO> subPayList = await GetPayrollProviderListByUser(userId);
 
             //user selects a year from dropdown list so no need to provide seperate list of years. posting will ignore same month validation.
             //## This is the actual Field / Data validation on the Excel file - which is now in a 'List<ExcelsheetDataVM>'. This will generate respective error message based on the defined validation rules on each field.
@@ -286,7 +294,7 @@ namespace MCPhase3.Controllers
                 validPayrollYearList = String.Join(',', GetYears());
             }
 
-            string spreadsheetValidationErrors = _validateExcel.Validate(excelSheetData, vm.SelectedMonth, vm.SelectedPostType.ToString(), validPayrollYearList, subPayList);
+            string spreadsheetValidationErrors = _validateExcel.Validate(excelSheetData, vm.SelectedMonth, vm.SelectedPostType.ToString(), validPayrollYearList, authPayLocationList);
             LogInfo($"_validateExcel.Validate({vm.SelectedYear}, {vm.SelectedMonth}, {vm.SelectedPostType}): Finished.");
 
             if (IsEmpty(spreadsheetValidationErrors))
@@ -320,6 +328,7 @@ namespace MCPhase3.Controllers
             }
 
             _cache.Set(GetKeyName(ExcelData_ToInsert), remittanceRecords);
+
             System.IO.File.Delete(csvFilePath); //## this is a staging file for invalid contents check.. now all need is finished
 
             return remittanceRecords;
@@ -404,38 +413,52 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> CheckTotals(MonthlyContributionBO contributionPost)
         {
             //var userLoginName = ContextGetValue(Constants.LoginNameKey);
-            var currentUser = await GetUserDetails(ContextGetValue(Constants.LoginNameKey));            
+            var currentUser = await GetUserDetails(ContextGetValue(Constants.LoginNameKey));
+            //## Get the 'PayLocation Ref'. PayLocation id and Ref can be different, and both are type: VARCHAR..ie: BAR0001            
+            string payLocationRef = ContextGetValue(ExcelData_FirstPayLocationCode);
+
             contributionPost.UserLoginID = currentUser.LoginName;
             contributionPost.UserName = currentUser.UserId;
-            contributionPost.employerID = currentUser.Pay_Location_ID;
-            contributionPost.employerName = ContextGetValue(Constants.SessionKeyEmployerName);
-            contributionPost.payrollProviderID = currentUser.Pay_Location_Ref;
+            contributionPost.employerID = ContextGetValue(Constants.SessionKeyPayLocId);
+            contributionPost.employerName = ContextGetValue(Constants.ExcelData_FirstPayLocationName);
+            contributionPost.payrollProviderID = payLocationRef;
             
             //contributionSummaryInfo.ClientID = ContextGetValue(Constants.SessionKeyClientId);
             contributionPost.ClientID = currentUser.Client_Id;
             contributionPost.payrollYear = ContextGetValue(Constants.SessionKeyYears);
             contributionPost.PaymentMonth = ContextGetValue(Constants.SessionKeyMonth);
-
-            //## Get the 'PayLocation Ref'. PayLocation id and Ref can be different, and both are type: VARCHAR..ie: BAR0001
-            string payrollProvider = HttpContext.Session.GetString(Constants.SessionKeyPayLocId);
-
-            //## Get the Finance Business Partner Id- to be added to the Filename..
-            string fbpUserId = await Get_Finance_Business_Partner_By_PayLocation(payrollProvider);  //## api/GetPayLocation_With_Finance_Business_Partner
-
-            string fileNamePrefix = $"{fbpUserId}-{payrollProvider}-{contributionPost.employerName.Replace(" ", "-")}-{contributionPost.payrollYear.Replace("/", "-")}-{contributionPost.PaymentMonth}-{DateTime.Now:dd-MM-yyyy}-{DateTime.Now:hh-mm-ss}";            
-
-            //## Rename the file name.. Replace GUID with 'fileNamePrefix'            
-            contributionPost.UploadedFileName = RenameFileName(fileNamePrefix);
-
+            
+            //string customerUploadFileName = await GenerateFileName(contributionPost);    
+            // $"{fbpUserId}_{payLocationRef}_{contributionPost.employerName.Replace(" ", "-")}_{contributionPost.payrollYear.Replace("/", "_")}_{contributionPost.PaymentMonth}_{DateTime.Now:dd-MM-yyyy}_{DateTime.Now:hh-mm-ss}";            
+            
             string remittanceInsertApi = GetApiUrl(_apiEndpoints.InsertRemitanceDetails);
 
             //## First Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE'
             LogInfo($"Create the Remittance with its Details.. insert-into 'UPMWEBEMPLOYERCONTRIBADVICE. {currentUser.Pay_Location_Ref}-{contributionPost.employerName}, {contributionPost.PaymentMonth}-{contributionPost.payrollYear}");
-
+            int remittanceID;
             var apiResult = await ApiPost(remittanceInsertApi, contributionPost);
-            string remittanceID = JsonConvert.DeserializeObject<string>(apiResult);            
+            if (apiResult.NotEmpty())
+            {
+                remittanceID = JsonConvert.DeserializeObject<int>(apiResult);
+                ContextSetValue(Constants.SessionKeyRemittanceID, remittanceID.ToString());
 
-            if (IsEmpty(apiResult)) {
+                //## Generate and Update the File name with the RemittanceID- which we have now..
+                string customerFileName = await GenerateFileName(contributionPost, remittanceID);
+                var fileNameUpdateVM = new RemittanceFileNameUpdateVM()
+                { 
+                    CustomerFileName = customerFileName,
+                    RemittanceId = remittanceID
+                };
+                string updateRemittanceFileNameApi = GetApiUrl(_apiEndpoints.RemittanceFileNameUpdate); //## api/remittance-file-name-update
+                LogInfo($"New Remittance Inserted and File name is generated. Now update the name in the Table now. RemittanceId: {remittanceID}, customerFileName: {customerFileName} ");
+                LogInfo($"Calling api: {updateRemittanceFileNameApi}");
+
+                apiResult = await ApiPost(updateRemittanceFileNameApi, fileNameUpdateVM);
+                if (IsEmpty(apiResult)) {
+                    LogInfo("Error: Failed to update the new FileName for RemittanceID: " + remittanceID);
+                }
+            }
+            else { 
                 //## somehow crashed... 
                 string errorMessage = $"Failed to insert Remittance information into database. User: {currentUser.LoginName}, employer: {contributionPost.employerName}, Provider: {contributionPost.payrollProviderID}, Period: {contributionPost.payrollYear}/{contributionPost.PaymentMonth}";
                 TempData["Msg"] = "Failed to insert Remittance information into database. Please contact MP3 support team.";
@@ -445,7 +468,7 @@ namespace MCPhase3.Controllers
 
             var postingType = HttpContext.Session.GetString(Constants.SessionKeyPosting);
             //## Insert EventDetails: RemitanceSubmitted =>	New remitance submitted and remitance ID created for the uploaded file
-            EventLog_Add(Convert.ToInt32(remittanceID), $"New remitance submitted and remitance ID created for the uploaded file. employerID: {contributionPost.employerID}, Payroll Period: {contributionPost.PaymentMonth}-{contributionPost.payrollYear}, PostingType: {postingType}", (int)EventType.RemitanceSubmitted, (int)EventType.RemitanceSubmitted);
+            EventLog_Add(remittanceID, $"New remitance submitted and remitance ID created for the uploaded file. employerID: {contributionPost.employerID}, Payroll Period: {contributionPost.PaymentMonth}-{contributionPost.payrollYear}, PostingType: {postingType}", (int)EventType.RemitanceSubmitted, (int)EventType.RemitanceSubmitted);
 
             LogInfo($"Remittance Summary successfully inserted into database, Id: {remittanceID}.");
 
@@ -460,15 +483,14 @@ namespace MCPhase3.Controllers
             if (isInserted)
             {
                 totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
-                EventLog_Add(Convert.ToInt32(remittanceID), $"Bulk data is inserted into database. Total records: {totalRecordsInFile}. EmployersEmployeeTotalValue: {contributionPost.EmployersEmployeeTotalValue().ToString("C2")}", (int)EventType.BulkDataInsert, (int)EventType.BulkDataInsert);
+                EventLog_Add(remittanceID, $"Bulk data is inserted into database. Total records: {totalRecordsInFile}. EmployersEmployeeTotalValue: {contributionPost.EmployersEmployeeTotalValue().ToString("C2")}", (int)EventType.BulkDataInsert, (int)EventType.BulkDataInsert);
                                 
-                _ = MoveFileToDone(remittanceID);   //## This will also insert EventLog for the 'FileMovedToDone' EventType
-                //## we can still work as usual even if the file wasn't moved to 'Done' folder
+                _ = MoveFileToDone(remittanceID);   //## This will also insert EventLog for the 'FileMovedToDone' EventType                
 
             }
             else {
                 TempData["MsgError"] = $"Remittance Id: {remittanceID}. System has failed inserting records in to the database, Please contact MP3 support.";
-                EventLog_Add(Convert.ToInt32(remittanceID), "FAILED to execute Bulk data insert into database.", (int)EventType.BulkDataInsert, (int)EventType.BulkDataInsert);
+                EventLog_Add(remittanceID, "FAILED to execute Bulk data insert into database.", (int)EventType.BulkDataInsert, (int)EventType.BulkDataInsert);
                 LogInfo("FAILED to execute Bulk data insert into database.", true);
                 //## Delete this Temp file.. not needed anymore..
                 DeleteTheExcelFile();
@@ -476,7 +498,7 @@ namespace MCPhase3.Controllers
             }
 
             
-            string encryptedRemitId = EncryptUrlValue(remittanceID);
+            string encryptedRemitId = EncryptUrlValue(remittanceID.ToString());
 
             //## all good- we have checked the Totals and used it from the cache.. now better remove that DataTable variable from cache.. work done
             _cache.Delete(GetKeyName(Constants.ExcelDataAsString));
@@ -485,21 +507,26 @@ namespace MCPhase3.Controllers
             ContextSetValue(Constants.SessionKeyRemittanceID, encryptedRemitId);
 
             //## Return Check API to call to check if the previous month file is completed.            
-            var submissionCheckResult = await CheckPreviousMonthFileIsSubmitted();
+            var submissionCheckResult = await CheckPreviousMonthFileIsSubmitted();  //## currently this is useless, due to Employers submitting file via MC2 and MP3 doesn't know about those submissio and saying 'Prev month submission missing'
 
             if (submissionCheckResult.IsSuccess)
             {
                 LogInfo("Exiting Home/CheckTotals page..");
+
+                var isTupeEnabled = bool.Parse(_Configure["IsTupeEnabled"]);
+                if (isTupeEnabled) {
+                    return RedirectToAction("TupeSummary");
+                }
                 return RedirectToAction("InitialiseProcessWithSteps");
             }
             else {
-                int remittance_ID = Convert.ToInt32(remittanceID);
+                //int remittance_ID = Convert.ToInt32(remittanceID);
                 LogInfo("CheckPreviousMonthFileIsSubmitted() has returned FALSE. Will notify the user and run the Return_Initialise() in background- while user can go home and sleep.");
 
                 //## lets run the Return_Initialise() here which runs silently in background without waiting it to finish...
                 var initialiseProcBO = new InitialiseProcBO
                 {
-                    P_REMITTANCE_ID = remittance_ID,
+                    P_REMITTANCE_ID = remittanceID,
                     P_USERID = CurrentUserId()
                 };
 
@@ -526,6 +553,137 @@ namespace MCPhase3.Controllers
 
         }
 
+        /// <summary>
+        /// Once Remittance ID is created- the customer file is renamed to WYPF standard. When loading we assign a GUID for this file.
+        /// Still we wait- for all the Member records to be inserted- if all successfully inserted- then only we move this file to DONE folder.
+        /// Until then- it sits in the Staging folder- which will be DELETED if NOT processed in next 1 hour.
+        /// </summary>
+        /// <param name="contributionPost">Remittance Meta Data</param>
+        /// <param name="remittanceId">Remittance ID</param>
+        /// <returns>New File name</returns>
+        private async Task<string> GenerateFileName(MonthlyContributionBO contributionPost, int remittanceId)
+        {
+            //## Get the relevent Texts - to populate the Filename..
+            string payLocationRef = ContextGetValue(ExcelData_FirstPayLocationCode);
+            string payLocationName = ContextGetValue(ExcelData_FirstPayLocationName);
+
+            string fbpUserId = await Get_Finance_Business_Partner_By_PayLocation(payLocationRef);  //## api/GetPayLocation_With_Finance_Business_Partner            
+
+            string newFileName = $"{remittanceId}_{fbpUserId}_{payLocationRef}_{payLocationName.Replace(" ", "-")}_{contributionPost.payrollYear.Replace("/", "_")}_{contributionPost.PaymentMonth}_{DateTime.Now:dd-MM-yyyy}_{DateTime.Now:hh-mm-ss}";
+            
+            string currentFileName = _customerUploadsLocalFolder + _cache.Get<string>(GetKeyName(Constants.UploadedExcelFilePathKey));
+            string fileExt = Path.GetExtension(currentFileName);
+
+            string newFilePathNameForUpload = $"{_customerUploadsLocalFolder}{newFileName}{fileExt}";
+            System.IO.File.Move(currentFileName, newFilePathNameForUpload);    //## FileRename is happening.. moving the file in the same Location with a new Name
+
+            newFilePathNameForUpload = $"{newFileName}{fileExt}";
+            LogInfo($"RenameFileName.newFilePathNameForUpload: '{newFilePathNameForUpload}'");
+
+            _cache.SetString(GetKeyName(Constants.UploadedExcelFilePathKey), newFilePathNameForUpload);
+
+            return newFilePathNameForUpload;
+
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> TupeSummary()
+        {
+            var tupeApi = GetApiUrl(_apiEndpoints.TupeSummary); //## api/tupe-list
+#if DEBUG
+            //var encId = EncryptUrlValue("260847");
+            //ContextSetValue(Constants.SessionKeyRemittanceID, encId);
+#endif
+
+            int remittanceId = CurrentRemittanceId();
+            var apiResult = await ApiGet(tupeApi + remittanceId);
+            if (apiResult.IsEmpty()) {
+                return RedirectToAction("InitialiseProcessWithSteps");
+            }
+
+            var tupeList = JsonConvert.DeserializeObject<List<TupeSummmaryVM>>(apiResult);
+
+            //var totalTupeIn = tupeList.Where(m => m.TotalStarter >= 1).Count();
+            if (tupeList.Count < 1) {
+                return RedirectToAction("InitialiseProcessWithSteps");
+            }
+
+            return View(tupeList);
+        }
+
+
+        [HttpPost]
+        [Route("home/tupe-paylocation-alert")]
+        public async Task<ActionResult> TupePayLocations_Create_Alert(TupePayLocationAlertCreateVM tupePayLocAlert)
+        {
+            string apiUrl = GetApiUrl(_apiEndpoints.Tupe_PayLocation_Create_Alert);            
+
+            tupePayLocAlert.UserId = CurrentUserLoginId();
+            tupePayLocAlert.RemittanceId = CurrentRemittanceId();
+
+            //## If AcknowledgementType is 'Selected'- then add the selected member record Id.. otherwise- send it blank for None/All
+            ///string acknowledgementType = tupePayLocAlert.AcknowledgementType;
+            if (tupePayLocAlert.AcknowledgementType.ToLower() != "selected" && tupePayLocAlert?.RecordIdList?.Length < 5)
+            {                             
+                return Json(new TaskResults() { IsSuccess = false, Message = "Members not selected" });
+            }
+
+            var apiResult = await ApiPost(apiUrl, tupePayLocAlert);
+
+            string successMessage = $"successfully created Alert for: PayLocationCode: {tupePayLocAlert.LocationCode}, Date: {tupePayLocAlert.TupeDate}, Type: {tupePayLocAlert.TupeType}";
+
+            if (apiResult.IsEmpty())
+            {
+                successMessage = $"Failed to create alert PayLocationCode: {tupePayLocAlert.LocationCode}, Date: {tupePayLocAlert.TupeDate}, Type: {tupePayLocAlert.TupeType}";
+            }
+            Console.WriteLine(successMessage);
+
+            //foreach (var item in dataList)
+            //{
+            //    var payLocAlertInfo = item.Split(",");
+            //    var tupePayLocAlert = new TupePayLocationAlertVM
+            //    {
+            //        RemittanceId = remittanceId,
+            //        LocationCode = payLocAlertInfo[0],
+            //        TupeDate = DateTime.Parse(payLocAlertInfo[1]),
+            //        IsTupe = bool.Parse(payLocAlertInfo[2]),
+            //        TupeType = payLocAlertInfo[3],
+            //        UserId = CurrentUserLoginId()
+            //    };
+
+            //    var apiResult = await ApiPost(apiUrl, tupePayLocAlert);
+
+            //    string successMessage = $"successfully created Alert for: PayLocationCode: {tupePayLocAlert.LocationCode}, Date: {tupePayLocAlert.TupeDate}, IsTupe: {tupePayLocAlert.IsTupe}, Type: {tupePayLocAlert.TupeType}";
+
+            //    if (apiResult.IsEmpty())
+            //    {
+            //        successMessage = $"Failed to create alert PayLocationCode: {tupePayLocAlert.LocationCode}, Date: {tupePayLocAlert.TupeDate}, IsTupe: {tupePayLocAlert.IsTupe}, Type: {tupePayLocAlert.TupeType}";
+            //    }
+            //    Console.WriteLine(successMessage);
+            //}
+
+            var result = new TaskResults() { IsSuccess = true, Message = "Successfully acknowledged the Tupe selections." };
+            return Json(result);
+        }
+
+
+        [HttpPost]
+        [Route("home/tupe-paylocation-show-members")]
+        public async Task<ActionResult> TupeLoadShowMembers(TupeSearchVM searchVM)
+        {
+            //Tupe_Member_Search
+            searchVM.RemittanceId = CurrentRemittanceId();
+
+            string apiUrl = GetApiUrl(_apiEndpoints.Tupe_Member_Search);
+            var apiResult = await ApiPost(apiUrl, searchVM);
+            if (apiResult.IsEmpty()) {
+                return Json("API Error - no data found!");
+            }
+            
+            var memberList = JsonConvert.DeserializeObject<List<TupeItemVM>>(apiResult);
+
+            return PartialView("_TupeMembers", memberList);
+        }
 
         private void DeleteTheExcelFile()
         {
@@ -544,7 +702,7 @@ namespace MCPhase3.Controllers
 
         /// <summary>This will move our User data file (excel, csv) to the DONE folder...</summary>
         /// <returns></returns>
-        private bool MoveFileToDone(string remittanceID)
+        private bool MoveFileToDone(int remittanceID)
         {
 
             string customerFileName = _cache.GetString(GetKeyName(UploadedExcelFilePathKey)); 
@@ -570,7 +728,7 @@ namespace MCPhase3.Controllers
                 string destinationFile = Path.Combine(destinationFolder, customerFileName);
                 System.IO.File.Move(sourceFilePath, destinationFile, true);
 
-                EventLog_Add(Convert.ToInt32(remittanceID), "File is processed and now moved to 'Done' folder.", (int)EventType.FileMovedToDone, (int)EventType.FileMovedToDone);
+                EventLog_Add(remittanceID, "File is processed and now moved to 'Done' folder.", (int)EventType.FileMovedToDone, (int)EventType.FileMovedToDone);
                 string logInfoText = $"Moved user uploaded file to: 'DONE' folder. destinationFile: {destinationFile}";
                 LogInfo(logInfoText);                                    
 
@@ -628,7 +786,7 @@ namespace MCPhase3.Controllers
             LogInfo($"calling-> {bulkDataInsertApi}. Total records in excelData: {excelDataTransformedInClass.Count}");
             apiResult = await ApiPost(bulkDataInsertApi, excelDataTransformedInClass);
 
-            if (IsEmpty(apiResult)) {
+            if (apiResult.IsEmpty()) {
                 LogInfo($"ERROR: Failed to insert Bulk data: remittanceId: {remittanceId}");
                 LogInfo("delete the Remittance Summary info from the Table.. to make sure no incomplete info left to rot.");
 
@@ -668,6 +826,7 @@ namespace MCPhase3.Controllers
                 remittanceStatus = remittanceStatus,
                 eventTypeID = eventTypeID,
                 notes = eventNotes.Length > 200 ? eventNotes[..200] : eventNotes,
+                UserLoginId = CurrentUserId()
             };
 
             //update Event Details table File is uploaded successfully.                               
@@ -682,7 +841,8 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> InitialiseProcess()
         {           
             var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-            int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+            int remttanceId = CurrentRemittanceId();
+
             string userID = CurrentUserId();
 
             var initialiseProcessResultVM = new InitialiseProcessResultVM()
@@ -754,7 +914,7 @@ namespace MCPhase3.Controllers
         {
 
             var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-            int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+            int remittanceId = CurrentRemittanceId();
             int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
             var totalRecordsInDatabase = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecordsInDB));
             
@@ -810,7 +970,7 @@ namespace MCPhase3.Controllers
         public IActionResult InitialiseProcessCallOnly_Ajax(string id)
         {
             //string userID = CurrentUserId();            
-            int remittanceId = Convert.ToInt32(DecryptUrlValue(id));
+            int remittanceId = CurrentRemittanceId();
             int totalRecordsInFile = Convert.ToInt32(ContextGetValue(Constants.SessionKeyTotalRecords));
 
             var initialiseProcBO = new InitialiseProcBO
@@ -845,8 +1005,7 @@ namespace MCPhase3.Controllers
         [HttpGet, Route("Home/CheckProgress_Periodically_ReturnInitialise_Ajax/{stepName}")]
         public IActionResult CheckProgress_Periodically_ReturnInitialise_Ajax(string stepName)
         {
-            string encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-            int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));            
+            int remittanceId = CurrentRemittanceId();            
 
             LogInfo($"Home/CheckProgress_Periodically_ReturnInitialise_Ajax(), processName: {stepName}");
             
@@ -903,8 +1062,7 @@ namespace MCPhase3.Controllers
         public async Task<IActionResult> InitialiseProcessWithSteps(string remittanceId)
         {
             string userID = CurrentUserId();
-            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-            int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+            int remttanceId = CurrentRemittanceId();
 
             LogInfo($"Post -> Home/InitialiseProcessWithSteps()");
 
@@ -942,8 +1100,7 @@ namespace MCPhase3.Controllers
         [HttpGet,HttpPost]
         public ActionResult InitialiseAutoMatchProcess_CallOnly_Ajax()
         {
-            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-            int remittanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+            int remittanceId = CurrentRemittanceId();
 
             apiBaseUrlForAutoMatch = GetApiUrl(_apiEndpoints.AutoMatch_V2);    //## api/AutoMatchRecords_V2
             LogInfo($"InitialiseAutoMatchProcessByAjax() -> Calling Automatch api: {apiBaseUrlForAutoMatch}{remittanceId}");
@@ -973,8 +1130,7 @@ namespace MCPhase3.Controllers
         [HttpGet, HttpPost]
         public async Task<ActionResult> InitialiseAutoMatchProcessByAjax()
         {
-            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
-            int remttanceId = Convert.ToInt32(DecryptUrlValue(encryptedRemittanceId));
+            int remttanceId = CurrentRemittanceId();
 
             var autoMatchResult = await Execute_AutoMatchProcess(remttanceId);
             var taskResult = new TaskResults()
@@ -1068,9 +1224,9 @@ namespace MCPhase3.Controllers
             string apiResult = await ApiPost(apiUrl, queryParam);
 
             string submissionStatus;
-            if (IsEmpty(apiResult))
+            if (apiResult.IsEmpty())
             {   //## looks like crashed.. so- take it as we have the Submission in 'work-in-progress' status
-                LogInfo($"CheckPreviousMonthFileIsSubmitted => IsEmpty(apiResult) => looks like API failed .. so- take it as we have the Submission in 'work-in-progress' status");
+                LogInfo($"CheckPreviousMonthFileIsSubmitted => apiResult.IsEmpty() => looks like API failed .. so- take it as we have the Submission in 'work-in-progress' status");
                 checkResult.Message = "pending";
                 checkResult.IsSuccess = false;
                 return checkResult;
@@ -1252,11 +1408,11 @@ namespace MCPhase3.Controllers
         /// </summary>
         /// <param name="w2UserId">w2User id, not UPM.LoginName</param>
         /// <returns></returns>
-        private async Task<List<PayrollProvidersBO>> GetPayrollProviderListByUser(string w2UserId)
+        private async Task<List<PayrollProvidersBO>> GetPayLocationsAccessibleByUser(string w2UserId)
         {
-            string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.SubPayrollProvider);
+            string apiBaseUrlForSubPayrollProvider = GetApiUrl(_apiEndpoints.GetAccessible_PayLocations);
 
-            var apiResult = await ApiGet(apiBaseUrlForSubPayrollProvider + w2UserId);
+            var apiResult = await ApiGet(apiBaseUrlForSubPayrollProvider + w2UserId);   //## api: /GetSubPayrollProviders/
             var subPayrollList = JsonConvert.DeserializeObject<List<PayrollProvidersBO>>(apiResult);
 
             return subPayrollList;
@@ -1442,21 +1598,6 @@ namespace MCPhase3.Controllers
             return Json("Failed to transform the Excel file. Please use another file and try again.");
         }
 
-
-        private string RenameFileName(string newFileName)
-        {
-            string currentFileName = _customerUploadsLocalFolder + _cache.Get<string>(GetKeyName(Constants.UploadedExcelFilePathKey));
-            string fileExt = Path.GetExtension(currentFileName);
-
-            string fileNameForUpload = $"{_customerUploadsLocalFolder}{newFileName}{fileExt}";
-            System.IO.File.Move(currentFileName, fileNameForUpload);
-
-            LogInfo($"GenerateFileName.fileNameForUpload: '{fileNameForUpload}'");
-            fileNameForUpload = $"{newFileName}{fileExt}";
-            _cache.SetString(GetKeyName(Constants.UploadedExcelFilePathKey), fileNameForUpload);
-
-            return fileNameForUpload;
-        }
 
 
         /// <summary>

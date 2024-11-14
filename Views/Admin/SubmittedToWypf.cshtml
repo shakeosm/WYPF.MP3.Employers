@@ -37,7 +37,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model)
+                        @foreach (var item in Model.OrderByDescending(r => r.remittance_Id))
                         {
                             <tr>
                                 <td>@item.EMPLOYER_REF - @item.EMPLOYER_NAME </td>

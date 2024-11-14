@@ -1,0 +1,200 @@
+﻿@model IList<MCPhase3.Models.TupeSummmaryVM>
+@{
+    ViewData["Title"] = "Potential Tupe records";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    int counter = 1;
+    // var totalTupeIn = Model.Where(m => m.TotalStarter >= 1).Count();
+    // var totalTupeOut = Model.Where(m => m.TotalLeaver >= 1).Count();
+}
+<div id="TupeRecordsContainer" class="container">
+    <div class="container text-center p-0">
+        <div class="card">
+
+            <!-- progressbar -->
+            <ul id="progressbar">
+                <li class="active" id="account"><strong>File Upload</strong></li>
+                <li class="active" id="personal"><strong>Check Totals</strong></li>
+                <li class="active" id="personal"><strong>Data Processing</strong></li>
+                <li id="alerts"><strong>Error and Warning Summary</strong></li>
+                <li id="bulk"><strong>Bulk Approval</strong></li>
+                <li id="submit"><strong>Submit to Database</strong></li>
+                <li id="confirm"><strong>Finish</strong></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="border border-success rounded p-3 mt-3">
+
+        <h3 class="text-danger">Potential Tupe records</h3>
+        @if (Model.Any(t => t.TotalStarter >= 1))
+        {   @* this same model has Start and Leaver data.. so take only the 'Starter' records *@
+            counter = 1;
+            <div class="text-center h4 alert alert-success mt-3">Tupe IN</div>
+            <table id="tupeTable_IN" class="table table-striped tabled-bordered d-none">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>#</th>
+                        <th>PayLocation</th>
+                        @* <th>Code</th> *@
+                        <th>Date</th>
+                        @* <th>Type</th> *@
+                        <th>Members</th>
+                        <th class="text-end">Confirm</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    @foreach (var item in Model.Where(m => m.TotalStarter >= 1))
+                    {
+                        <tr>
+                            <td class="text-center">
+                                <a class="btn btn-outline-primary show-paylocation-members-dialog"><i class="fas fa-plus"></i></a>
+                            </td>
+                            <td>@counter</td>
+                            <td>@item.LocationCode - @item.LocationName</td>
+                            @* <td></td> *@
+                            <td>@item.DateStarted.ToShortDateString()</td>
+                            @* <td>@item.TupeType</td> *@
+                            <td>@item.TotalStarter</td>
+                            <td class="">
+                                <div class="form-check float-end">
+                                    <input class="form-check-input tupe-item-check"
+                                           data-paylocation-code="@item.LocationCode"
+                                           data-tupe-date="@item.DateStarted.ToShortDateString()"
+                                    type="checkbox">
+                                </div>
+                            </td>
+                        </tr>
+                        counter++;
+                    }
+                </tbody>
+            </table>
+
+            @* UI Option: Accordion Approach *@
+            <div class="accordion" id="TupeInAccordion">
+                @{
+                    counter = 1;
+                    
+                    string targetAccordionBody;
+                    @foreach (var item in Model.Where(m => m.TotalStarter >= 1))
+                    {                        
+                        targetAccordionBody = "accordionBody_" + @counter;
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading_@counter">
+                                <button class="accordion-button tupe-member-record-show-button" type="button" 
+                                    data-target-body="@targetAccordionBody" 
+                                    data-loaded-already="false" @* have we loaded the data for Accordion alread- if YES- then don't make anymore Ajax() call *@
+                                        data-paylocation-code="@item.LocationCode"
+                                        data-tupe-date="@item.DateStarted.ToShortDateString()"
+                                        data-tupe-type="IN"
+                                    data-bs-toggle="collapse" data-bs-target="#collapse_@counter" 
+                                    aria-expanded="true" aria-controls="#collapse_@counter">
+                                    @item.LocationCode - @item.LocationName - @item.DateStarted.ToShortDateString() - (@item.TotalStarter Members)
+                            </button>
+                            </h2>
+                            <div id="collapse_@counter" class="accordion-collapse collapse" aria-labelledby="heading_@counter" data-bs-parent="#TupeInAccordion">
+                                <div id="@targetAccordionBody" class="accordion-body">
+
+                                    <div class="text-center">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        counter++;
+                    }
+                }
+            </div>
+            
+            <div class="mb-5 d-none">
+                <a id="confirmTupeInButton"
+                data-tupe-type="IN"
+                class="confirm-tupe-button btn btn-outline-success float-end">Confirm Tupe IN</a>
+
+                <span class="bg-success float-end none show-success-message p-2 border border-primary rounded d-none">
+                    <i class="fas fa-check-circle fa-lg"></i>
+                    Tupe IN selection is acknowledged successfully</span>
+
+            </div>
+
+        }
+        &nbsp;
+
+        @if (Model.Any(t => t.TotalLeaver >= 1))
+        {
+            <div class="text-center h4 alert alert-primary mt-3">Tupe OUT</div>
+
+            <table id="tupeTable_OUT" class="table table-striped tabled-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>PayLocation</th>
+                        @* <th>Code</th> *@
+                        <th>Date</th>
+                        @* <th>Type</th> *@
+                        <th>Members</th>
+                        <th class="text-end">Confirm</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        counter = 1;
+                        foreach (var item in Model.Where(m => m.TotalLeaver >= 1))
+                        {
+                            <tr>
+                                <td>@counter</td>
+                                <td>@item.LocationCode - @item.LocationName</td>
+                                @* <td></td> *@
+                                <td>@item.DateLeft.ToShortDateString()</td>
+                                @* <td>@item.TupeType</td> *@
+                                <td>@item.TotalLeaver</td>
+                                <td class="">
+                                    <div class="form-check float-end">
+                                        <input class="form-check-input tupe-item-check"
+                                               data-paylocation-code="@item.LocationCode"
+                                               data-tupe-date="@item.DateLeft.ToShortDateString()"
+                                        type="checkbox">
+                                    </div>
+                                </td>
+                            </tr>
+                            counter++;
+                        }
+
+
+                    }
+                </tbody>
+            </table>
+
+        <div class="alert alert-primary">
+            <div class="button-holder-div d-flex justify-content-between">
+                <a class="btn btn-outline-warning tupe-member-acknowledge-out" data-tupe-ack-type="none">None</a>
+                <a class="btn btn-outline-success tupe-member-acknowledge-out ml-2" data-tupe-ack-type="all">Acknowledge All</a>
+                <a class="btn btn-outline-primary tupe-member-acknowledge-out ml-2" data-tupe-ack-type="selected">Selected Only</a>
+                    @* <a id="confirmTupeOutButton" data-tupe-type="OUT" class="confirm-tupe-button btn btn-outline-primary float-end">Confirm Tupe OUT</a> *@
+            </div>
+
+            <div class="bg-success show-success-message p-2 border border-primary rounded d-none">
+                <i class="fas fa-check-circle fa-lg"></i>
+                Tupe selection is acknowledged successfully
+            </div>
+
+        </div>
+
+
+        }
+        &nbsp;
+    </div>
+
+    <div class="mt-3">
+        <a href="InitialiseProcessWithSteps" class="btn btn-primary" alt="Proceed to next stage" data-bs-toggle="tooltip" data-bs-title="Proceed to next stage">Next</a>        
+    </div>
+
+</div>
+@section Scripts{
+    <script src="~/js/tupe-members.js"></script>
+}

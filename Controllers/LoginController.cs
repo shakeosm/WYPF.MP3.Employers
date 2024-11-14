@@ -50,17 +50,24 @@ namespace MCPhase3.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(LoginViewModel loginVM)
         {
+
+            //#### New edition.. We can now allow the Admin to Login/Impersonate an Employer User..
+            //## IN this case user name will be AdminUserName/EmployerUser; ie: RahmanHaf/BRETTC
+            bool isAdminLogin = loginVM.UserId.Split("/").Length > 1;
+            string loginName = isAdminLogin ? loginVM.UserId.Split("/")[0] : loginVM.UserId;
+
             //## lets store the UserId  in the Browser session, as we will be using this at very early stage. if Login isn't successful- they will be overridden later..
-            ContextSetValue(Constants.LoginNameKey, loginVM.UserId);    //## this 'loginVM.UserId' this is actually 'Upm2.LoginName'. eg: we have userId: 'BlackburnD' and LoginName: 'BlackburnD1'
+            ContextSetValue(Constants.LoginNameKey, loginName);    //## this 'loginVM.UserId' this is actually 'Upm2.LoginName'. eg: we have userId: 'BlackburnD' and LoginName: 'BlackburnD1'
+            loginVM.UserId = loginName;
 
             //check username and password
-            var loginResult = await LoginCheckMethod(loginVM.UserId, loginVM.Password);
+            var loginResult = await LoginCheckMethod(loginName, loginVM.Password, isAdminLogin);
 
             //## Yes, the user is valid, but we haven't Logged the user in yet. need to see if there is another session running anywhere
             if (loginResult == (int)LoginStatus.Valid)
             {
                 //## Get the User Details..
-                var currentUser = await base.GetUserDetails(loginVM.UserId);    //## we actually passing the LoginName (UPM.LoginName) to get the User Details.. 
+                var currentUser = await base.GetUserDetails(loginName);
                 await AddPayrollProviderInfo(currentUser);
 
                 //## now change the 'UserId' VALUE IN THE sESSION.. we have a tricky situation- where UserID not always same as LoginName.
@@ -73,7 +80,7 @@ namespace MCPhase3.Controllers
                 ContextSetValue(Constants.WindowsId, loginVM.WindowsId);
 
                 //## Super User Scenario
-                await LoggedInAs_SuperUser_SetSessionValue(loginVM.UserId);
+                await LoggedInAs_SuperUser_SetSessionValue(loginName);
 
                 //## Check in the Config- whether we should do MFA verification  or not.. we can sometimes disable it- for various reasons..
                 if (await Is_MfaEnabled())
@@ -81,15 +88,15 @@ namespace MCPhase3.Controllers
                     //### check whether this user needs a Multi-Factor Vreification today again... if yes, then send email with MFA Code and then ask to verify it
                     string mfa_Requirement_Check_Url = GetApiUrl(_apiEndpoints.MFA_IsRequiredForUser);// _configuration["ApiEndpoints:MFA_IsRequiredForUser"]);
 
-                    var apiResult = await ApiGet(mfa_Requirement_Check_Url + loginVM.UserId);
+                    var apiResult = await ApiGet(mfa_Requirement_Check_Url + loginName);
 
-                    Boolean.TryParse(apiResult, out bool isMFA_Required);
+                    _ = Boolean.TryParse(apiResult, out bool isMFA_Required);
 
                     if (isMFA_Required)
                     {                        
                         var mailData = new MailDataVM()
                         {
-                            UserId = loginVM.UserId,
+                            UserId = loginName,
                             EmailTo = currentUser.Email,
                             FullName = currentUser.FullName,
                             /* EmailBody, Subject- will be generated in the API,*/
@@ -99,7 +106,7 @@ namespace MCPhase3.Controllers
                         _cache.Set(GetKeyName(Constants.MFA_MailData), mailData);                        
                         apiResult = await SendMFA_VerificationCode();
 
-                        if (IsEmpty(apiResult))
+                        if (apiResult.IsEmpty())
                         {
                             LogInfo("API error: Failed to send verification code. apiResult  =  NULL");
 
@@ -124,7 +131,7 @@ namespace MCPhase3.Controllers
 
                 }
                 //## if no 'HasExistingSession' - then proceed to login and take the user to Admin/Home page
-                return await ProceedToLogIn(loginVM.UserId);
+                return await ProceedToLogIn(loginName);
 
             }
             else if (loginResult == (int)LoginStatus.Locked)
@@ -226,9 +233,9 @@ namespace MCPhase3.Controllers
         {
             payrollBO = await GetPayrollProviderInfo(currentUser.UserId);
 
-            currentUser.Pay_Location_Ref = payrollBO.paylocation_ref;
-            currentUser.Pay_Location_ID = payrollBO.pay_location_ID;
-            currentUser.Pay_Location_Name = payrollBO.pay_location_name;
+            currentUser.Pay_Location_Ref = payrollBO.Pay_Location_Ref;
+            currentUser.Pay_Location_ID = payrollBO.Pay_Location_ID;
+            currentUser.Pay_Location_Name = payrollBO.Pay_Location_Name;
             currentUser.Client_Id = payrollBO.client_Id;
 
             //## now set this newly built object in the cache- so we can re-use it faster..
@@ -279,13 +286,14 @@ namespace MCPhase3.Controllers
             //## Check the VerificationToken is Valid
             var tokenVerificationUrl = GetApiUrl(_apiEndpoints.MFA_Verify);// _configuration["ApiEndpoints:MFA_Verify"]);
             var apiResult = await ApiPost(tokenVerificationUrl, tokenDetails);
-            var verification = JsonConvert.DeserializeObject<TaskResults>(apiResult);
-
-            if (IsEmpty(apiResult)) {
+            
+            if (apiResult.IsEmpty()) {
                 LogInfo($"api: {tokenVerificationUrl}, returned NULL");
                 var loginVM = new LoginViewModel() { LoginErrorMessage = "Server Error: Token verificaton failed. Please contact support." };
                 return RedirectToAction("Index", loginVM);
             }
+
+            var verification = JsonConvert.DeserializeObject<TaskResults>(apiResult);
 
             if (!verification.IsSuccess)
             {
@@ -404,6 +412,10 @@ namespace MCPhase3.Controllers
             };
 
             var apiResult = await ApiPost(verifyUserRegistrationCodeApi, userToken);
+            if (apiResult.IsEmpty())
+            {
+                return View("Register", new UserRegistrationVM());
+            }
             var isVerified = JsonConvert.DeserializeObject<bool>(apiResult);
 
             ContextSetValue(Constants.LoginNameKey, id1);
@@ -451,6 +463,11 @@ namespace MCPhase3.Controllers
 
             string regiserUserApiUrl = GetApiUrl(_apiEndpoints.RegisterUserWithNewPassword);
             var apiResult = await ApiPost(regiserUserApiUrl, vm);
+            if (apiResult.IsEmpty())
+            {
+                result.Message = "Error while trying to register your account. We sincerely apoligize for this inconvenience. Please speak to you Finance Business Partner.";
+                return Json(result);
+            }
             var isRegistered = JsonConvert.DeserializeObject<bool>(apiResult);
 
             if (isRegistered)
@@ -519,7 +536,10 @@ namespace MCPhase3.Controllers
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    payrollBO = JsonConvert.DeserializeObject<PayrollProvidersBO>(result);
+                    if (!IsEmpty(result))
+                    {
+                        payrollBO = JsonConvert.DeserializeObject<PayrollProvidersBO>(result);
+                    }
                 }
             }
 
@@ -527,17 +547,22 @@ namespace MCPhase3.Controllers
         }
 
 
-        private async Task<int> LoginCheckMethod(string userId, string password)
+        private async Task<int> LoginCheckMethod(string loginName, string password, bool adminLogin)
         {
             var loginParams = new LoginPostVM()
             {
-                UserName = userId,
+                UserName = loginName,
                 Password = password,                
             };
 
             string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);   ///## api/CheckLogin
+            if (adminLogin) {
+                apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheckAdmin);   ///## api/LoginCheckAdmin
+                loginParams.PortalName = Constants.AdminPortalName; //## This will force the DB Procedure to check w2User table.
+            }
+
             var apiResult = await ApiPost(apiBaseUrlForLoginCheck, loginParams);
-            if (IsEmpty(apiResult)) {
+            if (apiResult.IsEmpty()) {
                 return (int)LoginStatus.Failed;
             }
 
@@ -791,13 +816,16 @@ namespace MCPhase3.Controllers
             var apiUrl = GetApiUrl(_apiEndpoints.PasswodResetLinkRequest);
             var apiResult = await ApiPost(apiUrl, mailData);
 
-            if (IsEmpty(apiResult)) {
+            if (apiResult.IsEmpty())
+            {
                 taskResult.Message = "Failed to invoke API.";
+                LogInfo($"Error!! SendResetRequestLink({userId}) Failed => {taskResult.Message}");
             }
-            var isResetLinkSent = JsonConvert.DeserializeObject<bool>(apiResult);
-            taskResult.IsSuccess = isResetLinkSent;
-            
-            Console.WriteLine($"Reset Link sent to the user: {userId}, result: {isResetLinkSent}");
+            else { 
+                var isResetLinkSent = JsonConvert.DeserializeObject<bool>(apiResult);
+                taskResult.IsSuccess = isResetLinkSent;                        
+                Console.WriteLine($"Reset Link sent to the user: {userId}, result: {isResetLinkSent}");
+            }
 
             return Json(taskResult);
         }
@@ -820,9 +848,13 @@ namespace MCPhase3.Controllers
 
             var apiUrl = GetApiUrl(_apiEndpoints.PasswodResetVerifyRequest);    //## api/PasswodResetVerifyRequest
             var apiResult = await ApiPost(apiUrl, param);
+            if (apiResult.IsEmpty())
+            {
+                return View(vm);    //## sending an empty ViewModel.. which will show error.. saying 'invalid link'
+            }
 
             var isValidResetRequest = JsonConvert.DeserializeObject<bool>(apiResult);
-            if(apiResult is null || !isValidResetRequest)
+            if(!isValidResetRequest)
             {
                 return View(vm);    //## sending an empty ViewModel.. which will show error.. saying 'invalid link'
             }

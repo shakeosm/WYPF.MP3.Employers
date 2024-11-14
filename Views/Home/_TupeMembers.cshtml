@@ -1,0 +1,75 @@
+﻿@model IList<MCPhase3.Models.TupeItemVM>
+@{
+    int counter = 1;
+    var firstRecord = Model.FirstOrDefault();
+    string dataTableName = firstRecord.LocationCode + "-" + firstRecord.DateStarted.ToShortDateString().Replace("/", "") + "-table";
+}
+@if (Model?.Count > 0)
+{
+    <div class="paylocation-member-list-container card">
+        <table id="@dataTableName" class="table table-striped tabled-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Full Name</th>
+                    <th>Gender</th>
+                    <th>DoB</th>
+                    <th>NI Number</th>
+                    <th>PayRef</th>
+                    <th>Job Title</th>
+                    <th class="text-center">Confirm</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@counter</td>
+                            <td>@item.FullName</td>
+                            <td>@item.Gender</td>
+                            <td>@item.DoB</td>
+                            <td>@item.NINumber</td>
+                            <td>@item.PayRef</td>
+                            <td>@item.JobTitle</td>
+                            <td class="text-center">
+                                <input class="form-check-input confirm-tupe-member-check" type="checkbox" value="@item.Id" id="DataRowRecord_@item.Id">
+
+                                <a class="btn btn-small btn-outline-primary confirm-tupe-member-record d-none" 
+                                    data-record-id="@item.Id">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        counter++;
+                    }
+
+
+                }
+            </tbody>
+        </table>        
+        
+        <div class="alert alert-primary">
+            <div class="button-holder-div d-flex justify-content-between">
+                <input class="tupe-type" type="hidden" value="IN" />
+                <input class="tupe-paylocation-code" type="hidden" value="@firstRecord.LocationCode" />
+                <input class="tupe-date" type="hidden" value="@firstRecord.DateStarted" />
+                <input class="tupe-table-name" type="hidden" value="@dataTableName" />                
+
+                <a class="btn btn-outline-warning tupe-member-acknowledge-in" data-tupe-ack-type="none">None</a>
+                <a class="btn btn-outline-success tupe-member-acknowledge-in ml-2" data-tupe-ack-type="all">Acknowledge All</a>
+                <a class="btn btn-outline-primary tupe-member-acknowledge-in ml-2" data-tupe-ack-type="selected">Selected Only</a>
+            </div>
+
+            <div class="bg-success show-success-message p-2 border border-primary rounded d-none">
+                <i class="fas fa-check-circle fa-lg"></i>
+                Tupe selection is acknowledged successfully
+            </div>
+
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">No data found!</div>
+}

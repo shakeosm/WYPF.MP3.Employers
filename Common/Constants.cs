@@ -4,6 +4,7 @@
     {
         public const int EmployersPortal = 2;    //## API=1, Employers = 2; Admin = 3
         public const string ThisPortalName = "Employers";
+        public const string AdminPortalName = "Admin";
         public const string PortalNameHttpRequestKey = "portal-name";
         public const string ClientIdHttpRequestKey = "client-id";
         public const int EndOfYear_March = 3;    //## To cmopare values in Excel sheet, some extra validation check for the month 'March'
@@ -73,7 +74,9 @@
         
         public static string ExcelDataAsString = "ExcelDataAsString";
         public static string CurrentAlertDescription = "CurrentAlertDescription";
-        public static string ExcelData_ToInsert = "Excel_DataToInsert";        
+        public static string ExcelData_ToInsert = "Excel_DataToInsert";                
+        public static string ExcelData_FirstPayLocationCode = "ExcelData_FirstPayLocationCode";                
+        public static string ExcelData_FirstPayLocationName = "ExcelData_FirstPayLocationName";                
         public static string ReturnInitialiseCurrentStep = "ReturnInitialiseCurrentStep";        
         public static string EmployerProcessedCount = "EmployerProcessedCount";        
         public static string ValidPayrollYears = "ValidPayrollYears";           //## in Redis cache.. Global value
@@ -136,13 +139,6 @@
             /// <summary>File has been submitted to WYPF by payroll provider.</summary>
             SubmittedToWypf = 110
         }
-
-        //public enum SubmissionStatus
-        //{
-        //    Missing = 0,
-        //    Pending = 1,
-        //}
-
 
 
     }

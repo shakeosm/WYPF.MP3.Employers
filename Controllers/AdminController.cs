@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static MCPhase3.Common.Constants;
 
@@ -177,28 +176,28 @@ namespace MCPhase3.Controllers
         private async Task<List<RemittanceItemVM>> GetRemittanceListByStatus(RemittanceSelectParamBO dashboardFilter)
         {
             string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.DashboardRecentSubmission); //# api/DashboardRecentSubmission
-            var apiResult = new List<RemittanceItemVM>();
+            var remittanceList = new List<RemittanceItemVM>();
 
             string apiResponse = await ApiPost(apiBaseUrlForDashboard, dashboardFilter);
-            if (string.IsNullOrEmpty(apiResponse) == false)
-            {
-                apiResult = JsonConvert.DeserializeObject<List<RemittanceItemVM>>(apiResponse);
-            }
-
-
-            if (apiResult != null && apiResult.Count > 0)
-            {
-                foreach (var item in apiResult)
-                {
-                    item.remittance_IdEnc = EncryptUrlValue(item.remittance_Id.ToString());
-                }
-
-                return apiResult.OrderByDescending(d => d.remittance_Id).ToList();
-            }
-            else
+            if (apiResponse.IsEmpty())
             {
                 return new List<RemittanceItemVM>();
             }
+            else
+            {
+                remittanceList = JsonConvert.DeserializeObject<List<RemittanceItemVM>>(apiResponse);
+
+                if (remittanceList.HasItems())
+                {
+                    foreach (var item in remittanceList)
+                    {
+                        item.remittance_IdEnc = EncryptUrlValue(item.remittance_Id.ToString());
+                    }
+
+                }                
+            }
+
+            return remittanceList;
         }
 
 
@@ -244,6 +243,7 @@ namespace MCPhase3.Controllers
             {
                 string WebapiBaseUrlForDetailEmpList = GetApiUrl(_apiEndpoints.DetailEmpList);
                 string remid = DecryptUrlValue(remittanceId);
+                var submissionDetails = new List<RemittanceItemVM>();
 
                 var paramList = new MasterDetailEmpListBO()
                 {
@@ -253,7 +253,11 @@ namespace MCPhase3.Controllers
                 };
 
                 string apiResponse = await ApiPost(WebapiBaseUrlForDetailEmpList, paramList);
-                var submissionDetails = JsonConvert.DeserializeObject<List<RemittanceItemVM>>(apiResponse);
+
+                if (apiResponse.NotEmpty())
+                {
+                    submissionDetails = JsonConvert.DeserializeObject<List<RemittanceItemVM>>(apiResponse);
+                }
 
                 return PartialView("_SubmissionDetails", submissionDetails);
             }
@@ -269,11 +273,13 @@ namespace MCPhase3.Controllers
         private async Task<List<GetRemittanceStatusByUserBO>> getDashboardValuesForEmployers(string userid, string status)
         {
             string apiBaseUrlForDashboard = GetApiUrl(_apiEndpoints.DashboardEmployers);
-            
+            var listBO = new List<GetRemittanceStatusByUserBO>();
             LogInfo($"getDashboardValuesForEmployers()-> api: {apiBaseUrlForDashboard}{userid}");
 
             string apiResponse = await ApiGet(apiBaseUrlForDashboard + userid);
-            var listBO = JsonConvert.DeserializeObject<List<GetRemittanceStatusByUserBO>>(apiResponse);
+            if (apiResponse.NotEmpty()) { 
+                listBO = JsonConvert.DeserializeObject<List<GetRemittanceStatusByUserBO>>(apiResponse);
+            }
 
 
             if (status.Equals("completed"))
@@ -295,14 +301,17 @@ namespace MCPhase3.Controllers
         {
             LogInfo($"Loading GetDashboardScoreHist(), remittanceId: {remittanceId}", true);
             string apiBaseUrlForDashboardScoreHist = GetApiUrl(_apiEndpoints.DashboardScoreHist);
+            var listBO = new List<DashboardHistScoreBO>();
 
             LogInfo($"apiBaseUrlForDashboardScoreHist()-> api: {apiBaseUrlForDashboardScoreHist}");
 
             string apiResponse = await ApiGet(apiBaseUrlForDashboardScoreHist + remittanceId);
-            var listBO = JsonConvert.DeserializeObject<List<DashboardHistScoreBO>>(apiResponse);
+            if (apiResponse.NotEmpty())
+            {
+                listBO = JsonConvert.DeserializeObject<List<DashboardHistScoreBO>>(apiResponse);
+            }
 
-
-            if (listBO != null && listBO.Count > 0)
+            if (listBO.HasItems())
             {
                 foreach (var item in listBO)
                 {

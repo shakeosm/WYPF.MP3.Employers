@@ -5,7 +5,7 @@
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 
     var payLocations = Model.PayLocationList;
-    var payLocationSelectList = new SelectList(payLocations, "pay_location_ID", "pay_location_name");
+    var payLocationSelectList = new SelectList(payLocations, "Pay_Location_ID", "Display_Name");
 
     bool isFileValidationSuccess = !string.IsNullOrEmpty(Model.ErrorMessage) && Model.ErrorMessage.StartsWith("Success");
     string selectedChecked = "";    //## this will be used to set the Radio button selected on Postback

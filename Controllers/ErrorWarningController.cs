@@ -87,9 +87,11 @@ namespace MCPhase3.Controllers
 
             alertSumBO.RemittanceId = remID.ToString();
             var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-            alertList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+            if (apiResult.NotEmpty()) { 
+                alertList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);            
+            }
 
-            if (alertList != null && alertList.Count > 0)
+            if (alertList.HasItems())
             {
                 var alertListFiltered = alertList.Where(x => x.ACTION_BY.Equals("ALL")).ToList();
 
@@ -153,7 +155,9 @@ namespace MCPhase3.Controllers
             {
                 alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                if (apiResult.NotEmpty()) { 
+                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                }
             }
             else
             {
@@ -167,7 +171,10 @@ namespace MCPhase3.Controllers
                 };
 
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, errorAndWarningTo);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                if (apiResult.NotEmpty())
+                {
+                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                }
             }
 
             foreach (var record in recordsList)
@@ -216,7 +223,10 @@ namespace MCPhase3.Controllers
             {
                 alertSumBO.L_PAYLOC_FILE_ID = Convert.ToInt32(HttpContext.Session.GetString(Constants.SessionKeyPaylocFileID));                
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertSumBO);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                if (apiResult.NotEmpty())
+                {
+                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                }
             }
             else
             {
@@ -229,7 +239,10 @@ namespace MCPhase3.Controllers
                 };
 
                 var apiResult = await ApiPost(apiBaseUrlForErrorAndWarnings, alertListQueryParams);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                if (apiResult.NotEmpty())
+                {
+                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResult);
+                }
             }
 
             foreach (var record in recordsList)
@@ -278,8 +291,11 @@ namespace MCPhase3.Controllers
             };
 
             string apiApproveWarningsBulkList = GetApiUrl(_apiEndpoints.ApproveWarningsBulkList);
-            var apiresult = await ApiPost(apiApproveWarningsBulkList, paramList);
-            paramList = JsonConvert.DeserializeObject<ApproveWarningsInBulkVM>(apiresult);  //## we get the ApiCall result in the same object and see what status we have got in return
+            var apiResult = await ApiPost(apiApproveWarningsBulkList, paramList);
+            if (apiResult.NotEmpty())
+            {
+                paramList = JsonConvert.DeserializeObject<ApproveWarningsInBulkVM>(apiResult);  //## we get the ApiCall result in the same object and see what status we have got in return
+            }
 
             //## All done.. now send the user back to the 'Index' with success status
             TempData["msg"] = $"All warnings ({bulkApprovalRecordIdList.Count}) are successfully Acknowledged.";
@@ -335,7 +351,10 @@ namespace MCPhase3.Controllers
                     {
                         _logger.LogInformation($"BulkApproval API Call successfull-> {endpoint}");
                         string result = await Response.Content.ReadAsStringAsync();
-                        errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(result);
+                        if (!IsEmpty(result))
+                        { 
+                            errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(result);                        
+                        }
 
                         TempData["msg"] = errorAndWarningTo.returnStatusTxt;
 
@@ -377,7 +396,10 @@ namespace MCPhase3.Controllers
             };
 
             var apiResult = await ApiPost(ErrorAndWarningsApprovalUrl, errorAndWarningTo);
-            errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(apiResult);
+            if (apiResult.NotEmpty())
+            { 
+                errorAndWarningTo = JsonConvert.DeserializeObject<ErrorAndWarningApprovalOB>(apiResult);            
+            }
             string approvalResult = errorAndWarningTo.returnStatusTxt;
 
             result.IsSuccess = true;
@@ -404,7 +426,7 @@ namespace MCPhase3.Controllers
                 //show employer name
                 //ViewBag.empName = HttpContext.Session.GetString(Constants.SessionKeyEmployerName);
                 string userName = CurrentUserId();
-                
+
                 string apiBaseUrlForErrorAndWarningsApproval = GetApiUrl(_apiEndpoints.GetAlertDetailsInfo);  //## api/GetIndvidualRecords
 
                 string apiBaseUrlForErrorAndWarningsList = GetApiUrl(_apiEndpoints.GetErrorWarningList);    //## api/UpdateIndvidualRecordErrorWarningList
@@ -415,7 +437,10 @@ namespace MCPhase3.Controllers
                 helpTextBO.L_DATAROWID_RECD = dataRowID;
 
                 apiResponse = await ApiPost(apiBaseUrlForErrorAndWarningsList, helpTextBO);
-                recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResponse);
+                if (!IsEmpty(apiResponse))
+                {
+                    recordsList = JsonConvert.DeserializeObject<List<ErrorAndWarningVM>>(apiResponse);
+                }
 
                 foreach (var item in recordsList)
                 {
@@ -425,10 +450,12 @@ namespace MCPhase3.Controllers
                 ViewBag.HelpText = recordsList;
                 string result = string.Empty;
 
-                apiResponse = await ApiPost(apiBaseUrlForErrorAndWarningsApproval, helpTextBO);
-
                 MemberUpdateRecordBO memberUpdateRecordBO = new();
-                memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
+                apiResponse = await ApiPost(apiBaseUrlForErrorAndWarningsApproval, helpTextBO);
+                if (!IsEmpty(apiResponse)){ 
+                    memberUpdateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
+                
+                }
 
                 memberUpdateRecordBO.dataRowID = dataRowID;
                 memberUpdateRecordBO.ErrorAndWarningList = recordsList;
@@ -461,7 +488,10 @@ namespace MCPhase3.Controllers
             string apiLink = GetApiUrl(_apiEndpoints.UpdateRecord);
 
             string apiResponse = await ApiPost(apiLink, updateRecordBO);
-            updateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO> (apiResponse);
+            if (!IsEmpty(apiResponse)){
+                updateRecordBO = JsonConvert.DeserializeObject<MemberUpdateRecordBO> (apiResponse);
+
+            }
 
             TempData["UpdateStatus"] = $"Success: The record is successfully updated. Member: {updateRecordBO.forenames} {updateRecordBO.lastName}, NI: {updateRecordBO.NI}";            
 
@@ -500,9 +530,14 @@ namespace MCPhase3.Controllers
             
 
             string apiBaseUrlForUpdateRecordGetValues = GetApiUrl(_apiEndpoints.GetAlertDetailsInfo);
+            MemberUpdateRecordBO memberRecord = new();
             //## show Member record- from the 'Contribution data received'
             string apiResponse = await ApiPost(apiBaseUrlForUpdateRecordGetValues, memberRecordQuery);
-            MemberUpdateRecordBO memberRecord = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
+            if (!IsEmpty(apiResponse))
+            {
+                memberRecord = JsonConvert.DeserializeObject<MemberUpdateRecordBO>(apiResponse);
+
+            }
 
             //To cal all values/data of member record. that is already in UPM.
             MatchingRecordQueryVM getMatchesBO = new ()
@@ -544,6 +579,10 @@ namespace MCPhase3.Controllers
         {
             string apiLink = GetApiUrl(_apiEndpoints.MatchingRecordsUPM);   //## api/MatchingRecords
             string apiResponse = await ApiPost(apiLink, getMatchesBO);
+            if (IsEmpty(apiResponse)){
+                return null;
+            }
+
             var apiResult = JsonConvert.DeserializeObject<List<MatchingPersonVM>>(apiResponse);
             return apiResult;
         }

@@ -105,3 +105,6 @@ function ShowOverlaySpinner() {
     $("#overlay").fadeIn(300);
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

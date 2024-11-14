@@ -64,6 +64,11 @@ namespace MCPhase3.Controllers
         public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKey);   
         public string CurrentUserLoginId() => HttpContext.Session.GetString(Constants.LoginNameKey);   
         public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
+        public int CurrentRemittanceId() {
+            var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
+            _ = int.TryParse(DecryptUrlValue(encryptedRemittanceId), out int remittanceId);
+            return remittanceId;
+        }
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
         /// <param name="returnAsEncrypted">Will return an Encrypted value if True, set false to get Number value</param>        
@@ -275,7 +280,7 @@ namespace MCPhase3.Controllers
             {
                 string getUserDetailsApi = GetApiUrl(_apiEndpoints.GetUserDetails);
                 var apiResult = await ApiGet(getUserDetailsApi + loginName);
-                if (IsEmpty(apiResult)) {
+                if (apiResult.IsEmpty()) {
                     LogInfo("This user details couldn't be found, GetUserDetails()=> " + loginName);
                     return new UserDetailsVM();
                 }

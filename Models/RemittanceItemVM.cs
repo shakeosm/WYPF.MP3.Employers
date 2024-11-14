@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace MCPhase3.Models
 {
@@ -32,6 +33,15 @@ namespace MCPhase3.Models
         public string EMPLOYER_REF { get; set; }
         public string EMPLOYER_NAME { get; set; }
         public string RETURN_PERIOD { get; set; }
+
+    }
+
+    public class RemittanceFileNameUpdateVM
+    {
+        [Required]
+        public int RemittanceId { get; set; }
+        [Required]
+        public string CustomerFileName { get; set; }
 
     }
 

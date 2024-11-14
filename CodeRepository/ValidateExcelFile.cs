@@ -55,7 +55,7 @@ namespace MCPhase3.CodeRepository
             //List<ExcelsheetDataVM> excelData, string selectedMonth, string selectedPosting, string validMonthNames, ref StringBuilder CheckSpreadSheetErrorMsg
             SpreadSheetChecks.CheckPayrollPeriod(excelData.Select(e=> e.PAYROLL_PD).ToList(), month, posting, validMonths, ref errorMessage);
             SpreadSheetChecks.CheckPayrollYear(excelData.Select(e => e.PAYROLL_YR).ToList(), validPayrollYr, ref errorMessage);            
-            SpreadSheetChecks.CheckEmployerLocCode(excelData.Select(e => e.EMPLOYER_LOC_CODE).ToList(), validPayLocations.Select(e => e.pay_location_ID).ToList(), ref errorMessage);
+            SpreadSheetChecks.CheckEmployerLocCode(excelData.Select(e => e.EMPLOYER_LOC_CODE).ToList(), validPayLocations.Select(e => e.Pay_Location_Ref).ToList(), ref errorMessage);
                         
             //## Title - data cleansing- remove '.' and any blank spaces..            
             foreach (var item in excelData)

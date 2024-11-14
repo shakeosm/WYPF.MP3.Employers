@@ -17,6 +17,7 @@
         public string ErrorAndWarnings { get; set; }
         public string TotalRecordsInserted { get; set; }
         public string InsertRemitanceDetails { get; set; }
+        public string RemittanceFileNameUpdate { get; set; }
         
         /// <summary>This call waits for the process to finish and then comes back with result/status</summary>
         public string AutoMatch { get; set; }
@@ -44,7 +45,9 @@
         public string InsertEventDetails { get; set; }
         public string PayrollProvider { get; set; }
         public string SubPayrollProvider { get; set; }
+        public string GetAccessible_PayLocations { get; set; }
         public string LoginCheck { get; set; }
+        public string LoginCheckAdmin { get; set; }
         public string MFA_IsRequiredForUser { get; set; }
         public string Is_MfaEnabled { get; set; }
         public string MFA_SendToEmployer { get; set; }
@@ -83,6 +86,12 @@
         public string VerifyUserRegistrationCode { get; set; }
         public string RegisterUserWithNewPassword { get; set; }
         public string SuperUserCheck { get; set; }
+        
+        
+        public string TupeSummary { get; set; }
+        public string Tupe_PayLocation_Create_Alert { get; set; }
+        public string Tupe_Create_Alerts { get; set; }
+        public string Tupe_Member_Search { get; set; }
     }
 
 }
