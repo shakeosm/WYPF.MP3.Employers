@@ -47,7 +47,7 @@
         public string SubPayrollProvider { get; set; }
         public string GetAccessible_PayLocations { get; set; }
         public string LoginCheck { get; set; }
-        public string LoginCheckAdmin { get; set; }
+        public string AdminImpersonateEmployeeLogin { get; set; }
         public string MFA_IsRequiredForUser { get; set; }
         public string Is_MfaEnabled { get; set; }
         public string MFA_SendToEmployer { get; set; }

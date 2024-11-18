@@ -1,11 +1,11 @@
-﻿@model MCPhase3.Models.LoginViewModel
+﻿@model MCPhase3.Models.UserDetailsVM
 
 @if (!string.IsNullOrEmpty(Model.UserId))
 {
     @* <a class="nav-item nav-link">Payroll provider: <b>@Model.EmployerName</b></a>  *@  
     <a class="nav-item nav-link">
 
-        You are logged in as: <b>@Model.UserId</b>
+        You are logged in as: <b>@Model.DisplayName()</b>
     </a>
 }
 else

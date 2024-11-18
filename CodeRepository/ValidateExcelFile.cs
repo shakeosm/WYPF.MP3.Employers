@@ -189,7 +189,8 @@ namespace MCPhase3.CodeRepository
         /// <returns>Returns the First part, ie: 2023</returns>
         private int GetYear(string financialYear)
         {
-            int financeYearPart = Convert.ToInt16(financialYear[..4]);    //## take the 4 letters from Left, ie: '2024'
+            //int yearPart = Convert.ToInt16(financialYear.Split("/")[1]) + 2000;
+            int financeYearPart = Convert.ToInt16(financialYear.Split("/")[1]) + 2000;    //## take the 4 letters from Left, ie: '2024'
             return financeYearPart;
         }
 

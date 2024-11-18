@@ -58,16 +58,29 @@ namespace MCPhase3.Controllers
         //## Life saving methods ##
         //#########################
         //public string CurrentUserId() => HttpContext.Session.GetString(Constants.LoggedInAsKeyName);
-        
+
         /// <summary>Returns w2User UserId- which is used in all Procedures</summary>
         /// <returns></returns>
         public string CurrentUserId() => HttpContext.Session.GetString(Constants.UserIdKey);   
+        //    var currentUser = await GetUserDetails(loggedInAs);
+        //    return currentUser.ImpersonatedAdmin.IsEmpty() ? loggedInAs : currentUser.ImpersonatedAdmin;
+        
+        //}
         public string CurrentUserLoginId() => HttpContext.Session.GetString(Constants.LoginNameKey);   
         public string SessionInfoKeyName()=> $"{CurrentUserId()}_{Constants.SessionInfoKeyName}";
         public int CurrentRemittanceId() {
             var encryptedRemittanceId = ContextGetValue(Constants.SessionKeyRemittanceID);
             _ = int.TryParse(DecryptUrlValue(encryptedRemittanceId), out int remittanceId);
             return remittanceId;
+        }
+
+        /// <summary>This will check if the current user is an Admin user logged in as Employee User</summary>
+        /// <returns>LoggedIn UserID</returns>
+        public async Task<string> CurrentLoggedInUser()
+        { 
+            var currentUser = await GetUserDetails(CurrentUserId());
+            return currentUser.ImpersonatedAdmin.IsEmpty() ? currentUser.UserId : currentUser.ImpersonatedAdmin;
+
         }
 
         /// <summary>This will return Remittance Id for the current session. By default this will return Remittance Id in Encrypted format.</summary>
@@ -312,7 +325,7 @@ namespace MCPhase3.Controllers
         {
             var logMessageText = $"{DateTime.Now.ToLongTimeString()}> {CurrentUserId()} > {message}";
 
-            //Console.WriteLine(logMessageText );
+            Console.WriteLine(logMessageText );
 
             if (_configuration["LogDebugInfo"].ToString().ToLower() == "yes")
             {

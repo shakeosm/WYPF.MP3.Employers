@@ -54,20 +54,31 @@ namespace MCPhase3.Controllers
             //#### New edition.. We can now allow the Admin to Login/Impersonate an Employer User..
             //## IN this case user name will be AdminUserName/EmployerUser; ie: RahmanHaf/BRETTC
             bool isAdminLogin = loginVM.UserId.Split("/").Length > 1;
-            string loginName = isAdminLogin ? loginVM.UserId.Split("/")[0] : loginVM.UserId;
+            string loginName = isAdminLogin ? loginVM.UserId.Split("/")[1] : loginVM.UserId;        //## All over the App- this LoginName will be used
+            string authLoginName = isAdminLogin ? loginVM.UserId.Split("/")[0] : loginVM.UserId;    //## If Admin is trying to Login- then Authenticate the Admin, NOT the EMployee user
 
             //## lets store the UserId  in the Browser session, as we will be using this at very early stage. if Login isn't successful- they will be overridden later..
             ContextSetValue(Constants.LoginNameKey, loginName);    //## this 'loginVM.UserId' this is actually 'Upm2.LoginName'. eg: we have userId: 'BlackburnD' and LoginName: 'BlackburnD1'
             loginVM.UserId = loginName;
 
             //check username and password
-            var loginResult = await LoginCheckMethod(loginName, loginVM.Password, isAdminLogin);
+            var loginResult = await LoginCheckMethod(authLoginName, loginVM.Password, isAdminLogin);
 
             //## Yes, the user is valid, but we haven't Logged the user in yet. need to see if there is another session running anywhere
             if (loginResult == (int)LoginStatus.Valid)
             {
                 //## Get the User Details..
                 var currentUser = await base.GetUserDetails(loginName);
+                
+                //## when Admin is trying to login- impersonating another Employee User- and if that UserId is spelled wrong- then show 'Invalid Login' error
+                if (currentUser.UserId.IsEmpty()) {
+                    LogInfo($"Ipersonation failed. User doesn't exist. Admin User: {authLoginName}, Employee User: {loginName}");
+
+                    loginVM.LoginErrorMessage = "Login failed- Employer User not found. Please check the LoginName and try again.";
+                    return View(loginVM);
+                }
+                currentUser.ImpersonatedAdmin = isAdminLogin ? authLoginName : "";
+
                 await AddPayrollProviderInfo(currentUser);
 
                 //## now change the 'UserId' VALUE IN THE sESSION.. we have a tricky situation- where UserID not always same as LoginName.
@@ -557,7 +568,7 @@ namespace MCPhase3.Controllers
 
             string apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheck);   ///## api/CheckLogin
             if (adminLogin) {
-                apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.LoginCheckAdmin);   ///## api/LoginCheckAdmin
+                apiBaseUrlForLoginCheck = GetApiUrl(_apiEndpoints.AdminImpersonateEmployeeLogin);   ///## api/login-admin
                 loginParams.PortalName = Constants.AdminPortalName; //## This will force the DB Procedure to check w2User table.
             }
 
